@@ -1,0 +1,12 @@
+node('master') {
+    stage('checkout') {
+        checkout scm
+    }
+    stage('add builds') {
+        jobDsl targets: ['firmware/yocto/build.groovy'].join('\n'),
+           removedJobAction: 'DELETE',
+           removedViewAction: 'DELETE',
+           lookupStrategy: 'SEED_JOB',
+           additionalParameters: [WORKSPACE:  pwd()]
+    }
+}
