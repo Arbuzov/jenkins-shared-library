@@ -1,3 +1,4 @@
+println('lkhjlhljhljkh')
 def call(projectName, webRootUrl, gitRootUrl) {
     def nullTrustManager = [
         checkClientTrusted: { chain, authType ->  },

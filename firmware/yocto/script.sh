@@ -1,5 +1,8 @@
+#!/bin/bash
 set -x
 
+echo $WORKSPACE
+#echo -e "Host git7-advgit\nHostName advgit.advantech.ca\nUser git7\nIdentityFile ~/.ssh/id_rsa.adv\n" >~/.ssh/config
 ln -fs ../../meta-awl /home/build/fsdk/meta-awl-fido
 
 meta-awl-plinux/scripts/awl-install-yocto-buildtools.sh
@@ -13,6 +16,7 @@ source /home/build/fsdk/yocto-1.8-buildtools/environment-setup-x86_64-pokysdk-li
 source build_awl-idu7000/SOURCE_THIS
 
 time bitbake awl-image-sit fsl-toolchain
+#./tmp/deploy/sdk/fsl-qoriq-glibc-x86_64-ppce500v2-toolchain-1.9.sh -y -d /opt/fsl-qoriq/1.9
 
 # gather artifacts
 cd $WORKSPACE
