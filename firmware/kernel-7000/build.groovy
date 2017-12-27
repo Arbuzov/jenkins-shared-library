@@ -11,7 +11,7 @@ String projectName = 'sit2.git';
 
 String webRootUrl = 'https://git.advantech.ca/cgit.cgi'
 
-String gitRootUrl = 'ssh://git7@192.168.21.19'
+String gitRootUrl = 'ssh://git7@git.advantech.ca'
 
 /*********************************************/
 
