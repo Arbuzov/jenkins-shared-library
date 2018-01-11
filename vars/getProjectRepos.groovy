@@ -1,10 +1,5 @@
-package com.advantech;
-
-public class CgitAdvantech {
-
-def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
-
-	System.out.println('2345235235324532');
+println('lkhjlhljhljkh')
+def call(projectName, webRootUrl, gitRootUrl) {
     def nullTrustManager = [
         checkClientTrusted: { chain, authType ->  },
         checkServerTrusted: { chain, authType ->  },
@@ -38,5 +33,4 @@ def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
     }
     
     return projectRepos;
-}
 }

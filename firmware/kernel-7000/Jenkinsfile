@@ -3,12 +3,12 @@ node('master') {
         checkout scm
     }
     stage('add builds') {
-        jobDsl targets: ['firmware/kernel-7000/build.groovy'].join('\n'),
+        jobDsl targets: ['vars/**.groovy', 'firmware/kernel-7000/build.groovy'].join('\n'),
            removedJobAction: 'DELETE',
            removedViewAction: 'DELETE',
            lookupStrategy: 'SEED_JOB',
            additionalParameters: [WORKSPACE:  pwd()],
-           additionalClasspath: ['vars/*.groovy'].join('\n')
+           additionalClasspath: ['vars/**.groovy'].join('\n')
     }
     stage('get diff') {
         build job: 'compare-builds',

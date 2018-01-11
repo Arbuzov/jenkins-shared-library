@@ -1,5 +1,5 @@
 import hudson.model.*;
-import java.util.regex.*;
+import java.util.regex.*
 
 /*********************************************/
 
@@ -11,7 +11,7 @@ String projectName = 'meta-awl.git';
 
 String webRootUrl = 'https://git.advantech.ca/cgit.cgi'
 
-String gitRootUrl = 'ssh://git7@git.advantech.ca'
+String gitRootUrl = 'ssh://git7@192.168.21.19'
 
 /*********************************************/
 
@@ -33,7 +33,7 @@ def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
     sc.init(null, [nullTrustManager as  javax.net.ssl.X509TrustManager] as  javax.net.ssl.X509TrustManager[], null)
     javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
     javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as javax.net.ssl.HostnameVerifier)
-    def projectRegexp = "title='repo/([a-z]|/|-|\\d)+\\.git"
+    def projectRegexp = "title='repo/([a-z]|/|-)+\\.git"
     def projectPattern = Pattern.compile(projectRegexp)
     def projectMatcher = projectPattern.matcher(new URL (webRootUrl+"/?q="+projectName).getText())
 
@@ -110,7 +110,7 @@ projectRepos.each{
                     allowEmpty(false)
                }
                extendedEmailPublisher {
-                    project_recipient_list('$DEFAULT_RECIPIENTS')
+                    project_recipient_list('$DEFAULT_RECIPIENTS'+"\nAlex.Landovskis@advantechwireless.com")
                     project_default_subject('$DEFAULT_SUBJECT')
                     project_replyto('$DEFAULT_REPLYTO')
                     project_content_type('both')
