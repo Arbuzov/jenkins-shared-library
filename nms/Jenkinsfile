@@ -1,0 +1,66 @@
+BUILD_FINISHED = false;
+DATABASE_READY = false;
+DATABASE_IP = '';
+/**
+ * Get information about the person approved last build dialog
+ */
+def getLatestApprover() {
+	def latestId = null;
+	def latestName = null;
+	def acts = currentBuild.rawBuild.getAllActions()
+	for (act in acts) {
+		if (act instanceof org.jenkinsci.plugins.workflow.support.steps.input.ApproverAction) {
+			latestId = act.userId;
+			latestName = User.get(latestId).getDisplayName();
+		}
+	}
+	return "${latestName}";
+}
+
+stage ('collect data') {
+	node () {
+		sh 'rm -rf ./*.rpm'
+		step([$class: 'CopyArtifact',
+			filter: '**/**.rpm',
+			fingerprintArtifacts: true,
+			flatten: true, projectName: 'webnms-package'
+		]);
+		stash includes: '**/**.rpm', name: 'rpm'
+	}
+}
+stage ('launch tests') {
+	parallel database : {
+		node('jenkins-node-nmsdb') {
+                                     def connectionInfo = env.SSH_CONNECTION.split();
+                                     DATABASE_IP=connectionInfo[2];
+                                     DATABASE_READY=true
+                                     waitUntil {
+                                         return BUILD_FINISHED;
+                                     }
+
+                      }
+	},
+	web : {
+		node('jenkins-node-nms-web-server') {
+									unstash 'rpm'
+									sh "sudo rpm -Uvh --force smshtml-5*"
+									waitUntil {
+										return DATABASE_READY;
+									}
+									sh " \
+										sudo  /usr/sbin/sms/sms_set_db_ip ${DATABASE_IP} 5432 \
+										&& cd /srv/www/htdocs/Symfony \
+										&& sudo php app/console monitoring:import \
+										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
+										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File\
+										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
+										"
+									input message: "Can we finish this pipeline and drop all images?";
+									echo getLatestApprover();
+									BUILD_FINISHED=true;
+		}
+	}
+}
+stage ('collect result') {
+          
+      }
