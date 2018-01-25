@@ -50,7 +50,7 @@ stage ('launch tests') {
 									sh " \
 										sudo  /usr/sbin/sms/sms_set_db_ip ${DATABASE_IP} 5432 \
 										&& cd /srv/www/htdocs/Symfony \
-										&& sed -i 's|open_basedir = /srv/www/htdocs:/var/equator|open_basedir = /srv/www/htdocs:/var/equator:/root:/etc:/usr:/opt|' /etc/php.ini \
+										&& sudo sed -i 's|open_basedir = /srv/www/htdocs:/var/equator|open_basedir = /srv/www/htdocs:/var/equator:/root:/etc:/usr:/opt|' /etc/php.ini \
 										&& composer require phpunit/phpunit \
 										&& sudo php app/console monitoring:import \
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
