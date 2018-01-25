@@ -54,7 +54,17 @@ stage ('launch tests') {
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
 										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File\
 										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
+										&& cd /srv/www/htdocs/Symfony/app && phpunit \
 										"
+									publishHTML([
+										allowMissing: true,
+										alwaysLinkToLastBuild: false,
+										keepAll: false,
+										reportDir: 'Symfony/logs/report',
+										reportFiles: 'index.html',
+										reportName: 'Test Coverage Report',
+										reportTitles: 'PHPUnit code coverage report'
+									])
 									input message: "Can we finish this pipeline and drop all images?";
 									echo getLatestApprover();
 									BUILD_FINISHED=true;
