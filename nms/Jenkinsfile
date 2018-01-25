@@ -54,7 +54,7 @@ stage ('launch tests') {
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
 										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File\
 										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
-										&& cd /srv/www/htdocs/Symfony/app && phpunit \
+										&& cd /srv/www/htdocs/Symfony/app && sudo phpunit \
 										"
 									publishHTML([
 										allowMissing: true,
