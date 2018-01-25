@@ -50,6 +50,7 @@ stage ('launch tests') {
 									sh " \
 										sudo  /usr/sbin/sms/sms_set_db_ip ${DATABASE_IP} 5432 \
 										&& cd /srv/www/htdocs/Symfony \
+										&& composer require phpunit/phpunit \
 										&& sudo php app/console monitoring:import \
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
 										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File\
