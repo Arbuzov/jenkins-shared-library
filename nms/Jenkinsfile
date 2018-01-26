@@ -61,11 +61,11 @@ stage ('launch tests') {
 										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
 										&& cd /srv/www/htdocs/Symfony/app && sudo phpunit \
 										"
-									publishHTML([
+									publishHTML(target: [
 										allowMissing: true,
 										alwaysLinkToLastBuild: false,
 										keepAll: false,
-										reportDir: 'Symfony/logs/report',
+										reportDir: '/srv/www/htdocs/Symfony/logs/report',
 										reportFiles: 'index.html',
 										reportName: 'Test Coverage Report',
 										reportTitles: 'PHPUnit code coverage report'
