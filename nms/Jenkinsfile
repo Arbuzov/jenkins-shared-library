@@ -59,19 +59,47 @@ stage ('launch tests') {
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
 										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File \
 										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
-										&& cd /srv/www/htdocs/Symfony/app && sudo phpunit \
+										&& install -d /home/jenkins/workspace/webnms-test-pipeline \
+										&& cd /srv/www/htdocs/Symfony/app && sudo phpunit && cp -r /srv/www/htdocs/Symfony/app/logs /home/jenkins/workspace/webnms-test-pipeline/logs \
 										"
-									publishHTML([
-										allowMissing: true,
+									publishHTML(target: [
+										allowMissing: false,
 										alwaysLinkToLastBuild: false,
 										keepAll: false,
-										reportDir: 'Symfony/logs/report',
+										reportDir: '/srv/www/htdocs/Symfony/app/logs/report',
 										reportFiles: 'index.html',
 										reportName: 'Test Coverage Report',
 										reportTitles: 'PHPUnit code coverage report'
 									])
-									input message: "Can we finish this pipeline and drop all images?";
-									echo getLatestApprover();
+									publishHTML(target: [
+										allowMissing: false,
+										alwaysLinkToLastBuild: false,
+										keepAll: false,
+										reportDir: '/srv/www/htdocs/Symfony/app/logs',
+										reportFiles: 'testdox.html',
+										reportName: 'PHPUnit test result',
+										reportTitles: 'PHPUnit test result'
+									])
+									/*
+									step([
+										$class: 'hudson.plugins.checkstyle.CheckStylePublisher',
+										pattern: '/srv/www/htdocs/Symfony/app/logs/checkstyle-*'
+									])
+									step([
+										$class: 'CloverPublisher',
+										cloverReportDir: '/srv/www/htdocs/Symfony/app/logs',
+										cloverReportFileName: 'coverage.xml',
+										healthyTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]
+									])
+									*/
+									step([$class: 'XUnitBuilder',
+										thresholds: [[$class: 'FailedThreshold', unstableThreshold: '999']],
+										tools: [[$class: 'PHPUnitJunitHudsonTestType', pattern: 'logs/logfile.xml', skipNoTestFiles: true]]
+									])
+									if (env.getAt('pause_after_build')!=null && !env.getAt('pause_after_build')) {
+										input message: "Can we finish this pipeline and drop all images?";
+										echo getLatestApprover();
+									}
 									BUILD_FINISHED=true;
 		}
 	}
