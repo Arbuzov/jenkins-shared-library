@@ -49,15 +49,15 @@ stage ('launch tests') {
 									}
 									sh " \
 										sudo  /usr/sbin/sms/sms_set_db_ip ${DATABASE_IP} 5432 \
-										&& sudo sed -i 's|open_basedir = /srv/www/htdocs:/var/equator|open_basedir = /srv/www/htdocs:/var/equator:/root:/etc:/usr:/opt:/home/jenkins/.composer|' /etc/php.ini \
+										&& sudo sed -i 's|open_basedir = /srv/www/htdocs:/var/equator|open_basedir = /|' /etc/php.ini \
 										&& sudo sed -i 's|allow_url_fopen = Off|allow_url_fopen = On|' /etc/php.ini \
+										&& sudo chmod 777 /srv/www/htdocs/Symfony \
 										&& cd /srv/www/htdocs/Symfony \
-										&& sudo curl -sS https://getcomposer.org/installer | php \
-										&& sudo mv composer.phar /usr/local/bin/composer \
-										&& composer require phpunit/phpunit \
+										&& sudo curl -k --output /usr/bin/phpunit https://phar.phpunit.de/phpunit-4.8.0.phar \
+										&& sudo chmod 777 /usr/bin/phpunit \
 										&& sudo php app/console monitoring:import \
 										&& sudo rm -rf /srv/www/htdocs/Symfony/app/cache/* \
-										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File\
+										&& sudo curl -k --output /srv/www/htdocs/bin/Check_File https://git.advantech.ca/cgit.cgi/repo/users/arbuzov/public/nms-dev/nms-testcases.git/plain/src/test/resources/tools/Check_File \
 										&& sudo chmod 777 /srv/www/htdocs/bin/Check_File \
 										&& cd /srv/www/htdocs/Symfony/app && sudo phpunit \
 										"
