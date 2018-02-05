@@ -1,5 +1,8 @@
-println('lkhjlhljhljkh')
-def call(projectName, webRootUrl, gitRootUrl) {
+package utils;
+import java.util.regex.*;
+println "some text from getProjectRepos.groovy"
+static call(String projectName, String webRootUrl, String gitRootUrl) {
+
     def nullTrustManager = [
         checkClientTrusted: { chain, authType ->  },
         checkServerTrusted: { chain, authType ->  },
@@ -17,17 +20,16 @@ def call(projectName, webRootUrl, gitRootUrl) {
     sc.init(null, [nullTrustManager as  javax.net.ssl.X509TrustManager] as  javax.net.ssl.X509TrustManager[], null)
     javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
     javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as javax.net.ssl.HostnameVerifier)
-    def projectRegexp = "title='repo/([a-z]|/|-)+\\.git"
+    def projectRegexp = "title='repo/([a-z]|/|-|\\d)+\\.git"
     def projectPattern = Pattern.compile(projectRegexp)
     def projectMatcher = projectPattern.matcher(new URL (webRootUrl+"/?q="+projectName).getText())
 
     projectMatcher.each {
-        repoPath = it[0].toString().replace("title='","")
+        String repoPath = it[0].toString().replace("title='","");
+        String repOwner = 'origin';
         if (repoPath.startsWith("repo/users/")) {
-            tmp = repoPath.replace("repo/users/","")
+            String tmp = repoPath.replace("repo/users/","")
             repOwner = tmp.take(tmp.indexOf('/'))
-        } else {
-            repOwner = 'origin'
         }
         projectRepos[repOwner] = (gitRootUrl + "/" + repoPath)
     }

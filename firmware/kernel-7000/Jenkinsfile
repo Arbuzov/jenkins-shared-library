@@ -7,8 +7,7 @@ node('master') {
            removedJobAction: 'DELETE',
            removedViewAction: 'DELETE',
            lookupStrategy: 'SEED_JOB',
-           additionalParameters: [WORKSPACE:  pwd()],
-           additionalClasspath: ['vars/**.groovy'].join('\n')
+           additionalParameters: [WORKSPACE:  pwd()]
     }
     stage('get diff') {
         build job: 'compare-builds',

@@ -1,5 +1,5 @@
 import hudson.model.*;
-import java.util.regex.*
+import java.util.regex.*;
 
 /*********************************************/
 
