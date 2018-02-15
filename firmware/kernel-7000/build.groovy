@@ -106,7 +106,7 @@ projectRepos.each{
       }
 }
 nestedView ('idu7000') {
-    views {
+    addView(        
         // create a separate view for all jobs generated here
         listView("kernel-7000") {
             description('All builds of kernel-7000')
@@ -122,6 +122,5 @@ nestedView ('idu7000') {
                 name()
                 buildButton()
             }
-        }
-    }
+        })
 }
