@@ -103,6 +103,7 @@ nestedView ('idu7000') {
         categorizedJobsView("Firmware-Rebuild") {
             jobs {
                 regex(/.*rebuild.*/)
+                names('kernel-7000', '	yocto-build', 'globax', 'firmware-awl-idu7000-all')
             }
             categorizationCriteria {
                 regexGroupingRule(/(yocto|globax|firmware-awl|kernel-7000)/)
