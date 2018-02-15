@@ -3,7 +3,7 @@ node('master') {
         checkout scm
     }
     stage('add builds') {
-        jobDsl targets: ['vars/**.groovy', 'firmware/kernel-7000/build.groovy'].join('\n'),
+        jobDsl targets: ['vars/**.groovy', 'firmware/kernel-7000/build.groovy', 'firmware/build.groovy'].join('\n'),
            removedJobAction: 'DELETE',
            removedViewAction: 'DELETE',
            lookupStrategy: 'SEED_JOB',

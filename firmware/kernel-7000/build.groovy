@@ -105,22 +105,3 @@ projectRepos.each{
            }
       }
 }
-nestedView ('idu7000') {
-    addView(        
-        // create a separate view for all jobs generated here
-        listView("kernel-7000") {
-            description('All builds of kernel-7000')
-            filterBuildQueue()
-            filterExecutors()
-            jobs {
-                name("${JOB_BASE_NAME}")
-                regex(/kernel-7000.*/)
-            }
-            columns {
-                status()
-                weather()
-                name()
-                buildButton()
-            }
-        })
-}
