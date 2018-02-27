@@ -44,6 +44,20 @@ nestedView ('idu7000') {
                 buildButton()
             }
         }
+        listView("Firmware-Arbuzov") {
+            description('All builds from one person')
+            filterBuildQueue()
+            filterExecutors()
+            jobs {
+                regex(/.*arbuzov.*/)
+            }
+            columns {
+                status()
+                weather()
+                name()
+                buildButton()
+            }
+        }
         listView("Firmware-Dymchenko") {
             description('All builds from one person')
             filterBuildQueue()

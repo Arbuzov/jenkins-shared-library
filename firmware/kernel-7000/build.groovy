@@ -4,15 +4,15 @@ import shared.CgitAdvantech;
 
 /*********************************************/
 
-String hostLabel = 'jslave-step2';
+String hostLabel = "jslave-step2";
 
-String genericBranch = 'master';
+String genericBranch = "master";
 
 String projectName = "sit2.git";
 
 String webRootUrl = "https://git.advantech.ca/cgit.cgi";
 
-String gitRootUrl = "ssh://git7@192.168.21.19";
+String gitRootUrl = "ssh://git7@advgit.advantech.ca";
 
 /*********************************************/
 

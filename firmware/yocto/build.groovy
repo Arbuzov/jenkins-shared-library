@@ -3,15 +3,15 @@ import java.util.regex.*;
 
 /*********************************************/
 
-String hostLabel = 'jslave-step1';
+String hostLabel = "jslave-step1";
 
-String genericBranch = 'fido-plinux';
+String genericBranch = "fido-plinux";
 
-String projectName = 'meta-awl.git';
+String projectName = "meta-awl.git";
 
-String webRootUrl = 'https://git.advantech.ca/cgit.cgi'
+String webRootUrl = "https://git.advantech.ca/cgit.cgi"
 
-String gitRootUrl = 'ssh://git7@192.168.21.19'
+String gitRootUrl = "ssh://git7@advgit.advantech.ca"
 
 /*********************************************/
 
