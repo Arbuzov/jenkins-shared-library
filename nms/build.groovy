@@ -51,8 +51,26 @@ def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
 
 def projectRepos = getProjectRepos(projectName, webRootUrl, gitRootUrl);
 
-println projectRepos;
+def remoteConfig = (SEED_JOB.getSCMs())[0].getUserRemoteConfigs().get(0);
 
+String repoCreds = remoteConfig.getCredentialsId();
+
+projectRepos.each{
+	jobName = "corenms-"+it.key;
+	if (it.key.equals('origin')) {
+		jobName = "corenms";
+	}
+	triggers {
+		periodic(2)
+	}
+	def gitUrl = it.value;
+		branchSources {
+		git {
+			remote(gitUrl)
+			credentialsId(repoCreds)
+		}
+	}
+}
 categorizedJobsView("nms-dev") {
 	description('All builds linked to the nms-dev repository')
 	jobs {
