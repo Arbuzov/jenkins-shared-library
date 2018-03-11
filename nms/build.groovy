@@ -53,10 +53,8 @@ def projectRepos = getProjectRepos(projectName, webRootUrl, gitRootUrl);
 
 println projectRepos;
 
-listView("nms-dev") {
+categorizedJobsView("nms-dev") {
 	description('All builds linked to the nms-dev repository')
-	filterBuildQueue()
-	filterExecutors()
 	jobs {
 		regex(/.*nms.*/)
 	}
