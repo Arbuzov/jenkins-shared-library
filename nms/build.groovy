@@ -60,14 +60,16 @@ projectRepos.each{
 	if (it.key.equals('origin')) {
 		jobName = "corenms";
 	}
-	triggers {
-		periodic(2)
-	}
 	def gitUrl = it.value;
+	multibranchPipelineJob(jobName) {
+		triggers {
+			periodic(2)
+		}
 		branchSources {
-		git {
-			remote(gitUrl)
-			credentialsId(repoCreds)
+			git {
+				remote(gitUrl)
+				credentialsId(repoCreds)
+			}
 		}
 	}
 }
