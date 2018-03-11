@@ -101,7 +101,16 @@ projectRepos.each{
                 scm("H/5 * * * *")
            }
            steps {
-                shell(scriptFile.getText())
+               copyArtifacts('yocto-build') {
+                   includePatterns('artifacts/sdk/*')
+                   targetDirectory('sdk')
+                   flatten()
+                   optional()
+                   buildSelector {
+                       latestSuccessful(true)
+                   }
+               }
+               shell(scriptFile.getText())
            }
       }
 }
