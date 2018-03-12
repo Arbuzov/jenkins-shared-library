@@ -76,7 +76,7 @@ projectRepos.each{
 categorizedJobsView("nms-dev") {
 	description('All builds linked to the nms-dev repository')
 	jobs {
-		regex(/.*nms.*/)
+		regex(/.*[nms|geo].*/)
 	}
 	columns {
 		status()
