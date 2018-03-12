@@ -76,7 +76,10 @@ projectRepos.each{
 categorizedJobsView("nms-dev") {
 	description('All builds linked to the nms-dev repository')
 	jobs {
-		regex(/.*nms.*/)
+		regex(/corenms[.^\t]*|webnms[.^\t]*|geo.*/)
+	}
+	categorizationCriteria {
+		regexGroupingRule(/corenms|webnms|geo|jenkins\-node|test/)
 	}
 	columns {
 		status()
