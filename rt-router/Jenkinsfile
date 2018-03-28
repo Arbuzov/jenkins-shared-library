@@ -1,0 +1,12 @@
+node('master') {
+	stage('checkout') {
+		checkout scm
+	}
+	stage('add views') {
+		jobDsl targets: ['vars/**.groovy', 'rt-router/build.groovy'].join('\n'),
+		   removedJobAction: 'DELETE',
+		   removedViewAction: 'DELETE',
+		   lookupStrategy: 'SEED_JOB',
+		   additionalParameters: [WORKSPACE:  pwd()]
+	}
+}
