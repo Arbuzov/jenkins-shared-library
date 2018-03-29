@@ -9,6 +9,9 @@ categorizedJobsView("RT-BSRC") {
 		status()
 		weather()
 		name()
+		lastSuccess()
+		lastFailure()
+		lastDuration()
 		buildButton()
 	}
 }
@@ -20,6 +23,24 @@ categorizedJobsView("RT-Router") {
 		status()
 		weather()
 		name()
+		lastSuccess()
+		lastFailure()
+		lastDuration()
+		buildButton()
+	}
+}
+
+categorizedJobsView("GPS-Ref") {
+	jobs {
+		regex(/^(u-boot-2009.01-build.*|gpsdo-source-reports.*|openwrt-.*-AA.*|alephgx-prodstation-pack.*)$/)
+	}
+	columns {
+		status()
+		weather()
+		name()
+		lastSuccess()
+		lastFailure()
+		lastDuration()
 		buildButton()
 	}
 }
