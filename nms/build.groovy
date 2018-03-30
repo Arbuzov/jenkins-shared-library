@@ -69,6 +69,10 @@ projectRepos.each{
 			git {
 				remote(gitUrl)
 				credentialsId(repoCreds)
+				cloneoptions {
+					noTags(false)
+					shallow(false)
+				}
 			}
 		}
 	}
