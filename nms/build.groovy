@@ -69,11 +69,19 @@ projectRepos.each{
 			git {
 				remote(gitUrl)
 				credentialsId(repoCreds)
-				cloneoptions {
-					noTags(false)
-					shallow(false)
-				}
 			}
+		}
+		configure {
+			it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.BranchDiscoveryTrait'
+		}
+		configure {
+				it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.CloneOptionTrait' / extension(class: 'hudson.plugins.git.extensions.impl.CloneOption') {
+					'shallow'('false')
+					'noTags'('false')
+				}
+			/*
+				 / 'extension(class: "hudson.plugins.git.extensions.impl.CloneOption")' {
+			}*/
 		}
 	}
 }
