@@ -113,11 +113,13 @@ projectRepos.each{
                     allowEmpty(false)
                }
                publishHtml {
-                    reportName('Change Log')
-                    reportFiles('META-AWL.change.log')
-                    keepAll()
-                    allowMissing()
-                    alwaysLinkToLastBuild()
+                   report{
+                       reportName('Change Log')
+                       reportFiles('META-AWL.change.log')
+                       keepAll()
+                       allowMissing()
+                       alwaysLinkToLastBuild()
+                   }
                }
                extendedEmailPublisher {
                     project_recipient_list('$DEFAULT_RECIPIENTS'+"\nAlex.Landovskis@advantechwireless.com")
