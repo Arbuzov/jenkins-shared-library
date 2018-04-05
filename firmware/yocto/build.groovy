@@ -113,7 +113,7 @@ projectRepos.each{
                     allowEmpty(false)
                }
                publishHtml {
-                   report{
+                   report ('$WORKSPACE') {
                        reportName('Change Log')
                        reportFiles('META-AWL.change.log')
                        keepAll()
@@ -122,11 +122,11 @@ projectRepos.each{
                    }
                }
                extendedEmailPublisher {
-                    project_recipient_list('$DEFAULT_RECIPIENTS'+"\nAlex.Landovskis@advantechwireless.com")
+                    project_recipient_list('$DEFAULT_RECIPIENTS')
                     project_default_subject('$DEFAULT_SUBJECT')
                     project_replyto('$DEFAULT_REPLYTO')
                     project_content_type('both')
-                    project_default_content('${SCRIPT, template="groovy-html.template"}')
+                    project_default_content('${SCRIPT, template="changelog.html.groovy"}')
                     project_presend_script('$DEFAULT_PRESEND_SCRIPT')
                     postsendScript('$DEFAULT_POSTSEND_SCRIPT')
                     project_save_output(true)
@@ -139,8 +139,9 @@ projectRepos.each{
                         xNthFailureTrigger {
                             recipientProviders {
                                 listRecipientProvider()
+                                requesterRecipientProvider()
                             }
-                            recipientList('Serge.Arbuzov@advantechwireless.com, Igor.Mordkovitch@advantechwireless.com')
+                            recipientList('$DEFAULT_RECIPIENTS')
                             replyTo('$PROJECT_DEFAULT_REPLYTO')
                             subject('$PROJECT_DEFAULT_SUBJECT')
                             body('$PROJECT_DEFAULT_CONTENT')
@@ -152,8 +153,9 @@ projectRepos.each{
                         successTrigger {
                             recipientProviders {
                                 developersRecipientProvider()
+                                requesterRecipientProvider()
                             }
-                            recipientList('Serge.Arbuzov@advantechwireless.com')
+                            recipientList('$DEFAULT_RECIPIENTS')
                             replyTo('$PROJECT_DEFAULT_REPLYTO')
                             subject('$PROJECT_DEFAULT_SUBJECT')
                             body('$PROJECT_DEFAULT_CONTENT')
@@ -165,8 +167,9 @@ projectRepos.each{
                             recipientProviders {
                                 developersRecipientProvider()
                                 listRecipientProvider()
+                                requesterRecipientProvider()
                             }
-                            recipientList('Igor.Mordkovitch@advantechwireless.com, Serge.Arbuzov@advantechwireless.com')
+                            recipientList('$DEFAULT_RECIPIENTS')
                             replyTo('$PROJECT_DEFAULT_REPLYTO')
                             subject('$PROJECT_DEFAULT_SUBJECT')
                             body('$PROJECT_DEFAULT_CONTENT')
