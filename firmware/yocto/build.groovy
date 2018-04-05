@@ -103,7 +103,7 @@ projectRepos.each{
            }
            steps {
                 shell(scriptFile.getText())
-                shell("#!/bin/bash\n repos=(\$WORKSPACE)\n"+scriptToMakeChangeLog.getText())
+                shell("#!/bin/bash\nset -x\nrepos=(\$WORKSPACE)\n"+scriptToMakeChangeLog.getText())
            }
            publishers {
                textFinder(/(ERROR message|ERROR 404)/, '', true, false, true)
@@ -111,6 +111,13 @@ projectRepos.each{
                     pattern("artifacts/**, **.log,/home/build/fsdk/v1.9/QorIQ-SDK-V1.9-20151210-yocto/build_awl-idu7000/tmp/work/**/log.do_configure.*")
                     fingerprint(true)
                     allowEmpty(false)
+               }
+               publishHtml {
+                    reportName('Change Log')
+                    reportFiles('META-AWL.change.log')
+                    keepAll()
+                    allowMissing()
+                    alwaysLinkToLastBuild()
                }
                extendedEmailPublisher {
                     project_recipient_list('$DEFAULT_RECIPIENTS'+"\nAlex.Landovskis@advantechwireless.com")
