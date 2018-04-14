@@ -1,0 +1,49 @@
+import hudson.model.Hudson;
+tags =[]
+
+def getProjects() {
+	String result = "";
+	for(item in Hudson.instance.items) {
+		result += (item.name+"\n");
+	}
+	return result;
+}
+
+
+properties(
+	[[
+		$class: 'ParametersDefinitionProperty',
+		parameterDefinitions: [
+			[$class: 'ChoiceParameterDefinition', name: 'PROJECT', defaultValue: 'satn-sit2-idu7000-source-reports', choices: getProjects()],
+			[$class: 'StringParameterDefinition', name: 'BRANCH', defaultValue: '']
+		]
+	]]
+)
+
+stage ('checkout scm') {
+	node ('master') {
+		def scm = ((Hudson) Jenkins.getInstance()).getJob(env.PROJECT).getScm()
+		sourceScmVars = checkout([
+			$class: 'GitSCM',
+			branches: [[name: '*/'+env.BRANCH]],
+			doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+			extensions: scm.extensions,
+			userRemoteConfigs: scm.userRemoteConfigs
+		]);
+		
+		tags = sh (
+			script: "git tag --sort=committerdate --merged",
+			returnStdout: true
+		).tokenize("\n");
+		println tags;
+	}
+}
+stage ('build tags') {
+	tags.each{tag->
+		build job: env.PROJECT,
+		parameters : [
+			[$class: 'GitParameterValue', name: 'BUILD_TAG', value: tag],
+		]
+	}
+}
+
