@@ -15,6 +15,8 @@ String gitRootUrl = "ssh://git7@advgit.advantech.ca"
 
 /*********************************************/
 
+def usersBlackList = ['alandovskis', 'spaul', 'jguo'];
+
 def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
     def nullTrustManager = [
         checkClientTrusted: { chain, authType ->  },
@@ -64,24 +66,25 @@ File scriptFile = new File("${workspace}/firmware/yocto/script.sh");
 File scriptToMakeChangeLog = new File("${workspace}/firmware/git_log.sh");
 
 projectRepos.each{
-    jobName = "yocto-build-"+it.key;
-    if (it.key.equals('origin')) {
-        jobName = "yocto-build";
-    }
-    def gitUrl = it.value
-    job(jobName) {
-           properties {
-                buildDiscarder {
-                    strategy {
-                        logRotator {
-                            daysToKeepStr('-1')
-                            numToKeepStr('-1')
-                            artifactDaysToKeepStr('-1')
-                            artifactNumToKeepStr('5')
+    if (!usersBlackList.containsValue(it.key)) {
+        jobName = "yocto-build-"+it.key;
+        if (it.key.equals('origin')) {
+            jobName = "yocto-build";
+        }
+        def gitUrl = it.value
+        job(jobName) {
+               properties {
+                    buildDiscarder {
+                        strategy {
+                            logRotator {
+                                daysToKeepStr('-1')
+                                numToKeepStr('-1')
+                                artifactDaysToKeepStr('-1')
+                                artifactNumToKeepStr('5')
+                            }
                         }
                     }
-                }
-           }
+               }
            keepDependencies()
            scm {
                 git {
@@ -186,7 +189,7 @@ projectRepos.each{
                 }
            }
     }
-
+    }
 }
 //create yocto rebuild project
 job("yocto-rebuild") {
