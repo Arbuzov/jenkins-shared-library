@@ -3,7 +3,7 @@ node('master') {
 		checkout scm
 	}
 	stage('add builds') {
-		jobDsl targets: ['firmware/yocto/build.groovy', 'firmware/build.groovy'].join('\n'),
+		jobDsl targets: ['firmware/build.groovy', 'firmware/yocto/build.groovy'].join('\n'),
 			removedJobAction: 'DELETE',
 			removedViewAction: 'DELETE',
 			lookupStrategy: 'SEED_JOB',

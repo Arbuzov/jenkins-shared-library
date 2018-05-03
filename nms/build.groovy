@@ -13,6 +13,8 @@ String gitRootUrl = "ssh://git7@advgit.advantech.ca"
 
 /*********************************************/
 
+def usersBlackList = ['alandovskis', 'spaul', 'jguo', 'romanovici', 'jtu'];
+
 def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
 	def nullTrustManager = [
 		checkClientTrusted: { chain, authType ->  },
@@ -56,32 +58,31 @@ def remoteConfig = (SEED_JOB.getSCMs())[0].getUserRemoteConfigs().get(0);
 String repoCreds = remoteConfig.getCredentialsId();
 
 projectRepos.each{
-	jobName = "corenms-"+it.key;
-	if (it.key.equals('origin')) {
-		jobName = "corenms";
-	}
-	def gitUrl = it.value;
-	multibranchPipelineJob(jobName) {
-		triggers {
-			periodic(2)
+	if (!usersBlackList.contains(it.key.toString())) {
+		jobName = "corenms-"+it.key;
+		if (it.key.equals('origin')) {
+			jobName = "corenms";
 		}
-		branchSources {
-			git {
-				remote(gitUrl)
-				credentialsId(repoCreds)
+		def gitUrl = it.value;
+		multibranchPipelineJob(jobName) {
+			triggers {
+				periodic(2)
 			}
-		}
-		configure {
-			it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.BranchDiscoveryTrait'
-		}
-		configure {
-				it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.CloneOptionTrait' / extension(class: 'hudson.plugins.git.extensions.impl.CloneOption') {
-					'shallow'('false')
-					'noTags'('false')
+			branchSources {
+				git {
+					remote(gitUrl)
+					credentialsId(repoCreds)
 				}
-			/*
-				 / 'extension(class: "hudson.plugins.git.extensions.impl.CloneOption")' {
-			}*/
+			}
+			configure {
+				it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.BranchDiscoveryTrait'
+			}
+			configure {
+					it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits' / 'jenkins.plugins.git.traits.CloneOptionTrait' / extension(class: 'hudson.plugins.git.extensions.impl.CloneOption') {
+						'shallow'('false')
+						'noTags'('false')
+					}
+			}
 		}
 	}
 }
