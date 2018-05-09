@@ -66,7 +66,11 @@ File scriptFile = new File("${workspace}/firmware/yocto/script.sh");
 File scriptToMakeChangeLog = new File("${workspace}/firmware/git_log.sh");
 
 projectRepos.each{
+<<<<<<< HEAD
     if (!usersBlackList.contains(it.key.toString())) {
+=======
+    if (!usersBlackList.containsValue(it.key)) {
+>>>>>>> branch 'master' of ssh://git7@advgit.advantech.ca/repo/advantech/devops/jenkins.git
         jobName = "yocto-build-"+it.key;
         if (it.key.equals('origin')) {
             jobName = "yocto-build";
