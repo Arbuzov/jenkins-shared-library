@@ -3,7 +3,7 @@ node('master') {
 		checkout scm
 	}
 	stage('add builds') {
-		jobDsl targets: ['vars/**.groovy', 'nms/build.groovy'].join('\n'),
+		jobDsl targets: ['nms/build.groovy'].join('\n'),
 		   removedJobAction: 'DELETE',
 		   removedViewAction: 'DELETE',
 		   lookupStrategy: 'SEED_JOB',

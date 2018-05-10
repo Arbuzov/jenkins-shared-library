@@ -1,21 +1,19 @@
 import hudson.model.*;
-import java.util.regex.*;
+import groovy.json.JsonSlurper;
 
 /*********************************************/
 
 String genericBranch = "develop";
 
-String projectName = "corenms.git";
+String projectName = "nms-dev-corenms";
 
-String webRootUrl = "https://git.advantech.ca/cgit.cgi"
-
-String gitRootUrl = "ssh://git7@advgit.advantech.ca"
+gitLabAPIUrl = "https://gitlab.advantech.ca/api/v4"
+gitLabAPISecret = "EY5yZqrYRKBxn8FDAeZh"
+usersBlackList = ['alandovskis', 'spaul', 'jguo', 'romanovici', 'jtu'];
 
 /*********************************************/
 
-def usersBlackList = ['alandovskis', 'spaul', 'jguo', 'romanovici', 'jtu'];
-
-def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
+def getProjectRepos(projectName) {
 	def nullTrustManager = [
 		checkClientTrusted: { chain, authType ->  },
 		checkServerTrusted: { chain, authType ->  },
@@ -27,31 +25,25 @@ def getProjectRepos(projectName, webRootUrl, gitRootUrl) {
 			true 
 		}
 	]
-
-	def projectRepos = [:]
+	def projects = [:]
 	javax.net.ssl.SSLContext sc = javax.net.ssl.SSLContext.getInstance("SSL")
 	sc.init(null, [nullTrustManager as  javax.net.ssl.X509TrustManager] as  javax.net.ssl.X509TrustManager[], null)
 	javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
-	javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as javax.net.ssl.HostnameVerifier)
-	def projectRegexp = "title='repo/([a-z]|/|-)+\\.git"
-	def projectPattern = Pattern.compile(projectRegexp)
-	def projectMatcher = projectPattern.matcher(new URL (webRootUrl+"/?q="+projectName).getText())
-
-	projectMatcher.each {
-		repoPath = it[0].toString().replace("title='","")
-		if (repoPath.startsWith("repo/users/")) {
-			tmp = repoPath.replace("repo/users/","")
-			repOwner = tmp.take(tmp.indexOf('/'))
-		} else {
-			repOwner = 'origin'
+	javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as javax.net.ssl.HostnameVerifier);	
+		def projectList=new JsonSlurper().parse(new URL (gitLabAPIUrl +"/projects/?private_token=" + gitLabAPISecret + "&search="+projectName));
+		projectList.each {
+			if (it.name.equals(projectName) && !it.namespace.name.startsWith("zz-") && !usersBlackList.contains(it.namespace.name)) {
+				def nsName="origin";
+				if (it.forks_count==0) {
+					nsName=it.namespace.name;
+				}
+				projects[nsName]=it.ssh_url_to_repo
+			}
 		}
-		projectRepos[repOwner] = (gitRootUrl + "/" + repoPath)
-	}
-	
-	return projectRepos;
+	return projects;
 }
 
-def projectRepos = getProjectRepos(projectName, webRootUrl, gitRootUrl);
+def projectRepos = getProjectRepos(projectName);
 
 def remoteConfig = (SEED_JOB.getSCMs())[0].getUserRemoteConfigs().get(0);
 
