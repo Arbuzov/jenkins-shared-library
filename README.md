@@ -3,7 +3,6 @@
 ## Project structure
 
  * [firmware](firmware) - builds and views for IDU 7000
- * [nms](nms) - builds and views for core and web NMS 
  * [rt-router](rt-router) - builds and views for the router firmware
  * [vars](vars) - shared librarys
 
