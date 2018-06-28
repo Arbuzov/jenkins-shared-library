@@ -34,7 +34,7 @@ def getProjectRepos(projectName) {
 	sc.init(null, [nullTrustManager as  javax.net.ssl.X509TrustManager] as  javax.net.ssl.X509TrustManager[], null)
 	javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory())
 	javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as javax.net.ssl.HostnameVerifier);	
-		def projectList=new JsonSlurper().parse(new URL (gitLabAPIUrl +"/projects/?private_token=" + gitLabAPISecret + "&search="+projectName));
+	def projectList=new JsonSlurper().parse(new URL (gitLabAPIUrl +"/projects/?private_token=" + gitLabAPISecret + "&search="+projectName));
 		projectList.each {
 			if (it.name.equals(projectName) && !it.namespace.name.startsWith("zz-") && !usersBlackList.contains(it.namespace.name)) {
 				def nsName="origin";
