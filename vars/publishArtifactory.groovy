@@ -1,18 +1,22 @@
 import static groovy.io.FileType.*;
 import static groovy.io.FileVisitResult.*;
 import java.util.regex.*;
+import java.util.Collections;
 
 ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '') {
+	
 	def server = Artifactory.server(serverName);
+	
+	//String beginUpload = "================= Begin upload =================\n";
+
+	//String endUpload = "================= End upload =================\n";
+	
 	ArrayList selectedFiles = []
 	
-	def addToList = {
-		selectedFiles << server.getUrl() + "/" + repoPath +(artifactVersion.equals("")?"":artifactVersion+"/")+it.name
-	}
-
-	def groovySrcDir = new File(pwd());
+	//println beginUpload;
+	
 	def uploadSpec = """{
-		"files\": [
+		\"files\": [
 			{
 				\"pattern\": \"(${artifactsRegexp})\",
 				\"regexp\": \"true\",
@@ -24,9 +28,22 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	
 	def buildInfo = server.upload(uploadSpec);
 	
-	groovySrcDir.traverse type: FILES, visit: addToList, nameFilter: Pattern.compile("${artifactsRegexp}")
-	
 	server.publishBuildInfo(buildInfo);
+	
+	sleep 5;
+	
+	//println endUpload;
+	
+	String[] logArray = manager.build.getLog(100);
+	
+	for (int i = logArray.length-1; i > 0; i--) {
+		
+		def matches=logArray[i]=~/.*Deploying artifact: (.*)$/
+		if(matches.find() && logArray[i].contains(repoPath+(artifactVersion.equals("")?"":artifactVersion+"/"))) {
+			selectedFiles.add(matches.group(1));
+		}
+	}
 	
 	return selectedFiles
 }
+
