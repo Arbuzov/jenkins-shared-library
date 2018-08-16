@@ -1,5 +1,5 @@
 def call(String companyName, String apiToken, String message, String header="") {
-    String sendMessage = ((!header.equals("")?"**${header.replace('%2F', ' ')}** ":"")+message.replace('%2F', ' '));
+    String sendMessage = ((!header.equals("")?"**${header.replace('%2F', ' ')}** \n\n":"")+message.replace('%2F', ' '));
     httpRequest(
         url : "https://${companyName}.ryver.com/application/webhook/${apiToken}",
         httpMode: 'POST',

@@ -39,7 +39,7 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	for (int i = logArray.length-1; i > 0; i--) {
 		
 		def matches=logArray[i]=~/.*Deploying artifact: (.*)$/
-		if(matches.find() && logArray[i].contains((repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/"))).replace("//", "/")) {
+		if(matches.find() && logArray[i].contains((repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")).replace("//", "/"))) {
 			selectedFiles.add(matches.group(1));
 		}
 	}
