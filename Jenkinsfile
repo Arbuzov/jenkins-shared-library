@@ -1,6 +1,9 @@
 @Library('asatnet@develop')_
 pipeline {
 	agent {label 'master'}
+	options {
+		disableConcurrentBuilds()
+	}
 	stages {
 		stage('Test steps')
 		{
@@ -28,10 +31,11 @@ pipeline {
 				
 				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'versioned', '20');
 				
-				
-				input (
-					message: "Message"
-				);
+				timeout(time: 10, unit: 'SECONDS') {
+					input (
+						message: "Message"
+					);
+				}
 				echo getLatestApprover();
 				
 				archiveArtifacts(
