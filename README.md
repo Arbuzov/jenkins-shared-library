@@ -2,29 +2,26 @@
 
 ## Project structure
 
- * [firmware](firmware) - builds and views for IDU 7000
- * [rt-router](rt-router) - builds and views for the router firmware
- * [vars](vars) - shared librarys
+  * [firmware](firmware) - builds and views for IDU 7000
+  * [rt-router](rt-router) - builds and views for the router firmware
+  * [vars](vars) - shared librarys
+    * [arrayToString](vars/arrayToString.groovy)
+    * [buildInfoPublisher](vars/buildInfoPublisher.groovy)
+    * [copyFromArtifactory](vars/copyFromArtifactory.groovy)
+    * [getLatestApprover](vars/getLatestApprover.groovy)
+    * [getOrigin](vars/getOrigin.groovy)
+    * [getProjectRepos](vars/getProjectRepos.groovy)
+    * [getRequestor](vars/getRequestor.groovy)
+    * [getStackTrace](vars/isMergeRequest.groovy)
+    * [isMergeRequest](vars/isMergeRequest.groovy)
+    * [isOrigin](vars/isOrigin.groovy)
+    * [notifyRyver](vars/notifyRyver.groovy)
+    * [publishArtifactory](vars/publishArtifactory.groovy)
+    * [publishChangeLog](vars/publishChangeLog.groovy)
+    * [publishSummary](vars/publishSummary.groovy)
+    * [sayHello](vars/sayHello.groovy)
+    * [tagToGitlab](vars/tagToGitlab.groovy)
 
-###General library of the Jenkins scripts used in several projects
-
-getProjectRepos.groovy returns list of the git forks of one project
-works due to unrestricted access to the cgit interface 
-
-usage:
-```
-String projectName = 'meta-awl.git';
-
-String webRootUrl = 'https://git.advantech.ca/cgit.cgi'
-
-String gitRootUrl = 'ssh://git7@192.168.21.19'
-
-def projectRepos = getProjectRepos(projectName, webRootUrl, gitRootUrl); 
-```
-## How to start using this repo
-
- * create a pipeline using Jenkinsfile from this project
- * launch the pipeline
 
 ## Required Jenkins plugins
 
