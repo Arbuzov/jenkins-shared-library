@@ -4,6 +4,7 @@
 
   * [firmware](firmware) - builds and views for IDU 7000
   * [rt-router](rt-router) - builds and views for the router firmware
+  * [email-templates](email-templates) - custom email templates keep here
   * [vars](vars) - shared librarys
     * [arrayToString](vars/arrayToString.groovy)
     * [buildInfoPublisher](vars/buildInfoPublisher.groovy)
@@ -21,6 +22,7 @@
     * [publishSummary](vars/publishSummary.groovy)
     * [sayHello](vars/sayHello.groovy)
     * [tagToGitlab](vars/tagToGitlab.groovy)
+    * [arrayToHrefList](vars/arrayToHrefList.groovy)
 
 
 ## Required Jenkins plugins
