@@ -3,7 +3,7 @@ def call(String companyName, String apiToken, String message, String header="") 
     httpRequest(
         url : "https://${companyName}.ryver.com/application/webhook/${apiToken}",
         httpMode: 'POST',
-        consoleLogResponseBody: true,
+        consoleLogResponseBody: false,
         contentType : 'TEXT_PLAIN',
         requestBody: sendMessage
     )

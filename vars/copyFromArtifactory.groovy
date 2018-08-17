@@ -5,10 +5,10 @@ import groovy.json.JsonSlurper;
 import org.apache.commons.io.FilenameUtils;
 
 @NonCPS
-def call(String repoPath, String serverName = 'artifactory', String destDirectory = '', String artifactVersion = '') {
+ArrayList call(String repoPath, String serverName = 'artifactory', String destDirectory = '', String artifactVersion = '') {
 	def server = Artifactory.server(serverName);
-	println server.getUrl()
-	println server.getUrl() + '/' + repoPath;
+	
+	ArrayList selectedFiles = []
 	
 	String storageUrl = server.getUrl()+ '/api/storage/' + repoPath + artifactVersion
 	
@@ -34,6 +34,7 @@ def call(String repoPath, String serverName = 'artifactory', String destDirector
 	targetItem.children.each {
 		if (it.folder==false) {
 			itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
+			selectedFiles.add(itemInfo.downloadUri);
 			fileOperations(
 				[
 					fileDownloadOperation(
@@ -47,4 +48,6 @@ def call(String repoPath, String serverName = 'artifactory', String destDirector
 			)
 		}
 	}
+	
+	return selectedFiles
 }
