@@ -10,8 +10,12 @@ def call() {
 			uriStr = env.getAt('GIT_URL');
 			println "generic Git NO MR ${env.getAt('GIT_URL')}"
 		} else {
-			uriStr = env.getAt('GIT_URL_1');
-			println "Git NO MR two sources"
+			if (env.getAt('GIT_URL_1')!=null && !env.getAt('GIT_URL_1').equals("")) {
+				uriStr = env.getAt('GIT_URL_1');
+				println "Git NO MR two sources"
+			} else {
+				throw new Exception("Can`t find any GIT information origin is unknown");
+			}
 		}
 	}
 	
