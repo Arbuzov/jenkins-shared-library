@@ -2,6 +2,7 @@ import static groovy.io.FileType.*;
 import static groovy.io.FileVisitResult.*;
 import java.util.regex.*;
 import java.util.Collections;
+import org.apache.commons.io.FilenameUtils;
 
 ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '') {
 	
@@ -42,6 +43,10 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 		if(matches.find() && logArray[i].contains((repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")).replace("//", "/"))) {
 			selectedFiles.add(matches.group(1));
 		}
+		if (matches.find()) {
+			println FilenameUtils.getPath(repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")) + "   " + FilenameUtils.getPath(matches.group(1))
+		}
+
 	}
 	
 	return selectedFiles
