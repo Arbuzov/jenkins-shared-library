@@ -1,7 +1,7 @@
 def call() {
 	String result = "";
 	String uriStr = "";
-	
+	sh "env";
 	if (env.getAt('gitlabSourceRepoURL')!=null && !env.getAt('gitlabSourceRepoURL').equals("")) {
 		println "Gitlab probably MR"
 		uriStr = env.getAt('gitlabSourceRepoURL');
