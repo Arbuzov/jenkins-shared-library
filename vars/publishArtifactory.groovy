@@ -40,12 +40,12 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	for (int i = logArray.length-1; i > 0; i--) {
 		
 		def matches=logArray[i]=~/.*Deploying artifact: (.*)$/
-		if(matches.find() && logArray[i].contains((repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")).replace("//", "/"))) {
+		if(matches.find() && logArray[i].contains(FilenameUtils.normalize(repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")))) {
 			selectedFiles.add(matches.group(1));
 		}
 		matches=logArray[i]=~/.*Deploying artifact: (.*)$/
 		if (matches.find()) {
-			println FilenameUtils.getPath(repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")) + "   " + FilenameUtils.getPath(matches.group(1))
+			println FilenameUtils.normalize(repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")) + "   " + FilenameUtils.getPath(matches.group(1))
 		}
 
 	}
