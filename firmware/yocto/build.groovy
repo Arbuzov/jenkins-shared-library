@@ -79,6 +79,9 @@ projectRepos.each{
                         }
                     }
                }
+           throttleConcurrentBuilds {
+              categories(['yocto'])
+           }
            keepDependencies()
            scm {
                 git {
