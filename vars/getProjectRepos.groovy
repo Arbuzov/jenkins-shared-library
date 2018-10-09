@@ -1,6 +1,5 @@
 package utils;
 import java.util.regex.*;
-println "some text from getProjectRepos.groovy"
 static call(String projectName, String webRootUrl, String gitRootUrl) {
 
     def nullTrustManager = [

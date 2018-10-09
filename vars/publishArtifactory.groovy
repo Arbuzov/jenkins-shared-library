@@ -44,7 +44,6 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 			selectedFiles.add(matches.group(1));
 		}
 	}
-	
 	return selectedFiles
 }
 

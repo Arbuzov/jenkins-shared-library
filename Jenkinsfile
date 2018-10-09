@@ -9,27 +9,39 @@ pipeline {
 		{
 			steps {
 				sh "install -d versioned && install -d latest && env>debug.txt"
+				
 				publishSummary(
 					arrayToString(
-						publishArtifactory('FileExchange/debug/'),
+						publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt'),
 						["\t<li>","</li>\n"],
 						["<ul>\n","</ul>\n"]
 					),
 					"Unversioned list"
 				)
 				sayHello 'Maaan'
+				script {
+					ARTIFACTORY_UPLOADS = publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt', BUILD_NUMBER);
+				}
 				publishSummary(
 					arrayToString(
-						publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt', BUILD_NUMBER),
+						ARTIFACTORY_UPLOADS,
 						["\t<li>","</li>\n"],
 						["<ul>\n","</ul>\n"]
 					)
 				)
-				
+				sh "env"
+				withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+					tagToGitlab(GIT_URL, "1", GIT_COMMIT);
+					tagToGitlab(
+						GIT_URL,
+						"${BUILD_NUMBER}",
+						GIT_COMMIT,
+						"This is a test tag from build ${BUILD_NUMBER}",
+						"## Release ${BUILD_NUMBER}\n\n__Build reference:__ ${BUILD_URL}\n\n__Artifactory:__ ${ARTIFACTORY_UPLOADS[0]}"
+					);
+				}
 				
 				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
-				
-				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'versioned', '20');
 				
 				timeout(time: 10, unit: 'SECONDS') {
 					input (
@@ -42,6 +54,13 @@ pipeline {
 					artifacts: "**/**",
 					onlyIfSuccessful: false
 				)
+				
+			}
+			
+			post {
+				always {
+					cleanWs()
+				}
 			}
 		}
 	}
