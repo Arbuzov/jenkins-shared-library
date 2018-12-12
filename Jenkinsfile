@@ -1,4 +1,5 @@
-@Library('asatnet@develop')_
+@Library('asatnet@master')_
+GIT_URL = ''
 pipeline {
 	agent {label 'master'}
 	options {
@@ -30,12 +31,19 @@ pipeline {
 					)
 				)
 				sh "env"
+				script {
+					if (env.GIT_URL == null) {
+						GIT_URL = env.GIT_URL_1;
+					} else {
+						GIT_URL = env.GIT_URL;
+					}
+				}
 				withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-					tagToGitlab(GIT_URL, "1", GIT_COMMIT);
+					tagToGitlab(GIT_URL, "1", env.GIT_COMMIT);
 					tagToGitlab(
 						GIT_URL,
 						"${BUILD_NUMBER}",
-						GIT_COMMIT,
+						env.GIT_COMMIT,
 						"This is a test tag from build ${BUILD_NUMBER}",
 						"## Release ${BUILD_NUMBER}\n\n__Build reference:__ ${BUILD_URL}\n\n__Artifactory:__ ${ARTIFACTORY_UPLOADS[0]}"
 					);
@@ -43,7 +51,7 @@ pipeline {
 				
 				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
 				
-				timeout(time: 10, unit: 'SECONDS') {
+				timeout(time: 20, unit: 'SECONDS') {
 					input (
 						message: "Message"
 					);
