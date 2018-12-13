@@ -19,7 +19,7 @@ pipeline {
 					),
 					"Unversioned list"
 				)
-				sayHello 'Maaan'
+				sayHello 'User'
 				script {
 					ARTIFACTORY_UPLOADS = publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt', BUILD_NUMBER);
 				}
@@ -50,19 +50,26 @@ pipeline {
 				}
 				
 				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
-				
-				timeout(time: 20, unit: 'SECONDS') {
-					input (
-						message: "Message"
-					);
-				}
-				echo getLatestApprover();
-				
+
 				archiveArtifacts(
 					artifacts: "**/**",
 					onlyIfSuccessful: false
 				)
-				
+				script {
+					try {
+						timeout(time: 20, unit: 'SECONDS') {
+							input (
+								message: "Message"
+							);
+						}
+					} catch (err) {
+						def user = err.getCauses()[0].getUser()
+						if('SYSTEM' == user.toString()) {
+							currentBuild.result = "SUCCESS"
+						}
+					}
+				}
+				echo getLatestApprover();
 			}
 			
 			post {
