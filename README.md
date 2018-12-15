@@ -6,6 +6,7 @@
   * [rt-router](rt-router) - builds and views for the router firmware
   * [email-templates](email-templates) - custom email templates keep here
   * [vars](vars) - shared librarys
+    * [arrayToHrefList](vars/arrayToHrefList.txt)
     * [arrayToString](vars/arrayToString.groovy)
     * [buildInfoPublisher](vars/buildInfoPublisher.groovy)
     * [copyFromArtifactory](vars/copyFromArtifactory.groovy)
@@ -15,6 +16,7 @@
     * [getRequestor](vars/getRequestor.groovy)
     * [getStackTrace](vars/isMergeRequest.groovy)
     * [isMergeRequest](vars/isMergeRequest.groovy)
+    * [isOrganizationProject](vars/isOrganizationProject.groovy)
     * [isOrigin](vars/isOrigin.groovy)
     * [notifyRyver](vars/notifyRyver.groovy)
     * [publishArtifactory](vars/publishArtifactory.groovy)
@@ -22,7 +24,6 @@
     * [publishSummary](vars/publishSummary.groovy)
     * [sayHello](vars/sayHello.groovy)
     * [tagToGitlab](vars/tagToGitlab.groovy)
-    * [arrayToHrefList](vars/arrayToHrefList.groovy)
 
 
 ## Required Jenkins plugins

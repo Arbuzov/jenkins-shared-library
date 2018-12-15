@@ -1,0 +1,5 @@
+## Converts array to the list with the links
+
+**Definition:** arrayToHrefList(ArrayList stringList, ArrayList rowBrace = ["<li>", "</li>"], ArrayList listBrace = ["<ul style='list-style-type:none'>","</ul>"])
+
+**Usage:** arrayToHrefList(["A", "B", "C"], ["<li>", "</li>"], ["<ul style='list-style-type:none'>", "</ul>"])
