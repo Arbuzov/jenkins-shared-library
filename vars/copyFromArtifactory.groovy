@@ -10,7 +10,7 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String destDi
 	
 	ArrayList selectedFiles = []
 	
-	String storageUrl = server.getUrl()+ '/api/storage/' + repoPath + artifactVersion
+	String storageUrl = server.getUrl()+ FilenameUtils.normalize('/api/storage/' + repoPath +'/'+ artifactVersion)
 	
 	def targetItem = (new JsonSlurper().parse(new URL (storageUrl)))
 	
