@@ -49,10 +49,6 @@ pipeline {
 					);
 				}
 				
-				copyFromArtifactory('sidu-scpc-bbf')
-				
-				sh "ls -la1"
-				
 				copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
 
 				archiveArtifacts(
