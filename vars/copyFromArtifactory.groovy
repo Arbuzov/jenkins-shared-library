@@ -31,23 +31,22 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String destDi
 		targetItem = latestItem;
 	}
 	def itemInfo = null;
+	ArrayList operationsList = []
 	targetItem.children.each {
 		if (it.folder==false) {
 			itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
 			selectedFiles.add(itemInfo.downloadUri);
-			fileOperations(
-				[
-					fileDownloadOperation(
-						password: server.getPassword(),
-						targetFileName: FilenameUtils.getName(new URL(itemInfo.downloadUri).getPath()),
-						targetLocation: destDirectory,
-						url: itemInfo.downloadUri,
-						userName: server.getUsername()
-					)
-				]
-			)
+			operationsList.add(
+				fileDownloadOperation(
+					password: server.getPassword(),
+					targetFileName: FilenameUtils.getName(new URL(itemInfo.downloadUri).getPath()),
+					targetLocation: destDirectory,
+					url: itemInfo.downloadUri,
+					userName: server.getUsername()
+				)
+			);
 		}
 	}
-	
+	fileOperations(operationsList)
 	return selectedFiles
 }
