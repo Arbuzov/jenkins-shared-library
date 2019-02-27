@@ -18,6 +18,8 @@ def call (String gitUrl, String mrIid, String ref, String message = '', String r
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
 	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/" + gitLabAPISecret);
 
+	echo mrUrl
+
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 	SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
