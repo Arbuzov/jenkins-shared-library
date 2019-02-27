@@ -11,12 +11,12 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 
-def call (String gitUrl, String mrIid, String ref, String message = '', String release = '',Boolean skipIfExist = true) {
+def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist = true) {
 
 	URL url = new URL(gitUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
 	String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
-	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/" + gitLabAPISecret);
+	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes" + gitLabAPISecret);
 
 	echo mrUrl
 
@@ -33,7 +33,6 @@ def call (String gitUrl, String mrIid, String ref, String message = '', String r
 	HttpPost httppost = new HttpPost(mrUrl.toString());
 		
 	List<NameValuePair> params = new ArrayList<NameValuePair>();
-	params.add(new BasicNameValuePair("ref", ref));
 	params.add(new BasicNameValuePair("message", message));
 		
 	UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params, "UTF-8");
