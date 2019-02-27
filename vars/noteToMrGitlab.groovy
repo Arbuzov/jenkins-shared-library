@@ -16,8 +16,7 @@ def call (String gitUrl, String mrIid, String ref, String message = '', String r
 	URL url = new URL(gitUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
 	String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
-	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/" gitLabAPISecret);
-
+	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/" + gitLabAPISecret);
 
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
@@ -41,5 +40,4 @@ def call (String gitUrl, String mrIid, String ref, String message = '', String r
 	entity = response.getEntity();
 	print IOUtils.toString(entity.getContent(), "UTF-8")
 	EntityUtils.consume(entity);
-	}
 }
