@@ -18,7 +18,7 @@ def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist 
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
 	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes" + gitLabAPISecret);
 
-	echo mrUrl
+	echo mrUrl.toString()
 
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
