@@ -19,6 +19,7 @@ def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist 
 	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/?private_token=" + gitLabAPISecret);
 
 	echo mrUrl.toString()
+	echo message.toString()
 
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
