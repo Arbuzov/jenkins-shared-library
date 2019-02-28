@@ -16,7 +16,7 @@ def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist 
 	URL url = new URL(gitUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
 	String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
-	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes");
+	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/?private_token=" + gitLabAPISecret);
 
 	echo mrUrl.toString()
 
