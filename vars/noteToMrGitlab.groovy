@@ -11,7 +11,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 
-def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist = true) {
+def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true) {
 
 	URL url = new URL(gitUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
 	String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
@@ -19,7 +19,7 @@ def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist 
 	URL mrUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/merge_requests/"+mrIid+"/notes/?private_token=" + gitLabAPISecret);
 
 	echo mrUrl.toString()
-	echo message.toString()
+	echo body.toString()
 
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
@@ -34,7 +34,7 @@ def call (String gitUrl, String mrIid, String message = '', Boolean skipIfExist 
 	HttpPost httppost = new HttpPost(mrUrl.toString());
 		
 	List<NameValuePair> params = new ArrayList<NameValuePair>();
-	params.add(new BasicNameValuePair("message", message));
+	params.add(new BasicNameValuePair("body", body));
 		
 	UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params, "UTF-8");
 	httppost.setEntity(ent);
