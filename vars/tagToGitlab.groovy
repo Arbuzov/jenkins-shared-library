@@ -17,7 +17,7 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
 	String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";	
 	String usrEncodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
 	URL tagsUrl = new URL (gitLabAPIUrl+"/projects/"+usrEncodedProject+"/repository/tags/?private_token=" + gitLabAPISecret);
-	
+	echo tagsUrl.toString()
 	SSLContextBuilder builder = new SSLContextBuilder();
 	builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 	SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
@@ -40,7 +40,7 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
 	}
 	if (!tagExists || !skipIfExist) {
 		HttpPost httppost = new HttpPost(tagsUrl.toString());
-		
+		echo "Update existing TAG"
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair("tag_name", tagName));
 		params.add(new BasicNameValuePair("ref", ref));
