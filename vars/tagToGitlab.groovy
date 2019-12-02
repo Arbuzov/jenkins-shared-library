@@ -32,7 +32,7 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
 	
 	ArrayList  tagList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
 	EntityUtils.consume(entity);
-	
+
 	Boolean tagExists = false;
 	
 	tagList.each { tag->

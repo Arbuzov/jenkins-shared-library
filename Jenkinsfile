@@ -1,3 +1,4 @@
+//@Library('debug@issue_DEVOPS-9-Create_a_protot')_
 @Library('asatnet@master')_
 pipeline {
   agent {label 'master'}
@@ -80,8 +81,7 @@ pipeline {
         changeRequest()
       }
       steps {
-        sh "env"
-        getRelatedBranch(env.GIT_URL_1, 'jenkins-violations-secret')
+        getRelatedBranch(env.gitlabTargetRepoSshUrl, 'jenkins-violations-secret')
         sh "env"
       }
     }
