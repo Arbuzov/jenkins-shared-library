@@ -12,8 +12,8 @@ import org.apache.commons.io.IOUtils;
 
 def call (String relatedProjectOriginUrl, String apiSecretId = '') {
   
-  env.putAt('GIT_RELATED_URL', null);
-  env.putAt('GIT_RELATED_BRANCH', null);
+  env.putAt('GIT_RELATED_URL', '');
+  env.putAt('GIT_RELATED_BRANCH', '');
 
   if (apiSecretId == '') throw new Exception("Attribute apiSecretId must be set.");
   if (env.gitlabSourceBranch == null) throw new Exception("Variable 'gitlabSourceBranch' is undefined. You must use this function with the GitLab merge request.");
