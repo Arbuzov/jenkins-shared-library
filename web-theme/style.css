@@ -1,0 +1,55 @@
+/*   */
+
+div#utc-clock {
+	float: right;
+	color: white;
+	font-size: 1.75em;
+        display: flex;
+	margin: 10px;
+	margin-left: 180px;
+	font-family: Helvetica, Arial, sans-serif;
+}
+
+div.stage-start-box {
+	margin: 5px;
+}
+div.cell-box {
+	width: 20px;
+}
+/******************From we must try to pus this changes into atlassian theme*****************/
+td>span.status_success,td>span.status_unstable {
+ 	width: 60px;
+	display: inline-block;
+}
+                                                   
+img.icon-gitlab,img.icon-pipeline-multibranch-project {
+	margin-left: 5px;
+}
+
+div#side-panel.collapsed {
+  width: unset!important;
+}
+
+div#main-panel.expanded {
+  margin-left: 36px!important;
+}
+
+div#side-panel.collapsed>div#tasks>div.task>a.task-link,
+div#side-panel.collapsed>div#cloudstats,
+div#side-panel.collapsed>div#buildQueue,
+div#side-panel.collapsed>div#buildHistoryPage,
+div#side-panel.collapsed>div#executors {
+  display: none;
+}
+
+div#side-panel.collapsed>div#tasks>div.task>a#sidebar-collapse-link>img {
+  width: 24px;
+  height: 24px;
+  content:url('/static/e22ed674/images/16x16/expand.png');
+}
+
+div#side-panel>div#tasks>div.task>a#sidebar-collapse-link>img {
+  width: 24px;
+  height: 24px;
+  content:url('/static/e22ed674/images/16x16/collapse.png');
+}

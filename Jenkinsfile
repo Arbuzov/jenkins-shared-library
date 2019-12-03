@@ -1,5 +1,5 @@
-//@Library('debug@issue_DEVOPS-9-Create_a_protot')_
-@Library('asatnet@master')_
+@Library('debug@debug_library')_
+//@Library('asatnet@master')_
 pipeline {
   agent {label 'master'}
   options {
@@ -68,7 +68,9 @@ pipeline {
             }
           }
         }
-        echo getLatestApprover();
+        echo getLatestApprover()
+        
+        print mergeRequestsChangeLog('jenkins-violations-secret')
       }
       post {
         always {

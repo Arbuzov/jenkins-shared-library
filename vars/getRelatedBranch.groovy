@@ -27,7 +27,6 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
     String branchesUrl = '';
     String relatedUrl = '';
    
-
 	  SSLContextBuilder builder = new SSLContextBuilder();
 	  builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 	  SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
@@ -45,6 +44,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
         relatedUrl = fork.ssh_url_to_repo;
       }
 	  }
+
     if (!branchesUrl.equals('')) {
 	    httpget = new HttpGet(branchesUrl);
 	    response = httpclient.execute(httpget);
@@ -52,7 +52,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 	
 	    ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
       EntityUtils.consume(entity);
-      
+	
 	    branchesList.each { branch->
 		    if (branch.name.equals(env.gitlabSourceBranch)) {
           env.putAt('GIT_RELATED_BRANCH', env.gitlabSourceBranch);
@@ -60,6 +60,5 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 		    }
 	    }
     }
-sh 'env'
   }
 }
