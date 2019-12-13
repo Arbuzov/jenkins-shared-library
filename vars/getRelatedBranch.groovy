@@ -14,7 +14,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
   
   env.putAt('GIT_RELATED_URL', '');
   env.putAt('GIT_RELATED_BRANCH', '');
-
+  sh "env"
   if (apiSecretId == '') throw new Exception("Attribute apiSecretId must be set.");
   if (env.gitlabSourceBranch == null) throw new Exception("Variable 'gitlabSourceBranch' is undefined. You must use this function with the GitLab merge request.");
   if (env.gitlabSourceNamespace == null) throw new Exception("Variable 'gitlabSourceNamespace' is undefined. You must use this function with the GitLab merge request.");
