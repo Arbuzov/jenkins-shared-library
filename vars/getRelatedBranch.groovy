@@ -61,5 +61,6 @@ print(branchesList)
 		    }
 	    }
     }
+sh 'env'
   }
 }
