@@ -41,11 +41,10 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
     
     forksList.each { fork->
       if (fork.namespace.name.equals(env.gitlabSourceNamespace)) {
-        branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?private_token=" + gitLabAPISecret;
+        branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?per_page=100&private_token=" + gitLabAPISecret;
         relatedUrl = fork.ssh_url_to_repo;
       }
 	  }
-print(branchesUrl)
     if (!branchesUrl.equals('')) {
 	    httpget = new HttpGet(branchesUrl);
 	    response = httpclient.execute(httpget);
@@ -53,7 +52,7 @@ print(branchesUrl)
 	
 	    ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
       EntityUtils.consume(entity);
-print(branchesList)	
+      
 	    branchesList.each { branch->
 		    if (branch.name.equals(env.gitlabSourceBranch)) {
           env.putAt('GIT_RELATED_BRANCH', env.gitlabSourceBranch);
