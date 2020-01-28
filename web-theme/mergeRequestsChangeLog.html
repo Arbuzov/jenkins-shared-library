@@ -3,31 +3,74 @@
 <head>
   <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
     crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" crossorigin="anonymous"></script>
   <script>
     function loadchangelog(projectId) {
-      $.get("https://gitlab.asatnet.net/api/v4/projects/" + projectId + "/merge_requests/?per_page=1000&order_by=updated_at&state=all&private_token=EY5yZqrYRKBxn8FDAeZh", function (data) {
-        data
-          .filter(element => element.state === 'merged')
-          .sort((a, b) => (new Date(a)).getTime() - (new Date(b).getTime()))
-          .forEach(element => {
-            var mrDescription = element.description
-              .replace(/(?<=(\*\*)).*(?=(\*\*))/g, '<b>$&</b>')
-              .replace(/(http|https):\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?/g, '<a target="_blank" href="$&">$&</a>')
-              .replace(/([A-Z])([A-Z]|\d)+\-(\d)+/g, '<a target="_blank" href="https://jira.spacebridge.com/browse/$&">$&</a>')
-              .replace(/(\r\n|\n|\r)/gm, '<br/>');
-            var description = $('<div>').html(mrDescription);
-            var head = $('<b>').html(element.merged_at + '  ' + element.title + '<br/>by ' + element.author.name);
-            var li = $('<li>');
-            var hr = $('<hr>');
-            li.append(head);
-            li.append(description);
-            li.append(hr);
-            $('ul#change-list').append(li)
-          });
+      $.get(
+        "https://gitlab.asatnet.net/api/v4/projects/" + projectId +
+        "/merge_requests/?per_page=1000&state=" + ($('#show-merged').prop("checked") ? "merged" : "all") +
+        "&target_branch=" + $('#branches-list').val() +
+        "&order_by=updated_at&private_token=EY5yZqrYRKBxn8FDAeZh", function (data) {
+          var foundRecords = false;
+          var converter = new showdown.Converter();
+          $('ul#change-list').html('');
+          data
+            .sort((a, b) => (new Date(a)).getTime() - (new Date(b).getTime()))
+            .forEach(element => {
+              var mrSubject = element.description.match(/(?<=%Subject:).*/);
+              var mrVisibility = element.description.match(/(?<=%Visibility:).*/);
+              var mrDescription = element.description
+                .replace(/(http|https):\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?/g, '<a target="_blank" href="$&">$&</a>')
+                .replace(/([A-Z])([A-Z]|\d)+\-(\d)+/g, '<a target="_blank" href="https://jira.spacebridge.com/browse/$&">$&</a>');
+
+              
+              var mrDetails = element.description.match(/(?<=%Details:)(.|\W)*(?=(%\n|$))/gm);
+              
+              mrDetails = mrDetails ? converter.makeHtml(mrDetails[0]): '';
+              mrDetails = mrDetails.replace(/(?<=(\s|\>))([A-Z])([A-Z]|\d)+\-(\d)+/gm, '<a target="_blank" href="https://jira.spacebridge.com/browse/$&">$&</a>');
+
+              if (mrDetails && mrSubject && mrVisibility && ($('#visibility-list').val() !== 'Production' || mrVisibility[0].toLowerCase().includes($('#visibility-list').val().toLowerCase()))) {
+                var head = $('<div>')
+                var details = $('<div>').html(mrDetails);
+
+                var date = $('<div>').html(element.merged_at ? element.merged_at : 'Not merged');
+                var user = $('<a>').html('by ' + element.author.name).attr('href', element.author.web_url).attr('target', '_blank');
+                var description = $('<a>').html(mrSubject ? mrSubject[0] : 'None').attr('href', element.web_url).attr('target', '_blank');
+                head.append(description);
+                head.append($('<br>'));
+                head.append(user);
+                head.append($('<br>'));
+                head.append(date);
+                if (element.state === 'merged') {
+                  head.append(
+                    $('<a>').html(element.merge_commit_sha).attr('href', '#').attr('name', element.merge_commit_sha)
+                  );
+                }
+                var li = $('<li>');
+                var hr = $('<hr>');
+                li.append(head);
+                li.append(details);
+                li.append(hr);
+                $('ul#change-list').append(li);
+                foundRecords = true;
+              }
+            });
+          if (!foundRecords) {
+            $('ul#change-list').html('<b>No suitable merge-requests found for the changelog</b>');
+          }
+        });
+    }
+    function loadBranches(projectId) {
+      $.get("https://gitlab.asatnet.net/api/v4/projects/" + projectId + "/repository/branches?per_page=1000&private_token=EY5yZqrYRKBxn8FDAeZh", function (data) {
+        data.forEach(element => {
+          var option = $('<option>').html(element.name).attr('value', element.name);
+          $('#branches-list').append(option);
+        });
       });
     }
     $().ready(function () {
-      loadchangelog(195)
+      loadchangelog(195);
+      loadBranches(195);
     })
   </script>
   <title>Change Log</title>
@@ -35,6 +78,17 @@
 
 <body>
   <div id="change-log">
+    <label>Show only merged requests</label>
+    <input id="show-merged" checked="true" type="checkbox" onclick="loadchangelog(195)" />
+    <label>Select branch</label>
+    <select id="branches-list" onchange="loadchangelog(195)">
+      <option value="master" selected>master</option>
+    </select>
+    <label>Select visibility</label>
+    <select id="visibility-list" onchange="loadchangelog(195)">
+      <option value="Developers">Developers</option>
+      <option value="Production">Production</option>
+    </select>
     <ul id="change-list">
 
     </ul>
