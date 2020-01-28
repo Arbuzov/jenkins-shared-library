@@ -1,0 +1,44 @@
+<html>
+
+<head>
+  <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+    crossorigin="anonymous"></script>
+  <script>
+    function loadchangelog(projectId) {
+      $.get("https://gitlab.asatnet.net/api/v4/projects/" + projectId + "/merge_requests/?per_page=1000&order_by=updated_at&state=all&private_token=EY5yZqrYRKBxn8FDAeZh", function (data) {
+        data
+          .filter(element => element.state === 'merged')
+          .sort((a, b) => (new Date(a)).getTime() - (new Date(b).getTime()))
+          .forEach(element => {
+            var mrDescription = element.description
+              .replace(/(?<=(\*\*)).*(?=(\*\*))/g, '<b>$&</b>')
+              .replace(/(http|https):\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/=]*)?/g, '<a target="_blank" href="$&">$&</a>')
+              .replace(/([A-Z])([A-Z]|\d)+\-(\d)+/g, '<a target="_blank" href="https://jira.spacebridge.com/browse/$&">$&</a>')
+              .replace(/(\r\n|\n|\r)/gm, '<br/>');
+            var description = $('<div>').html(mrDescription);
+            var head = $('<b>').html(element.merged_at + '  ' + element.title + '<br/>by ' + element.author.name);
+            var li = $('<li>');
+            var hr = $('<hr>');
+            li.append(head);
+            li.append(description);
+            li.append(hr);
+            $('ul#change-list').append(li)
+          });
+      });
+    }
+    $().ready(function () {
+      loadchangelog(195)
+    })
+  </script>
+  <title>Change Log</title>
+</head>
+
+<body>
+  <div id="change-log">
+    <ul id="change-list">
+
+    </ul>
+  </div>
+</body>
+
+</html>

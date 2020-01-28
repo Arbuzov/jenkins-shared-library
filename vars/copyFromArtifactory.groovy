@@ -6,47 +6,50 @@ import org.apache.commons.io.FilenameUtils;
 
 @NonCPS
 ArrayList call(String repoPath, String serverName = 'artifactory', String destDirectory = '', String artifactVersion = '') {
-	def server = Artifactory.server(serverName);
-	
-	ArrayList selectedFiles = []
-	
-	String storageUrl = server.getUrl()+ FilenameUtils.normalize('/api/storage/' + repoPath +'/'+ artifactVersion)
-	
-	def targetItem = (new JsonSlurper().parse(new URL (storageUrl)))
-	
-	if (artifactVersion.equals('')) {
-		def created = "";
-		def latestItem = {};
-		ArrayList children = (new JsonSlurper().parse(new URL (storageUrl))).children;
-		children.each {
-			if (it.folder==true) {
-				def itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
-				if (itemInfo.created>created) {
-					latestItem = itemInfo;
-					created = itemInfo.created;
-				}
-			}
-		}
-		storageUrl = latestItem.uri;
-		targetItem = latestItem;
-	}
-	def itemInfo = null;
-	ArrayList operationsList = []
-	targetItem.children.each {
-		if (it.folder==false) {
-			itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
-			selectedFiles.add(itemInfo.downloadUri);
-			operationsList.add(
-				fileDownloadOperation(
-					password: server.getPassword(),
-					targetFileName: FilenameUtils.getName(new URL(itemInfo.downloadUri).getPath()),
-					targetLocation: destDirectory,
-					url: itemInfo.downloadUri,
-					userName: server.getUsername()
-				)
-			);
-		}
-	}
-	fileOperations(operationsList)
-	return selectedFiles
+  def server = Artifactory.server(serverName);
+  
+  ArrayList selectedFiles = []
+  
+  String storageUrl = server.getUrl()+ FilenameUtils.normalize('/api/storage/' + repoPath +'/'+ artifactVersion)
+  
+  def targetItem = (new JsonSlurper().parse(new URL (storageUrl)))
+  
+  if (artifactVersion.equals('')) {
+    def created = "";
+    def latestItem = {};
+    ArrayList children = (new JsonSlurper().parse(new URL (storageUrl))).children;
+    children.each {
+      if (it.folder==true) {
+        def itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
+        if (itemInfo.created>created) {
+          latestItem = itemInfo;
+          created = itemInfo.created;
+        }
+      }
+    }
+    storageUrl = latestItem.uri;
+    targetItem = latestItem;
+  }
+  def itemInfo = null;
+  ArrayList operationsList = []
+  operationsList.add(
+    folderCreateOperation(folderPath: destDirectory)
+  )
+  targetItem.children.each {
+    if (it.folder==false) {
+      itemInfo = (new JsonSlurper().parse(new URL (storageUrl + it.uri)));
+      selectedFiles.add(itemInfo.downloadUri);
+      operationsList.add(
+        fileDownloadOperation(
+          password: server.getPassword(),
+          targetFileName: FilenameUtils.getName(new URL(itemInfo.downloadUri).getPath()),
+          targetLocation: destDirectory,
+          url: itemInfo.downloadUri,
+          userName: server.getUsername()
+        )
+      );
+    }
+  }
+  fileOperations(operationsList)
+  return selectedFiles
 }

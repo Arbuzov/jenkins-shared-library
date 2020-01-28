@@ -1,4 +1,5 @@
+import org.apache.commons.io.FilenameUtils;
 
-def call(String baseUrl, fileList) {
+def call(String baseUrl, fileList = []) {
 
 }
