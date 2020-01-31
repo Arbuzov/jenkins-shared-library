@@ -13,7 +13,7 @@ pipeline {
         
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt'),
+            publishArtifactory('FileExchange/debug/', 'artifactory', 'firmware/.*','', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),

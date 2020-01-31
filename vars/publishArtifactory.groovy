@@ -4,7 +4,7 @@ import java.util.regex.*;
 import java.util.Collections;
 import org.apache.commons.io.FilenameUtils;
 
-ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '') {
+ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '', Boolean flat = true) {
 	
 	def server = Artifactory.server(serverName);
 	
@@ -21,7 +21,7 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 			{
 				\"pattern\": \"(${artifactsRegexp})\",
 				\"regexp\": \"true\",
-				\"flat\": \"true\",
+				\"flat\": \"${flat}\",
 				\"target\": \"${repoPath}${artifactVersion.equals("")?"":"/"+artifactVersion+"/"}\"
 			}
  		]
@@ -32,9 +32,7 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	server.publishBuildInfo(buildInfo);
 	
 	sleep 5;
-	
-	//println endUpload;
-	
+
 	String[] logArray = manager.build.getLog(100);
 	
 	for (int i = logArray.length-1; i > 0; i--) {

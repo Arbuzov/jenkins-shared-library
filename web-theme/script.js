@@ -19,6 +19,7 @@ function replaceHref() {
           'http://devops2.advantech.ca:8080',
           'https://jenkins.asatnet.net'));
     });
+  
   jQuery('form[action^="http://devops2.advantech.ca:8080"]').each(
     function() {
       jQuery(this).attr(
@@ -27,6 +28,13 @@ function replaceHref() {
           'http://devops2.advantech.ca:8080',
           'https://jenkins.asatnet.net'));
     });
+  
+}
+
+function replaceMRHref() {
+  var href = jQuery( "a:contains('GitLab Merge Request')").attr('href')
+  href= href.replace(/:/,'/').replace(/git@/,'https://').replace(/\.git/,'');
+  jQuery("a:contains('GitLab Merge Request')").attr('href', href)
 }
 
 function harold(standIn) {
@@ -48,6 +56,18 @@ function applySideMenu() {
   }
 }
 
+function clock() {
+  var time = new Date();
+
+  var hours = time.getUTCHours();
+  var minutes = time.getUTCMinutes();
+  var seconds = time.getUTCSeconds();
+
+  document.querySelectorAll('#utc-clock')[0].innerHTML = '<nobr>' + harold(hours)
+    + ":" + harold(minutes) + ":" + harold(seconds) + " UTC" + '</nobr>';
+}
+
+
 var collapsed = window.localStorage.getItem('sidebar-collapsed')==='true';
 
 jQuery(document)
@@ -59,6 +79,7 @@ jQuery(document)
         validate_user_name);
       validate_user_name();
       replaceHref();
+      replaceMRHref();
       var toggleButton = jQuery('<div class="task">').append(
         jQuery('<a onClick="collapsed = !collapsed;applySideMenu()" id="sidebar-collapse-link" class="task-icon-link" href="#">').append(
           jQuery('<img>')
@@ -66,19 +87,7 @@ jQuery(document)
       );
       jQuery("div#tasks").append(toggleButton);
       jQuery("div.logo").append(jQuery('<div id="utc-clock">'));
-      function clock() {
-        // We create a new Date object and
-        // assign it to a variable called
-        // "time".
-        var time = new Date();
 
-        var hours = time.getUTCHours();
-        var minutes = time.getUTCMinutes();
-        var seconds = time.getUTCSeconds();
-
-        document.querySelectorAll('#utc-clock')[0].innerHTML = '<nobr>' + harold(hours)
-          + ":" + harold(minutes) + ":" + harold(seconds) + " UTC" + '</nobr>';
-      }
 
       applySideMenu();
 
