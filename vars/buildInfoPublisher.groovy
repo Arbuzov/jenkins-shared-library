@@ -56,7 +56,7 @@ def call() {
 	publishHTML([
 		allowMissing: false,
 		alwaysLinkToLastBuild: false,
-		keepAll: false,
+		keepAll: true,
 		reportDir: "${WORKSPACE}",
 		reportFiles: destBreif,
 		reportName: "${upperName} Breif info",
@@ -66,7 +66,7 @@ def call() {
 	publishHTML([
 		allowMissing: false,
 		alwaysLinkToLastBuild: false,
-		keepAll: false,
+		keepAll: true,
 		reportDir: "${WORKSPACE}",
 		reportFiles: destFull,
 		reportName: "${upperName} Full info",
