@@ -32,9 +32,11 @@ function replaceHref() {
 }
 
 function replaceMRHref() {
-  var href = jQuery( "a:contains('GitLab Merge Request')").attr('href')
-  href= href.replace(/:/,'/').replace(/git@/,'https://').replace(/\.git/,'');
-  jQuery("a:contains('GitLab Merge Request')").attr('href', href)
+  var href = jQuery( "a:contains('GitLab Merge Request'):not(.task-link)").attr('href')
+  if (href) {
+    href= href.replace(/:/,'/').replace(/git@/,'https://').replace(/\.git/,'');
+    jQuery("a:contains('GitLab Merge Request')").attr('href', href);
+  }
 }
 
 function harold(standIn) {

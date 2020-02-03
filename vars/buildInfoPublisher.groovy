@@ -1,4 +1,5 @@
 import org.apache.commons.io.FilenameUtils;
+
 def call() {
 	def strUrl = sh (
 		script: "git remote get-url --all origin",
@@ -47,17 +48,17 @@ def call() {
 	fullContent += "${upperName}_COMMIT_MESSAGE=\"${commitMessage}\"\n\n"
 	
 	
-	dir ("${WORKSPACE}/logs") {
-		writeFile file: destBreif, text: briefContent;
-		writeFile file: destFull, text: fullContent;
-	}
+	
+	writeFile file: destBreif, text: briefContent;
+	writeFile file: destFull, text: fullContent;
+	
 	
 	publishHTML([
 		allowMissing: false,
 		alwaysLinkToLastBuild: false,
 		keepAll: false,
 		reportDir: "${WORKSPACE}",
-		reportFiles: "logs/"+destBreif,
+		reportFiles: destBreif,
 		reportName: "${upperName} Breif info",
 		reportTitles: "${upperName} Breif info"
 	]);
@@ -67,7 +68,7 @@ def call() {
 		alwaysLinkToLastBuild: false,
 		keepAll: false,
 		reportDir: "${WORKSPACE}",
-		reportFiles: "logs/"+destFull,
+		reportFiles: destFull,
 		reportName: "${upperName} Full info",
 		reportTitles: "${upperName} Full info"
 	]);
