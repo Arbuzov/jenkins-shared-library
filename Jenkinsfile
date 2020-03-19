@@ -70,7 +70,7 @@ pipeline {
         }
         echo getLatestApprover()
         
-        print mergeRequestsChangeLog('jenkins-violations-secret')
+        //print mergeRequestsChangeLog('jenkins-violations-secret')
       }
       post {
         always {

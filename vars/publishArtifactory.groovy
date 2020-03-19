@@ -1,22 +1,27 @@
 import static groovy.io.FileType.*;
 import static groovy.io.FileVisitResult.*;
-import java.util.regex.*;
-import java.util.Collections;
-import org.apache.commons.io.FilenameUtils;
 
 ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '', Boolean flat = true) {
 	
 	def server = Artifactory.server(serverName);
 	
-	//String beginUpload = "================= Begin upload =================\n";
-
-	//String endUpload = "================= End upload =================\n";
-	
 	ArrayList selectedFiles = []
+  
+  String shaReport = ""
+
+  String shaURLString = 
+    server.getUrl() + '/' +
+    repoPath + 
+    (artifactVersion.equals('') ? '' : (artifactVersion + '/')) + 
+    "signature.sha"
 	
-	//println beginUpload;
+  try {
+    shaReport = (new URL (shaURLString)).getText()
+  } catch (Exception e) {
+    shaReport = ""
+  }
 	
-	def uploadSpec = """{
+  def uploadSpec = """{
 		\"files\": [
 			{
 				\"pattern\": \"(${artifactsRegexp})\",
@@ -29,19 +34,32 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	
 	def buildInfo = server.upload(uploadSpec);
 	
-	server.publishBuildInfo(buildInfo);
-	
-	sleep 5;
+  buildInfo.getArtifacts().each{
+    shaReport = shaReport + it.sha1 + ' '+it.localPath.replace(WORKSPACE, '.') + "\n"
+    selectedFiles.add(new URL(server.getUrl()+'/'+it.remotePath).toString())
+  }
+//	println(selectedFiles)
+//  println("=========================================================");
+//  println(shaReport);
+//  println("=========================================================");
+  
+  server.publishBuildInfo(buildInfo);
 
-	String[] logArray = manager.build.getLog(100);
+  writeFile file: 'signature.sha', text: shaReport;
+
+  uploadSpec = """{
+		\"files\": [
+			{
+				\"pattern\": \"signature.sha\",
+				\"regexp\": \"false\",
+				\"target\": \"${repoPath}${artifactVersion.equals("")?"":"/"+artifactVersion+"/"}\"
+			}
+ 		]
+	}"""
 	
-	for (int i = logArray.length-1; i > 0; i--) {
-		
-		def matches=logArray[i]=~/.*Deploying artifact: (.*)$/
-		if(matches.find() && logArray[i].contains(FilenameUtils.normalize(repoPath+(artifactVersion.equals("")?"":"/"+artifactVersion+"/")))) {
-			selectedFiles.add(matches.group(1));
-		}
-	}
+	buildInfo = server.upload(uploadSpec)
+  server.publishBuildInfo(buildInfo)
+
 	return selectedFiles
 }
 
