@@ -19,11 +19,11 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
     .toURI()
     .normalize()
     .getPath()
-    .replace(
-      new URL(server.getUrl()).getPath(),
+    .replaceFirst(
+      new URL(server.getUrl()).getPath()+'/',
       ''
     )
-    .split('/')[1]
+    .split('/')[0]
 
   String target = shaURL
     .toURI()
