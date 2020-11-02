@@ -55,7 +55,33 @@ pipeline {
           ),
           "Unversioned list in the deep without trailing slashes"
         )
+        publishSummary(
+          arrayToHrefList(
+            publishArtifactory('FileExchange/debug/tree1/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER, false)
+          ),
+          "Build with the flat number deep folders"
+        )        
         
+        publishSummary(
+          arrayToHrefList(
+            publishArtifactory('FileExchange/debug/tree2/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', false)
+          ),
+          "Build with the deep number flat folders"
+        )  
+        
+        publishSummary(
+          arrayToHrefList(
+            publishArtifactory('FileExchange/debug/flat1/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER, true)
+          ),
+          "Build with the flat number deep folders"
+        )  
+        
+        publishSummary(
+          arrayToHrefList(
+            publishArtifactory('FileExchange/debug/flat2/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', true)
+          ),
+          "Build with the deep number deep folders"
+        )
         sayHello 'User'
         script {
           ARTIFACTORY_UPLOADS = publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt', BUILD_NUMBER);
