@@ -8,15 +8,38 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 	ArrayList selectedFiles = []
   
   String shaReport = ""
-
-  String shaURLString = 
+  
+  URL shaURL = new URL(
     server.getUrl() + '/' +
-    repoPath + 
-    (artifactVersion.equals('') ? '' : (artifactVersion + '/')) + 
-    "signature.sha"
+    repoPath + '/' + (artifactVersion.equals('') ? '' : (artifactVersion + '/')) + '/' +
+    'signature.sha'
+  )
+  
+  String baseRepoName = shaURL
+    .toURI()
+    .normalize()
+    .getPath()
+    .replace(
+      new URL(server.getUrl()).getPath(),
+      ''
+    )
+    .split('/')[1]
+
+  String target = shaURL
+    .toURI()
+    .normalize()
+    .getPath()
+    .replace(
+      new URL(server.getUrl()).getPath()+'/',
+      ''
+    )
+    .replace(
+      'signature.sha',
+      ''
+    )
 	
   try {
-    shaReport = (new URL (shaURLString)).getText()
+    shaReport = shaURL.getText()
   } catch (Exception e) {
     shaReport = ""
   }
@@ -27,21 +50,16 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 				\"pattern\": \"(${artifactsRegexp})\",
 				\"regexp\": \"true\",
 				\"flat\": \"${flat}\",
-				\"target\": \"${repoPath}${artifactVersion.equals("")?"":"/"+artifactVersion+"/"}\"
+				\"target\": \"${target}\"
 			}
  		]
 	}"""
-	
+
 	def buildInfo = server.upload(uploadSpec);
-	
   buildInfo.getArtifacts().each{
     shaReport = shaReport + it.sha1 + ' '+it.localPath.replace(WORKSPACE, '.') + "\n"
-    selectedFiles.add(new URL(server.getUrl()+'/'+it.remotePath).toString())
+    selectedFiles.add(new URL(server.getUrl()+'/'+baseRepoName+'/'+it.remotePath).toString())
   }
-//	println(selectedFiles)
-//  println("=========================================================");
-//  println(shaReport);
-//  println("=========================================================");
   
   server.publishBuildInfo(buildInfo);
 
@@ -52,7 +70,7 @@ ArrayList call(String repoPath, String serverName = 'artifactory', String artifa
 			{
 				\"pattern\": \"signature.sha\",
 				\"regexp\": \"false\",
-				\"target\": \"${repoPath}${artifactVersion.equals("")?"":"/"+artifactVersion+"/"}\"
+				\"target\": \"${target}\"
 			}
  		]
 	}"""

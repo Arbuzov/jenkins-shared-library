@@ -19,6 +19,43 @@ pipeline {
           ),
           "Unversioned list"
         )
+        
+        publishSummary(
+          arrayToString(
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','1/2/3', false),
+            ["\t<li>","</li>\n"],
+            ["<ul>\n","</ul>\n"]
+          ),
+          "Unversioned list in the deep with the deep version"
+        )
+        
+        publishSummary(
+          arrayToString(
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','/4/5/6/', false),
+            ["\t<li>","</li>\n"],
+            ["<ul>\n","</ul>\n"]
+          ),
+          "Unversioned list in the deep with the deep version"
+        )
+        
+        publishSummary(
+          arrayToString(
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','', false),
+            ["\t<li>","</li>\n"],
+            ["<ul>\n","</ul>\n"]
+          ),
+          "Unversioned list in the deep"
+        )
+        
+        publishSummary(
+          arrayToString(
+            publishArtifactory('FileExchange/debug/new', 'artifactory', 'firmware/.*','', false),
+            ["\t<li>","</li>\n"],
+            ["<ul>\n","</ul>\n"]
+          ),
+          "Unversioned list in the deep without trailing slashes"
+        )
+        
         sayHello 'User'
         script {
           ARTIFACTORY_UPLOADS = publishArtifactory('FileExchange/debug/', 'artifactory', 'debug.txt', BUILD_NUMBER);
