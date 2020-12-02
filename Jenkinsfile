@@ -11,6 +11,8 @@ pipeline {
       steps {
         sh "install -d versioned && install -d latest && env>debug.txt"
         
+        print(getNPMPackageVersion())
+        
         publishSummary(
           arrayToString(
             publishArtifactory('FileExchange/debug/', 'artifactory', 'firmware/.*','', false),
@@ -60,7 +62,7 @@ pipeline {
             publishArtifactory('FileExchange/debug/tree1/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER, false)
           ),
           "Build with the flat number deep folders"
-        )        
+        )   
         
         publishSummary(
           arrayToHrefList(
