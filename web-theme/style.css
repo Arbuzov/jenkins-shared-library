@@ -53,3 +53,7 @@ div#side-panel>div#tasks>div.task>a#sidebar-collapse-link>img {
   height: 24px;
   content:url('/static/e22ed674/images/16x16/collapse.png');
 }
+
+div.dashboard>table {
+ width:99%!important;
+}
