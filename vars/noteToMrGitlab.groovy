@@ -40,6 +40,6 @@ def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = t
 	httppost.setEntity(ent);
 	response = httpclient.execute(httppost);
 	entity = response.getEntity();
-	print IOUtils.toString(entity.getContent(), "UTF-8")
+	// print IOUtils.toString(entity.getContent(), "UTF-8")
 	EntityUtils.consume(entity);
 }

@@ -13,9 +13,11 @@ pipeline {
         
         print(getNPMPackageVersion())
         
-        createNewJiraVersion("1.1.${BUILD_NUMBER}", 'DEVOPS')
+//      createNewJiraVersion("1.1.${BUILD_NUMBER}", 'DEVOPS')
         
         createNewJiraVersion("1.1.0", 'DEVOPS')
+            
+        iterateBuilds()    
             
         publishSummary(
           arrayToString(
@@ -123,6 +125,7 @@ pipeline {
           artifacts: "**/**",
           onlyIfSuccessful: false
         )
+        publishArtifactsInGitlabComment()
         script {
           try {
             timeout(time: 20, unit: 'SECONDS') {
