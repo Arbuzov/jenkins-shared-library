@@ -13,6 +13,10 @@ pipeline {
         
         print(getNPMPackageVersion())
         
+        createNewJiraVersion("1.1.${BUILD_NUMBER}", 'DEVOPS')
+        
+        createNewJiraVersion("1.1.0", 'DEVOPS')
+            
         publishSummary(
           arrayToString(
             publishArtifactory('FileExchange/debug/', 'artifactory', 'firmware/.*','', false),
