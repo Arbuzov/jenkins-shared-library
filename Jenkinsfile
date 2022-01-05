@@ -155,7 +155,7 @@ pipeline {
         changeRequest()
       }
       steps {
-        getRelatedBranch(env.gitlabTargetRepoSshUrl, 'jenkins-violations-secret')
+        getRelatedBranch(env.GITLAB_OA_TARGET_GIT_SSH_URL, 'jenkins-violations-secret')
         sh "env"
       }
     }

@@ -16,8 +16,8 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
   env.putAt('GIT_RELATED_BRANCH', '');
   sh "env"
   if (apiSecretId == '') throw new Exception("Attribute apiSecretId must be set.");
-  if (env.gitlabSourceBranch == null) throw new Exception("Variable 'gitlabSourceBranch' is undefined. You must use this function with the GitLab merge request.");
-  if (env.gitlabSourceNamespace == null) throw new Exception("Variable 'gitlabSourceNamespace' is undefined. You must use this function with the GitLab merge request.");
+  if (env.GITLAB_OA_SOURCE_BRANCH == null) throw new Exception("Variable 'GITLAB_OA_SOURCE_BRANCH' is undefined. You must use this function with the GitLab merge request.");
+  if (env.GITLAB_OA_SOURCE_NAMESPACE == null) throw new Exception("Variable 'GITLAB_OA_SOURCE_NAMESPACE' is undefined. You must use this function with the GitLab merge request.");
 
   withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
     URL url = new URL(relatedProjectOriginUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
@@ -39,7 +39,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
     EntityUtils.consume(entity);
     
     forksList.each { fork->
-      if (fork.namespace.name.equals(env.gitlabSourceNamespace)) {
+      if (fork.namespace.name.equals(env.GITLAB_OA_SOURCE_NAMESPACE)) {
         branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?per_page=100&private_token=" + gitLabAPISecret;
         relatedUrl = fork.ssh_url_to_repo;
       }
@@ -54,8 +54,8 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
       EntityUtils.consume(entity);
 	
 	    branchesList.each { branch->
-		    if (branch.name.equals(env.gitlabSourceBranch)) {
-          env.putAt('GIT_RELATED_BRANCH', env.gitlabSourceBranch);
+		    if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
+          env.putAt('GIT_RELATED_BRANCH', env.GITLAB_OA_SOURCE_BRANCH);
           env.putAt('GIT_RELATED_URL', relatedUrl);
 		    }
 	    }
