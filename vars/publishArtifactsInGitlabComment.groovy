@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper;
 
 def call(String secretId = 'gitlab-text-secret') {
-  if (!env.gitlabTargetRepoSshUrl || !env.CHANGE_ID) {
+  if (!env.GITLAB_OA_TARGET_GIT_SSH_URL || !env.CHANGE_ID) {
     return
   }
   def artifactUrl = env.BUILD_URL + "artifact/"
@@ -16,6 +16,6 @@ def call(String secretId = 'gitlab-text-secret') {
   message +="\n### Note the links will be reachable untill the MR is not merged\n"
   
   withCredentials([string(credentialsId: secretId, variable: 'gitLabAPISecret')]) {
-    noteToMrGitlab(env.gitlabTargetRepoSshUrl, env.CHANGE_ID, message)
+    noteToMrGitlab(env.GITLAB_OA_TARGET_GIT_SSH_URL, env.CHANGE_ID, message)
   }
 }
