@@ -40,7 +40,7 @@ def call(String apiSecretId = '') {
 
 def collectMRChangsets(String apiSecretId) {
   withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
-    String GIT_URL = env.GIT_URL_2==null?env.GIT_URL:env.GIT_URL_2
+    String GIT_URL = env.GITLAB_OA_TARGET_GIT_SSH_URL==null?env.GIT_URL:env.GITLAB_OA_TARGET_GIT_SSH_URL
     URL url = new URL(GIT_URL.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'))
     String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4"
     String encodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F')
