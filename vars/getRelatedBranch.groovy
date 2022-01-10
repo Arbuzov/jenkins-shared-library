@@ -11,7 +11,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 def call (String relatedProjectOriginUrl, String apiSecretId = '') {
-  
+
   env.putAt('GIT_RELATED_URL', '');
   env.putAt('GIT_RELATED_BRANCH', '');
   sh "env"
@@ -26,7 +26,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
     String forksUrl = gitLabAPIUrl+"/projects/"+encodedProject+"/forks/?private_token=" + gitLabAPISecret;
     String branchesUrl = '';
     String relatedUrl = '';
-   
+
 	  SSLContextBuilder builder = new SSLContextBuilder();
 	  builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 	  SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
@@ -37,7 +37,7 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 	  HttpEntity entity = response.getEntity();
     ArrayList  forksList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
     EntityUtils.consume(entity);
-    
+
     forksList.each { fork->
       if (fork.namespace.name.equals(env.GITLAB_OA_SOURCE_NAMESPACE)) {
         branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?per_page=100&private_token=" + gitLabAPISecret;
@@ -49,10 +49,10 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 	    httpget = new HttpGet(branchesUrl);
 	    response = httpclient.execute(httpget);
 	    entity = response.getEntity();
-	
+
 	    ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
       EntityUtils.consume(entity);
-	
+
 	    branchesList.each { branch->
 		    if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
           env.putAt('GIT_RELATED_BRANCH', env.GITLAB_OA_SOURCE_BRANCH);
