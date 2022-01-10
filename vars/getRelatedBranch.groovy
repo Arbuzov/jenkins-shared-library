@@ -21,20 +21,20 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 
   withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
     URL url = new URL(relatedProjectOriginUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
-	  String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
+    String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
     String encodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
     String forksUrl = gitLabAPIUrl+"/projects/"+encodedProject+"/forks/?private_token=" + gitLabAPISecret;
     String branchesUrl = '';
     String relatedUrl = '';
 
-	  SSLContextBuilder builder = new SSLContextBuilder();
-	  builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-	  SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-	  CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+    SSLContextBuilder builder = new SSLContextBuilder();
+    builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+    SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
+    CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 
-  	HttpGet httpget = new HttpGet(forksUrl);
-	  HttpResponse response = httpclient.execute(httpget);
-	  HttpEntity entity = response.getEntity();
+    HttpGet httpget = new HttpGet(forksUrl);
+    HttpResponse response = httpclient.execute(httpget);
+    HttpEntity entity = response.getEntity();
     ArrayList  forksList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
     EntityUtils.consume(entity);
 
@@ -43,22 +43,22 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
         branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?per_page=100&private_token=" + gitLabAPISecret;
         relatedUrl = fork.ssh_url_to_repo;
       }
-	  }
+    }
 
     if (!branchesUrl.equals('')) {
-	    httpget = new HttpGet(branchesUrl);
-	    response = httpclient.execute(httpget);
-	    entity = response.getEntity();
+      httpget = new HttpGet(branchesUrl);
+      response = httpclient.execute(httpget);
+      entity = response.getEntity();
 
-	    ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
+      ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
       EntityUtils.consume(entity);
 
-	    branchesList.each { branch->
-		    if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
+      branchesList.each { branch->
+        if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
           env.putAt('GIT_RELATED_BRANCH', env.GITLAB_OA_SOURCE_BRANCH);
           env.putAt('GIT_RELATED_URL', relatedUrl);
-		    }
-	    }
+        }
+      }
     }
   }
 }
