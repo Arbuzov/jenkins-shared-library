@@ -1,4 +1,5 @@
-@Library('debug@debug_library')_
+@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
+//@Library('debug@debug_library')_
 //@Library('asatnet@master')_
 pipeline {
   agent {label 'master'}
