@@ -156,8 +156,21 @@ pipeline {
         changeRequest()
       }
       steps {
-        getRelatedBranch(env.GITLAB_OA_TARGET_GIT_SSH_URL, 'jenkins-violations-secret')
+        script {
+          env.putAt('COPY_OF_SOURCE_NAMESPACE', env.GITLAB_OA_SOURCE_NAMESPACE)
+          env.putAt('COPY_OF_SOURCE_BRANCH', env.GITLAB_OA_SOURCE_BRANCH)
+
+          env.putAt('GITLAB_OA_SOURCE_NAMESPACE', 'Evgueni Souleimanov')
+          env.putAt('GITLAB_OA_SOURCE_BRANCH', 'gps_log')
+        }
         sh "env"
+        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
+        sh "env"
+
+        script {
+          env.putAt('GITLAB_OA_SOURCE_NAMESPACE', env.COPY_OF_SOURCE_NAMESPACE)
+          env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
+	}
       }
     }
   }
