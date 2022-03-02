@@ -9,7 +9,12 @@ pipeline {
   stages {
     stage('Test steps')
     {
+      environment {
+        CHANGE_REQUEST_BUILD_NUMBER = """${ getChangeRequestBuildNumber() }"""
+      }
       steps {
+        echo "CHANGE_REQUEST_BUILD_NUMBER='" + env.CHANGE_REQUEST_BUILD_NUMBER + "'"
+
         sh "install -d versioned && install -d latest && env>debug.txt"
 
         print(getNPMPackageVersion())
