@@ -60,7 +60,7 @@ def call() {
 	varNames.each { varName ->
 		String varValue = env.getAt(varName);
 		if (varValue != null) {
-			if (true) {
+			if (false) {
 				println("debug: Saving environment variable " + varName + "='" + varValue + "'");
 			}
 			env.putAt(varName, varValue);
