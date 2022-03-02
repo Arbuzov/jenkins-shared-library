@@ -162,6 +162,7 @@ pipeline {
         changeRequest()
       }
       steps {
+        saveEnvVarsForChangeRequest()
         script {
           env.putAt('COPY_OF_SOURCE_NAMESPACE', env.GITLAB_OA_SOURCE_NAMESPACE)
           env.putAt('COPY_OF_SOURCE_BRANCH', env.GITLAB_OA_SOURCE_BRANCH)
