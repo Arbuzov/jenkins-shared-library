@@ -183,39 +183,33 @@ pipeline {
   }
   post {
     failure {
-      script {
-        echo "======== **Pipeline execution FAILED.** ========"
-        withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-          noteToMrGitlab(
-            "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
-            "${env.CHANGE_ID}",
-            "**Pipeline execution FAILED.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
-          )
-        }
+      echo "======== **Pipeline execution FAILED.** ========"
+      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+        noteToMrGitlab(
+          "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
+          "${env.CHANGE_ID}",
+          "**Pipeline execution FAILED.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+        )
       }
     }
     unstable {
-      script {
-        echo "======== **Pipeline execution result is UNSTABLE.** ========"
-        withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-          noteToMrGitlab(
-            "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
-            "${env.CHANGE_ID}",
-            "**Pipeline execution result is UNSTABLE.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
-          )
-        }
+      echo "======== **Pipeline execution result is UNSTABLE.** ========"
+      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+        noteToMrGitlab(
+          "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
+          "${env.CHANGE_ID}",
+          "**Pipeline execution result is UNSTABLE.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+        )
       }
     }
     success {
-      script {
-        echo "======== All stages in the pipeline have been completed. ========"
-        withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-          noteToMrGitlab(
-            "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
-            "${env.CHANGE_ID}",
-            "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
-          )
-        }
+      echo "======== All stages in the pipeline have been completed. ========"
+      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+        noteToMrGitlab(
+          "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
+          "${env.CHANGE_ID}",
+          "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+        )
       }
     }
   }
