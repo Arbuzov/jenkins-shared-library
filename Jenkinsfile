@@ -22,6 +22,9 @@ pipeline {
 
         sh "install -d versioned && install -d latest && env>debug.txt"
 
+        sh "install -d -m 0755 scripts/jenkins"
+        loadSharedLibraryFile("pipelinelib_functions.sh", "scripts/jenkins/tmp_pipelinelib_functions.sh")
+
         print(getNPMPackageVersion())
 
 //      createNewJiraVersion("1.1.${BUILD_NUMBER}", 'DEVOPS')
@@ -129,6 +132,23 @@ pipeline {
             "## Release ${BUILD_NUMBER}\n\n__Build reference:__ ${BUILD_URL}\n\n__Artifactory:__ ${ARTIFACTORY_UPLOADS[0]}"
           );
         }
+        sh """#!/bin/sh
+              set -x
+              set -e
+
+              . scripts/jenkins/tmp_pipelinelib_functions.sh
+
+              pipelinelib_do_debug_show_info
+              pipelinelib_override_source_date_epoch
+              pipelinelib_override_build_number
+              pipelinelib_override_build_tag
+
+              pipelinelib_generate_checksums_file . . sha256sum .tmp_00_sha256sum_shared_lib.txt
+
+              cat .tmp_00_sha256sum_shared_lib.txt
+              pipelinelib_do_debug_show_info
+
+        """
 
         copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
 
