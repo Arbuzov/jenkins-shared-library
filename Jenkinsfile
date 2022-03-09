@@ -13,6 +13,7 @@ pipeline {
         CHANGE_REQUEST_BUILD_NUMBER = """${ getChangeRequestBuildNumber() }"""
       }
       steps {
+        echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='" + env.CHANGE_REQUEST_BUILD_NUMBER + "'"
 
         sh "install -d versioned && install -d latest && env>debug.txt"
