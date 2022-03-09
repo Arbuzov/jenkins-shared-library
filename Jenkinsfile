@@ -13,6 +13,10 @@ pipeline {
         CHANGE_REQUEST_BUILD_NUMBER = """${ getChangeRequestBuildNumber() }"""
       }
       steps {
+        requireCleanGitWorkTree()
+        // doCleanGitWorkTree()
+        requireNoGeneratedGlobalFiles()
+
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='" + env.CHANGE_REQUEST_BUILD_NUMBER + "'"
 
