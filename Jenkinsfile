@@ -236,5 +236,9 @@ pipeline {
         )
       }
     }
+    cleanup {
+      echo "Deleting all workspace contents after completing the pipeline..."
+      doCleanWorkspaceAfterStage(true, false)
+    }
   }
 }
