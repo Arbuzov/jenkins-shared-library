@@ -1,3 +1,5 @@
+// getRelatedBranch(): Get target project fork and branch from source project URL and branch
+
 import groovy.json.JsonSlurper;
 import org.apache.http.*;
 import org.apache.http.client.methods.*;
