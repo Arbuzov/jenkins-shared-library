@@ -187,9 +187,14 @@ pipeline {
       }
       steps {
         saveEnvVarsForChangeRequest()
+        // Find a related branch for hardcoded inputs - BEGIN
         script {
-          env.putAt('COPY_OF_SOURCE_NAMESPACE', env.GITLAB_OA_SOURCE_NAMESPACE)
-          env.putAt('COPY_OF_SOURCE_BRANCH', env.GITLAB_OA_SOURCE_BRANCH)
+          if (env.GITLAB_OA_SOURCE_NAMESPACE != null) {
+            env.putAt('COPY_OF_SOURCE_NAMESPACE', env.GITLAB_OA_SOURCE_NAMESPACE)
+          }
+          if (env.GITLAB_OA_SOURCE_BRANCH != null) {
+            env.putAt('COPY_OF_SOURCE_BRANCH', env.GITLAB_OA_SOURCE_BRANCH)
+          }
 
           env.putAt('GITLAB_OA_SOURCE_NAMESPACE', 'Evgueni Souleimanov')
           env.putAt('GITLAB_OA_SOURCE_BRANCH', 'gps_log')
@@ -199,9 +204,14 @@ pipeline {
         sh "env"
 
         script {
-          env.putAt('GITLAB_OA_SOURCE_NAMESPACE', env.COPY_OF_SOURCE_NAMESPACE)
-          env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
+          if (env.COPY_OF_SOURCE_NAMESPACE != null) {
+            env.putAt('GITLAB_OA_SOURCE_NAMESPACE', env.COPY_OF_SOURCE_NAMESPACE)
+          }
+          if (env.COPY_OF_SOURCE_BRANCH != null) {
+            env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
+          }
 	}
+        // Find a related branch for hardcoded inputs - END
       }
     }
   }
