@@ -187,6 +187,13 @@ pipeline {
       }
       steps {
         saveEnvVarsForChangeRequest()
+
+        // Find a related branch for this merge request - BEGIN
+        sh "env"
+        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
+        sh "env"
+        // Find a related branch for this merge request - END
+
         // Find a related branch for hardcoded inputs - BEGIN
         script {
           if (env.GITLAB_OA_SOURCE_NAMESPACE != null) {

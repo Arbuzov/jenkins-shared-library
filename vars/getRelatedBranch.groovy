@@ -19,8 +19,17 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
   env.putAt('GIT_RELATED_BRANCH', '');
 
   if (apiSecretId == '') throw new Exception("Attribute apiSecretId must be set.");
-  if (env.GITLAB_OA_SOURCE_BRANCH == null) throw new Exception("Variable 'GITLAB_OA_SOURCE_BRANCH' is undefined. You must use this function with the GitLab merge request.");
-  if (env.GITLAB_OA_SOURCE_NAMESPACE == null) throw new Exception("Variable 'GITLAB_OA_SOURCE_NAMESPACE' is undefined. You must use this function with the GitLab merge request.");
+  if (env.CHANGE_ID == null) throw new Exception("Variable 'CHANGE_ID' is undefined. You must use getRelatedBranch() function with a GitLab merge request.");
+
+  if (!(env.GITLAB_OA_SOURCE_BRANCH != null && env.GITLAB_OA_SOURCE_NAMESPACE != null)) {
+    // Called by Jenkins when building a change request, but without involving GitLab,
+    // for example when the user pressed Rescan GitLab project or Rebuild buttons.
+    // We cannot use GitLab API in this case.
+    // Just let the caller build the main branch of dependent projects in this case.
+    println("WARNING: Building change request '" + env.CHANGE_ID.toString() + "' without going through GitLab, for some reason");
+    println("WARNING: will build the main branch of dependent projects");
+    return;
+  }
 
   println("Looking for related branch for namespace '" + env.GITLAB_OA_SOURCE_NAMESPACE.toString() + "' branch '" + env.GITLAB_OA_SOURCE_BRANCH.toString() + "' in related target project '" + relatedProjectOriginUrl + "'...");
 
