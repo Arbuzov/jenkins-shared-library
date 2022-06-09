@@ -1,7 +1,7 @@
 def call() {
 	def isWindows = true
 	try {
-		bat "echo ''"
+		bat ""
 	} catch (java.io.IOException exeption) {
 		isWindows = false
 	}
