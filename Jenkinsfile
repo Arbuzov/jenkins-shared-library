@@ -1,5 +1,5 @@
-@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
-//@Library('debug@debug_library')_
+//@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
+@Library('debug@debug_library')_
 //@Library('asatnet@master')_
 pipeline {
   agent {label 'master'}
@@ -32,6 +32,10 @@ pipeline {
         createNewJiraVersion("1.1.0", 'DEVOPS')
 
         iterateBuilds()
+        
+//      sh 'git fetch --all --tags'
+        
+        echo getLastTag()
 
         publishSummary(
           arrayToString(
