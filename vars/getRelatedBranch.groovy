@@ -13,6 +13,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 def call (String relatedProjectOriginUrl, String apiSecretId = '') {
+	int pageNum = 0;
+	int itemsOnPageCount = 0;     // items on page
 	int forksCount = 0;
 	int branchesCount = 0;
 	env.putAt('GIT_RELATED_URL', '');
@@ -37,8 +39,8 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 		URL url = new URL(relatedProjectOriginUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));
 		String gitLabAPIUrl = "https://"+url.getHost()+"/api/v4";
 		String encodedProject = url.getPath().substring(1).replace('.git', '').replace('/', '%2F');
-		String forksUrl = gitLabAPIUrl+"/projects/"+encodedProject+"/forks/?private_token=" + gitLabAPISecret;
-		String branchesUrl = '';
+		String forksUrlPrefix = gitLabAPIUrl+"/projects/"+encodedProject+"/forks/";
+		String branchesUrlPrefix = '';
 		String relatedUrl = '';
 		String relatedBranchStr = '';
 
@@ -46,45 +48,68 @@ def call (String relatedProjectOriginUrl, String apiSecretId = '') {
 		builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
 		CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-
-		HttpGet httpget = new HttpGet(forksUrl);
-		HttpResponse response = httpclient.execute(httpget);
-		HttpEntity entity = response.getEntity();
-		ArrayList  forksList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
-		EntityUtils.consume(entity);
+		HttpGet httpget = null;
+		HttpResponse response = null;
+		HttpEntity entity = null;
 
 		forksCount = 0;
-		forksList.each { fork->
-			forksCount++;
-			if (fork.namespace.name.equals(env.GITLAB_OA_SOURCE_NAMESPACE)) {
-				branchesUrl = gitLabAPIUrl+"/projects/"+fork.path_with_namespace.replace('/', '%2F')+"/repository/branches/?per_page=100&private_token=" + gitLabAPISecret;
-				relatedUrl = fork.ssh_url_to_repo;
-				println("Found related fork '" + relatedUrl + "' for related target project '" + relatedProjectOriginUrl + "'")
-			}
-		}
-		println("Note: Looked at " + forksCount.toString() + " forks for related target project '" + relatedProjectOriginUrl + "'")
+		for (pageNum = 1; pageNum <= 20; pageNum++) {
+			String forksUrl = forksUrlPrefix + "?page=" + pageNum.toString() + "&private_token=" + gitLabAPISecret;
 
-		if (!branchesUrl.equals('')) {
-			httpget = new HttpGet(branchesUrl);
+			httpget = new HttpGet(forksUrl);
 			response = httpclient.execute(httpget);
 			entity = response.getEntity();
-
-			ArrayList  branchesList=(new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
+			ArrayList forksList = (new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
 			EntityUtils.consume(entity);
 
-			branchesCount = 0;
-			branchesList.each { branch->
-				branchesCount++;
-				if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
-					relatedBranchStr = env.GITLAB_OA_SOURCE_BRANCH;
-					env.putAt('GIT_RELATED_BRANCH', relatedBranchStr);
-					env.putAt('GIT_RELATED_URL', relatedUrl);
-					println("Found related branch '" + relatedBranchStr + "' for related fork '" + relatedUrl + "'")
+			itemsOnPageCount = 0;
+			forksList.each { fork->
+				itemsOnPageCount++;
+				forksCount++;
+				if (fork.namespace.name.equals(env.GITLAB_OA_SOURCE_NAMESPACE)) {
+					branchesUrlPrefix = gitLabAPIUrl + "/projects/" + fork.path_with_namespace.replace('/', '%2F') + "/repository/branches/";
+					relatedUrl = fork.ssh_url_to_repo;
+					println("Found related fork '" + relatedUrl + "' on page " + pageNum.toString() + ", for related target project '" + relatedProjectOriginUrl + "'")
 				}
 			}
 
-			println("Note: Looked at " + branchesCount.toString() + " branches for related fork '" + relatedUrl + "'")
+			if (itemsOnPageCount == 0) {
+				break;
+			}
+		}
 
+		println("Note: Looked at " + forksCount.toString() + " forks on " + pageNum.toString() + " pages, for related target project '" + relatedProjectOriginUrl + "'")
+
+		if (!branchesUrlPrefix.equals('')) {
+			branchesCount = 0;
+			for (pageNum = 1; pageNum <= 20; pageNum++) {
+				String branchesUrl = branchesUrlPrefix + "?per_page=100&page=" + pageNum.toString() + "&private_token=" + gitLabAPISecret;
+
+				httpget = new HttpGet(branchesUrl);
+				response = httpclient.execute(httpget);
+				entity = response.getEntity();
+
+				ArrayList branchesList = (new JsonSlurper().parseText(IOUtils.toString(entity.getContent(), "UTF-8")));
+				EntityUtils.consume(entity);
+
+				itemsOnPageCount = 0;
+				branchesList.each { branch->
+					itemsOnPageCount++;
+					branchesCount++;
+					if (branch.name.equals(env.GITLAB_OA_SOURCE_BRANCH)) {
+						relatedBranchStr = env.GITLAB_OA_SOURCE_BRANCH;
+						env.putAt('GIT_RELATED_BRANCH', relatedBranchStr);
+						env.putAt('GIT_RELATED_URL', relatedUrl);
+						println("Found related branch '" + relatedBranchStr + "' on page " + pageNum.toString() + ", for related fork '" + relatedUrl + "'")
+					}
+				}
+
+				if (itemsOnPageCount == 0) {
+					break;
+				}
+			}
+
+			println("Note: Looked at " + branchesCount.toString() + " branches on " + pageNum.toString() + " pages, for related fork '" + relatedUrl + "'")
 		}
 	}
 }
