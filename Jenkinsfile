@@ -1,5 +1,5 @@
-//@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
-@Library('debug@debug_library')_
+@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
+//@Library('debug@debug_library')_
 //@Library('asatnet@master')_
 pipeline {
   agent {label 'master'}
@@ -208,7 +208,7 @@ pipeline {
           }
 
           env.putAt('GITLAB_OA_SOURCE_NAMESPACE', 'Evgueni Souleimanov')
-          env.putAt('GITLAB_OA_SOURCE_BRANCH', 'gps_log')
+          env.putAt('GITLAB_OA_SOURCE_BRANCH', 'z_branch_240')
         }
         sh "env"
         getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
