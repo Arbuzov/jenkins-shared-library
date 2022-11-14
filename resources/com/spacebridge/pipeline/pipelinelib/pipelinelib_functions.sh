@@ -110,8 +110,12 @@ pipelinelib_generate_checksums_bsd_for_file()
 	local _file_size=
 
 	if [ -f "${_file_path}" ] ; then
-		_file_size="$( stat --format='%s' "${_file_path}" )"
+		# NOTE: do not use stat command, it is not working in some environments on Jenkins
+		_file_size="$( wc -c <"${_file_path}" | cut -d ' ' -f 1 | grep -E -o '^[0-9]+$' )"
 	else
+		_file_size="-1"
+	fi
+	if [ -z "${_file_path}" ] ; then
 		_file_size="-1"
 	fi
 
