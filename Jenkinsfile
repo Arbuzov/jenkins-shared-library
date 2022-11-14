@@ -150,9 +150,23 @@ pipeline {
               pipelinelib_generate_checksums_file . . sha256sum .tmp_00_sha256sum_shared_lib.txt
 
               cat .tmp_00_sha256sum_shared_lib.txt
+
+              ( cd ./firmware && find . ! -type d ! -type l -print | sed -e 's,^[.]/,,' | LC_ALL=C sort | pipelinelib_generate_checksums_bsd_for_list ; ) >.tmp_01_checksums.txt
+
               pipelinelib_do_debug_show_info
 
         """
+
+        rtp(
+            stableText: '<h3>Checksums for files</h3><pre>' +
+                    readFile('.tmp_01_checksums.txt') +
+                    '</pre>',
+            unstableAsStable: true,
+            parserName: 'HTML',
+            failedAsStable: true,
+            abortedAsStable: true,
+            nullAction: '1'
+        )
 
         copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
 
