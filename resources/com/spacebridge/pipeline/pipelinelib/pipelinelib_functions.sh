@@ -97,7 +97,7 @@ _pipelinelib_generate_checksum_for_file()
 	fi
 	if [ -z "${_file_checksum}" ] ; then
 		# repeat a space N times, the replace spaces with 'f' s
-		_file_checksum="$( printf "%${_checksum_chars_len}s" ' ' | tr ' ' 'f' )"
+		_file_checksum="$( printf '%*s'   "${_checksum_chars_len}"   ' ' | tr   ' '   'f' )"
 	fi
 	printf '%s (%s) = %s\n' "${_prefix_name}" "${_file_path}" "${_file_checksum}"
 }
