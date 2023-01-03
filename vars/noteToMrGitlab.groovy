@@ -25,7 +25,7 @@ def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = t
   httpRequest(
     url: mrUrl.toString(),
     httpMode: 'POST',
-    consoleLogResponseBody: true,
+    consoleLogResponseBody: false,
     contentType: 'APPLICATION_JSON',
     requestBody: JsonOutput.toJson([body: body])
   )

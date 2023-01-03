@@ -19,7 +19,7 @@ pipeline {
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
-        sh "env"
+        
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='${getChangeRequestBuildNumber()}'"
 
@@ -44,6 +44,8 @@ pipeline {
           ),
           "Unversioned list"
         )
+        
+        publishNexus('firmware/*', 'http://nexus.asatnet.net/repository/store/debug/')
 
         publishSummary(
           arrayToString(
