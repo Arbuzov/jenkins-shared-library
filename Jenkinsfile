@@ -1,8 +1,6 @@
-//@Library('souleimanov_jenkins_shared_lib@souleimanov_debug')_
-@Library('debug@debug_library')_
-//@Library('asatnet@master')_
+@Library('asatnet@master')_
 pipeline {
-  agent {label 'master'}
+  agent {label 'parent-docker'}
   options {
     disableConcurrentBuilds()
   }
@@ -13,10 +11,11 @@ pipeline {
         CHANGE_REQUEST_BUILD_NUMBER = """${ getChangeRequestBuildNumber() }"""
       }
       steps {
+        println(library('asatnet@master'))
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
-
+        sh "env"
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='" + env.CHANGE_REQUEST_BUILD_NUMBER + "'"
 
@@ -221,7 +220,7 @@ pipeline {
           if (env.COPY_OF_SOURCE_BRANCH != null) {
             env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
           }
-	}
+        }
         // Find a related branch for hardcoded inputs - END
       }
     }
