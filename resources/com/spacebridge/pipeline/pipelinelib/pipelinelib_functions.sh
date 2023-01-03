@@ -84,6 +84,70 @@ pipelinelib_generate_checksums_file() {
 }
 
 
+_pipelinelib_generate_checksum_for_file()
+{
+	local _checksum_tool="${1}"
+	local _prefix_name="${2}"
+	local _checksum_chars_len="${3}"
+	local _file_path="${4}"
+	local _file_checksum=
+
+	if [ -f "${_file_path}" ] ; then
+		_file_checksum="$( "${_checksum_tool}" -b "${_file_path}" | cut -d ' ' -f 1 | grep -E -o '^[0-9A-Fa-f]{'"${_checksum_chars_len}"'}$' )"
+	fi
+	if [ -z "${_file_checksum}" ] ; then
+		# repeat a space N times, the replace spaces with 'f' s
+		_file_checksum="$( printf '%*s'   "${_checksum_chars_len}"   ' ' | tr   ' '   'f' )"
+	fi
+	printf '%s (%s) = %s\n' "${_prefix_name}" "${_file_path}" "${_file_checksum}"
+}
+
+# Generate sha256, sha1 and md5 checksums for one file, in BSD checksum style format
+# Argument: FILE_PATH, path to one file
+pipelinelib_generate_checksums_bsd_for_file()
+{
+	local _file_path="${1}"
+	local _file_size=
+
+	if [ -f "${_file_path}" ] ; then
+		# NOTE: do not use stat command, it is not working in some environments on Jenkins
+		_file_size="$( wc -c <"${_file_path}" | cut -d ' ' -f 1 | grep -E -o '^[0-9]+$' )"
+	else
+		_file_size="-1"
+	fi
+	if [ -z "${_file_path}" ] ; then
+		_file_size="-1"
+	fi
+
+	printf '%s (%s) = %s\n' 'SIZE' "${_file_path}" "${_file_size}"
+
+	# Disable SHA512 checksums for now
+	#_pipelinelib_generate_checksum_for_file "sha512sum" "SHA512" 128 "${_file_path}"
+	_pipelinelib_generate_checksum_for_file "sha256sum" "SHA256" 64 "${_file_path}"
+	_pipelinelib_generate_checksum_for_file "sha1sum" "SHA1" 40 "${_file_path}"
+	_pipelinelib_generate_checksum_for_file "md5sum" "MD5" 32 "${_file_path}"
+	printf '\n'
+}
+
+
+# Generate sha256, sha1 and md5 checksums for files, in BSD checksum style format
+# Input is newline-separated list of files on standard input
+pipelinelib_generate_checksums_bsd_for_list()
+{
+	( set +x ; set +e ; _pipelinelib_generate_checksums_bsd_for_list_sub "$@" ; )
+}
+
+_pipelinelib_generate_checksums_bsd_for_list_sub()
+{
+	set +x
+	set +e
+	local _file_path=
+	while IFS="$( printf '\n' )" read -r _file_path ; do
+		pipelinelib_generate_checksums_bsd_for_file "${_file_path}"
+	done
+}
+
+
 # Debug print ccache statistics - part A
 
 pipelinelib_debug_print_ccache_stats_A() {

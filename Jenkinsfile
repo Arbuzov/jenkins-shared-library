@@ -1,23 +1,27 @@
-@Library('asatnet@master')_
 pipeline {
-  agent {label 'parent-docker'}
+  agent {label 'master'}
   options {
     disableConcurrentBuilds()
   }
   stages {
     stage('Test steps')
     {
-      environment {
-        CHANGE_REQUEST_BUILD_NUMBER = """${ getChangeRequestBuildNumber() }"""
-      }
       steps {
-        println(library('asatnet@master'))
+        library(
+          identifier: "custom-lib@${env.GIT_BRANCH}",
+          retriever: modernSCM([
+            $class: 'GitSCMSource',
+            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL?env.GITLAB_OA_SOURCE_GIT_SSH_URL:env.GIT_URL}",
+            credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
+          ])
+        )
+
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
         sh "env"
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
-        echo "CHANGE_REQUEST_BUILD_NUMBER='" + env.CHANGE_REQUEST_BUILD_NUMBER + "'"
+        echo "CHANGE_REQUEST_BUILD_NUMBER='${getChangeRequestBuildNumber()}'"
 
         sh "install -d versioned && install -d latest && env>debug.txt"
 
@@ -26,13 +30,9 @@ pipeline {
 
         print(getNPMPackageVersion())
 
-//      createNewJiraVersion("1.1.${BUILD_NUMBER}", 'DEVOPS')
-
         createNewJiraVersion("1.1.0", 'DEVOPS')
 
-        iterateBuilds()
-        
-//      sh 'git fetch --all --tags'
+        // iterateBuilds()
         
         echo getLastTag()
 
@@ -149,9 +149,23 @@ pipeline {
               pipelinelib_generate_checksums_file . . sha256sum .tmp_00_sha256sum_shared_lib.txt
 
               cat .tmp_00_sha256sum_shared_lib.txt
+
+              ( cd ./firmware && find . ! -type d ! -type l -print | sed -e 's,^[.]/,,' | LC_ALL=C sort | pipelinelib_generate_checksums_bsd_for_list ; ) >.tmp_01_checksums.txt
+
               pipelinelib_do_debug_show_info
 
         """
+
+        rtp(
+            stableText: '<h3>Checksums for files</h3><pre>' +
+                    readFile('.tmp_01_checksums.txt') +
+                    '</pre>',
+            unstableAsStable: true,
+            parserName: 'HTML',
+            failedAsStable: true,
+            abortedAsStable: true,
+            nullAction: '1'
+        )
 
         copyFromArtifactory('FileExchange/debug/', 'artifactory', 'latest');
 
@@ -189,6 +203,14 @@ pipeline {
         changeRequest()
       }
       steps {
+        library(
+          identifier: "custom-lib@${env.GIT_BRANCH}",
+          retriever: modernSCM([
+            $class: 'GitSCMSource',
+            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL?env.GITLAB_OA_SOURCE_GIT_SSH_URL:env.GIT_URL}",
+            credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
+          ])
+        )
         saveEnvVarsForChangeRequest()
 
         // Find a related branch for this merge request - BEGIN
@@ -207,7 +229,7 @@ pipeline {
           }
 
           env.putAt('GITLAB_OA_SOURCE_NAMESPACE', 'Evgueni Souleimanov')
-          env.putAt('GITLAB_OA_SOURCE_BRANCH', 'gps_log')
+          env.putAt('GITLAB_OA_SOURCE_BRANCH', 'z_branch_240')
         }
         sh "env"
         getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
