@@ -1,0 +1,18 @@
+def call(issueId, link, title = '', credentialsId = 'jira-username-password') {
+
+    def issueInfo = getIssueInfo(issueId)
+    def linksUrl  = issueInfo.self+'/remotelink'
+
+    if (title.equals('')) {
+       title = link.tokenize('/')[-1]
+    }
+    def data = "{\"object\":{\"url\":\"${link}\",\"title\":\"${title}\"}}"
+    httpRequest(
+      url: linksUrl,
+      httpMode: 'POST',
+      consoleLogResponseBody: false,
+      contentType: 'APPLICATION_JSON',
+      authentication: credentialsId,
+      requestBody: data
+    )
+}

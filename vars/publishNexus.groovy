@@ -1,6 +1,6 @@
 ArrayList call(String artifactsPattern, String repoPath, String credentialsId = '25d60c09-852c-4464-9bf1-877c7a165c2c') {
   def fileList = findFiles(glob: artifactsPattern).toList()
-  println(fileList)
+  ArrayList selectedFiles = []
   findFiles(glob: artifactsPattern).toList().each{
     httpRequest(
       url: repoPath+it.path,
@@ -15,5 +15,7 @@ ArrayList call(String artifactsPattern, String repoPath, String credentialsId = 
 //      consoleLogResponseBody: true,
       wrapAsMultipart: false
     )
+    selectedFiles.add(repoPath+it.path)
   }
+  return selectedFiles
 }
