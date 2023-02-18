@@ -31,6 +31,8 @@ pipeline {
         print(getNPMPackageVersion())
 
         createNewJiraVersion("1.1.0", 'DEVOPS')
+        
+        // assignJiraFixVersion("1.1.0", 'DEVOPS', "In Progress")
 
         // iterateBuilds()
         
@@ -175,6 +177,7 @@ pipeline {
           artifacts: "**/**",
           onlyIfSuccessful: false
         )
+        /*
         publishArtifactsInGitlabComment()
         script {
           try {
@@ -190,6 +193,7 @@ pipeline {
             }
           }
         }
+        */
         echo getLatestApprover()
 
         //print mergeRequestsChangeLog('jenkins-violations-secret')
