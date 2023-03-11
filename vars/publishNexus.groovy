@@ -15,7 +15,7 @@ ArrayList call(String artifactsPattern, String repoPath, Boolean flattern = fals
 //      consoleLogResponseBody: true,
       wrapAsMultipart: false
     )
-    selectedFiles.add(repoPath+it.path)
+    selectedFiles.add(repoPath+(flattern?it.name:it.path))
   }
   return selectedFiles
 }
