@@ -1,9 +1,9 @@
-ArrayList call(String artifactsPattern, String repoPath, String credentialsId = '25d60c09-852c-4464-9bf1-877c7a165c2c') {
+ArrayList call(String artifactsPattern, String repoPath, Boolean flattern = false, String credentialsId = '25d60c09-852c-4464-9bf1-877c7a165c2c') {
   def fileList = findFiles(glob: artifactsPattern).toList()
   ArrayList selectedFiles = []
   findFiles(glob: artifactsPattern).toList().each{
     httpRequest(
-      url: repoPath+it.path,
+      url: repoPath+(flattern?it.name:it.path),
       httpMode: 'PUT',
       ignoreSslErrors: true,
       contentType: 'APPLICATION_OCTETSTREAM',
