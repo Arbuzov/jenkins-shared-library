@@ -29,7 +29,8 @@ pipeline {
         loadSharedLibraryFile("pipelinelib_functions.sh", "scripts/jenkins/tmp_pipelinelib_functions.sh")
 
         print(getNPMPackageVersion())
-
+        print(makeYMD())
+        print(makeYMD('-'))
         createNewJiraVersion("1.1.0", 'DEVOPS')
         
         // assignJiraFixVersion("1.1.0", 'DEVOPS', "In Progress")
