@@ -1,4 +1,4 @@
-def call() {
+def call(String PACKAGE_NAME) {
   pipeline {
     agent none
     options {
