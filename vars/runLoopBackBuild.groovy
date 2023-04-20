@@ -1,5 +1,4 @@
 def call() {
-  @Library('asatnet@master')_
   pipeline {
     agent none
     options {
