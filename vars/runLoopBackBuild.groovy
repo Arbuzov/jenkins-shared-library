@@ -47,7 +47,6 @@ def call() {
             }
           }
           withSonarQubeEnv('SonarQube Server') {
-            sh "ls -la1"
             sh "sonar-scanner"
           }
         }
