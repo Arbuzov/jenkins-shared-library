@@ -5,6 +5,7 @@ def call(String PACKAGE_NAME) {
       buildDiscarder(logRotator(daysToKeepStr: '20', artifactDaysToKeepStr: '7'))
       disableConcurrentBuilds()
       preserveStashes(buildCount: 5)
+      timestamps()
     }
     stages {
       stage ('Build') {
