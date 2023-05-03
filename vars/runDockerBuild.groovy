@@ -1,4 +1,4 @@
-def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge') {
+def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERSION = '1.0.0') {
   pipeline {
     agent {
       label 'farmer-docker-ubuntu'
@@ -30,7 +30,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge') {
           }
         }
         environment {
-          VERSION = "0.1.1-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.branch}b${BUILD_NUMBER}"
+          VERSION = "${BASE_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.branch}b${BUILD_NUMBER}"
         }
         steps {
           script {
@@ -58,7 +58,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge') {
           }
         }
         environment {
-          VERSION = "0.1.1-b${BUILD_NUMBER}"
+          VERSION = "${BASE_VERSION}-b${BUILD_NUMBER}"
         }
         steps {
           script {
