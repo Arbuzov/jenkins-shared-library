@@ -16,7 +16,7 @@ def call(String PACKAGE_NAME) {
         }
         steps {
           sh 'npm run ci'
-          stash(name: 'report', includes: 'report*,report/**', allowEmpty: true)
+          stash(name: 'report', includes: 'report*,report/**,coverage/**', allowEmpty: true)
         }
         post {
           failure {
