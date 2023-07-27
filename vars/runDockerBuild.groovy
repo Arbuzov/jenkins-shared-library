@@ -37,7 +37,6 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
               image.push(VERSION)
-              sh "docker rmi ${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION}"
             }
             currentBuild.displayName = VERSION
             publishSummary(
@@ -67,7 +66,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
               def image = docker.build("${NAMESPACE}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
               image.push('latest')
               image.push(VERSION)
-              sh "docker rmi ${NAMESPACE}/${PACKAGE_NAME}:${VERSION} ${NAMESPACE}/${PACKAGE_NAME}:latest"
+              sh "docker rmi ${NAMESPACE}/${PACKAGE_NAME}:latest"
             }
             currentBuild.displayName = VERSION
             publishSummary(
