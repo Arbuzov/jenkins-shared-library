@@ -59,7 +59,7 @@ def call(String PACKAGE_NAME) {
           }
         }
         agent {
-          label 'sisyphus.asatnet.net'
+          label 'farmer-docker-ubuntu'
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
@@ -102,7 +102,7 @@ def call(String PACKAGE_NAME) {
           label 'sisyphus.asatnet.net'
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.branch}b${BUILD_NUMBER}"
+          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
         }
         steps {
           script {
