@@ -99,7 +99,7 @@ def call(String PACKAGE_NAME) {
           }
         }
         agent {
-          label 'sisyphus.asatnet.net'
+          label 'farmer-docker-ubuntu'
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
