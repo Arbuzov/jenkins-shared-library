@@ -41,7 +41,7 @@ pipeline {
 
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/', 'artifactory', 'firmware/.*','', false),
+            publishArtifactory('FileExchange/debug/', 'artifactory', 'resources/.*','', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),
@@ -52,7 +52,7 @@ pipeline {
 
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','1/2/3', false),
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'resources/.*','1/2/3', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),
@@ -61,7 +61,7 @@ pipeline {
 
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','/4/5/6/', false),
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'resources/.*','/4/5/6/', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),
@@ -70,7 +70,7 @@ pipeline {
 
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'firmware/.*','', false),
+            publishArtifactory('FileExchange/debug/new/test/', 'artifactory', 'resources/.*','', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),
@@ -79,7 +79,7 @@ pipeline {
 
         publishSummary(
           arrayToString(
-            publishArtifactory('FileExchange/debug/new', 'artifactory', 'firmware/.*','', false),
+            publishArtifactory('FileExchange/debug/new', 'artifactory', 'resources/.*','', false),
             ["\t<li>","</li>\n"],
             ["<ul>\n","</ul>\n"]
           ),
@@ -87,28 +87,28 @@ pipeline {
         )
         publishSummary(
           arrayToHrefList(
-            publishArtifactory('FileExchange/debug/tree1/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER, false)
+            publishArtifactory('FileExchange/debug/tree1/2020/11', 'artifactory', 'resources/.*', 'b' + env.BUILD_NUMBER, false)
           ),
           "Build with the flat number deep folders"
         )
 
         publishSummary(
           arrayToHrefList(
-            publishArtifactory('FileExchange/debug/tree2/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', false)
+            publishArtifactory('FileExchange/debug/tree2/2020/11', 'artifactory', 'resources/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', false)
           ),
           "Build with the deep number flat folders"
         )
 
         publishSummary(
           arrayToHrefList(
-            publishArtifactory('FileExchange/debug/flat1/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER, true)
+            publishArtifactory('FileExchange/debug/flat1/2020/11', 'artifactory', 'resources/.*', 'b' + env.BUILD_NUMBER, true)
           ),
           "Build with the flat number deep folders"
         )
 
         publishSummary(
           arrayToHrefList(
-            publishArtifactory('FileExchange/debug/flat2/2020/11', 'artifactory', 'firmware/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', true)
+            publishArtifactory('FileExchange/debug/flat2/2020/11', 'artifactory', 'resources/.*', 'b' + env.BUILD_NUMBER + '/1/2/3', true)
           ),
           "Build with the deep number deep folders"
         )
@@ -155,7 +155,7 @@ pipeline {
 
               cat .tmp_00_sha256sum_shared_lib.txt
 
-              ( cd ./firmware && find . ! -type d ! -type l -print | sed -e 's,^[.]/,,' | LC_ALL=C sort | pipelinelib_generate_checksums_bsd_for_list ; ) >.tmp_01_checksums.txt
+              ( cd ./resources && find . ! -type d ! -type l -print | sed -e 's,^[.]/,,' | LC_ALL=C sort | pipelinelib_generate_checksums_bsd_for_list ; ) >.tmp_01_checksums.txt
 
               pipelinelib_do_debug_show_info
 
@@ -178,23 +178,7 @@ pipeline {
           artifacts: "**/**",
           onlyIfSuccessful: false
         )
-        /*
-        publishArtifactsInGitlabComment()
-        script {
-          try {
-            timeout(time: 20, unit: 'SECONDS') {
-              input (
-                message: "Message"
-              );
-            }
-          } catch (err) {
-            def user = err.getCauses()[0].getUser()
-            if('SYSTEM' == user.toString()) {
-              currentBuild.result = "SUCCESS"
-            }
-          }
-        }
-        */
+
         echo getLatestApprover()
 
         //print mergeRequestsChangeLog('jenkins-violations-secret')
