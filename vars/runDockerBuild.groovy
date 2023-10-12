@@ -1,4 +1,17 @@
 def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERSION = '1.0.0') {
+
+  def changeDefinition(): String {
+    def result = ''
+    if (env.CHANGE_ID) {
+      result = "change-${env.CHANGE_ID}"
+    } else if (env.GIT_BRANCH) {
+      result = env.GIT_BRANCH.replace('/', '-')
+    } else if (env.GIT_TAG_NAME) {
+      result = env.GIT_TAG_NAME.replace('/', '-')
+    }
+    return result
+  }
+
   pipeline {
     agent {
       label 'farmer-docker-ubuntu'
@@ -30,7 +43,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
           }
         }
         environment {
-          VERSION = "${BASE_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.branch}b${BUILD_NUMBER}"
+          VERSION = "${BASE_VERSION}-${changeDefinition()}b${BUILD_NUMBER}"
         }
         steps {
           script {
