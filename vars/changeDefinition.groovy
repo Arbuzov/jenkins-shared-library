@@ -1,4 +1,4 @@
-def call(): String {
+String call() {
     def result = ''
     if (env.CHANGE_ID) {
         result = "mr${env.CHANGE_ID}"
