@@ -1,4 +1,8 @@
-def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERSION = '1.0.0') {
+def call(Map args) {
+  call(args.PACKAGE_NAME, args.NAMESPACE, args.BASE_VERSION, args.MULTI_BRANCH)
+}
+
+def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERSION = '1.0.0', Boolean MULTI_BRANCH = false) {
 
   pipeline {
     agent {
@@ -55,7 +59,10 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
       stage ('Create production image') {
         when {
           allOf {
-            branch 'master'
+            anyOf {
+              branch 'master'
+              expression { return MULTI_BRANCH }
+            }
             not { changeRequest() }
           }
         }
