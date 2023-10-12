@@ -3,7 +3,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
   def changeDefinition(): String {
     def result = ''
     if (env.CHANGE_ID) {
-      result = "change-${env.CHANGE_ID}"
+      result = "mr${env.CHANGE_ID}"
     } else if (env.GIT_BRANCH) {
       result = env.GIT_BRANCH.replace('/', '-')
     } else if (env.GIT_TAG_NAME) {
@@ -47,6 +47,7 @@ def call(String PACKAGE_NAME, String NAMESPACE = 'spacebridge', String BASE_VERS
         }
         steps {
           script {
+            sh "env"
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
               image.push(VERSION)
