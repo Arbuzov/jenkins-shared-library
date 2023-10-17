@@ -1,5 +1,4 @@
-
-def DIST_REPO = [
+DIST_REPO = [
   'stretch': [
     'repo': 'scpc',
     'image': 'debian:stretch-slim',
