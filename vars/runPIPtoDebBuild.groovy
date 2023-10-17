@@ -77,8 +77,8 @@ def call (String PACKAGE_NAME, String[] DISTS) {
                                             script {
                                                 findFiles(glob: "*.deb").each {
                                                     sh """
-                                                        sudo reprepro -C main -b /data/debian/ remove ${DIST_REPO[DIST_NAME]} `dpkg -f ${it.getName()} Package`
-                                                        sudo reprepro -C main -b /data/debian/ includedeb ${DIST_REPO[DIST_NAME]} ${it.getName()}
+                                                        sudo reprepro -C main -b /data/debian/ remove ${DIST_REPO[DIST_NAME]['repo']} `dpkg -f ${it.getName()} Package`
+                                                        sudo reprepro -C main -b /data/debian/ includedeb ${DIST_REPO[DIST_NAME]['repo']} ${it.getName()}
                                                         rm ${it.getName()}
                                                     """
                                                 }
