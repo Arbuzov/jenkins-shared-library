@@ -1,25 +1,25 @@
-DIST_REPO = [
-  'stretch': [
-    'repo': 'scpc',
-    'image': 'debian:stretch-slim',
-  ], 
-  'buster': [
-    'repo': 'buster',
-    'image': 'debian:buster-slim',
-  ],
-  'bullseye': [
-    'repo': 'bullseye',
-    'image': 'debian:bullseye-slim',
-  ],
-  'bookworm': [
-    'repo': 'bookworm-local',
-    'image': 'debian:bookworm-slim',
-  ]
-]
-
 def call (Map args) {
+    DIST_REPO = [
+        'stretch': [
+            'repo': 'scpc',
+            'image': 'debian:stretch-slim',
+        ], 
+        'buster': [
+            'repo': 'buster',
+            'image': 'debian:buster-slim',
+        ],
+        'bullseye': [
+            'repo': 'bullseye',
+            'image': 'debian:bullseye-slim',
+        ],
+        'bookworm': [
+            'repo': 'bookworm-local',
+            'image': 'debian:bookworm-slim',
+        ]
+    ]
     PACKAGE_NAME = args.PACKAGE_NAME
     DISTS = args.DISTS ?: ['stretch', 'buster', 'bullseye', 'bookworm']
+
     pipeline {
         agent any
         stages {
