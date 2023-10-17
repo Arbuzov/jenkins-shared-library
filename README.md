@@ -1,11 +1,12 @@
-# Builds and view description for Jenkins
+# Jenkins shared library for the Spacebridge DevOps activities
+
+[About the jenkins shared libraries](https://www.jenkins.io/doc/book/pipeline/shared-libraries/)
 
 ## Project structure
 
-  * [firmware](firmware) - builds and views for IDU 7000, suppose to be removed
   * [rt-router](rt-router) - builds and views for the router firmware
   * [email-templates](email-templates) - custom email templates keep here
-  * [vars](vars) - shared librarys
+  * [vars](vars) - shared functions
     * [arrayToHrefList](vars/arrayToHrefList.txt)
     * [arrayToString](vars/arrayToString.groovy)
     * [buildInfoPublisher](vars/buildInfoPublisher.groovy)
