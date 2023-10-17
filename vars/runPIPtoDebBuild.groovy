@@ -18,7 +18,7 @@ def DIST_REPO = [
   ]
 ]
 
-def call (String PACKAGE_NAME, String[] DISTS) {
+def call (String PACKAGE_NAME, java.util.ArrayList DISTS) {
 
     pipeline {
         agent any
@@ -77,8 +77,8 @@ def call (String PACKAGE_NAME, String[] DISTS) {
                                             script {
                                                 findFiles(glob: "*.deb").each {
                                                     sh """
-                                                        sudo reprepro -C main -b /data/debian/ remove ${DIST_REPO[DIST_NAME]} `dpkg -f ${it.getName()} Package`
-                                                        sudo reprepro -C main -b /data/debian/ includedeb ${DIST_REPO[DIST_NAME]} ${it.getName()}
+                                                        sudo reprepro -C main -b /data/debian/ remove ${DIST_REPO[DIST_NAME]['repo']} `dpkg -f ${it.getName()} Package`
+                                                        sudo reprepro -C main -b /data/debian/ includedeb ${DIST_REPO[DIST_NAME]['repo']} ${it.getName()}
                                                         rm ${it.getName()}
                                                     """
                                                 }
