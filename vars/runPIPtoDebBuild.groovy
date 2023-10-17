@@ -17,7 +17,7 @@ DIST_REPO = [
   ]
 ]
 
-def call (String PACKAGE_NAME, java.util.ArrayList DISTS) {
+def call (String PACKAGE_NAME, DISTS) {
 
     pipeline {
         agent any
