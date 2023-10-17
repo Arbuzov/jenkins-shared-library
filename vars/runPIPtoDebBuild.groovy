@@ -18,8 +18,8 @@ DIST_REPO = [
 ]
 
 def call (Map args) {
-    def PACKAGE_NAME = args.PACKAGE_NAME
-    def DISTS = args.DISTS ?: ['stretch', 'buster', 'bullseye', 'bookworm']
+    PACKAGE_NAME = args.PACKAGE_NAME
+    DISTS = args.DISTS ?: ['stretch', 'buster', 'bullseye', 'bookworm']
     pipeline {
         agent any
         stages {
