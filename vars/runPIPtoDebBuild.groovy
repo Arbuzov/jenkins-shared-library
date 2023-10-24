@@ -56,7 +56,7 @@ def call (Map args) {
                                             rm -rf deb_dist
                                             pip3 download --no-binary=${PACKAGE_NAME} ${PACKAGE_NAME}${VERSION.equals('')?'':'=='+VERSION}
                                             py2dsc-deb --debian-version=${DEB_VERSION_SUFFIX} \
-                                                        --dist-dir ./deb_dist ${PACKAGE_NAME}-[0-9]*.tar.gz
+                                                        --dist-dir ./deb_dist ${PACKAGE_NAME}-${VERSION.equals('')?'[0-9]':VERSION}*.tar.gz
                                             ls -la deb_dist
                                         """
                                         stash includes: 'deb_dist/*.deb', name: "${DIST_NAME}-deb"
