@@ -19,7 +19,7 @@ def call (Map args) {
     ]
     PACKAGE_NAME = args.PACKAGE_NAME
     DISTS = args.DISTS ?: ['stretch', 'buster', 'bullseye', 'bookworm']
-
+    VERSION = args.VERSION ?: ''
     pipeline {
         agent any
         stages {
@@ -54,7 +54,7 @@ def call (Map args) {
                                             # set -e
                                             # set -x
                                             rm -rf deb_dist
-                                            pip3 download --no-binary=${PACKAGE_NAME} ${PACKAGE_NAME}
+                                            pip3 download --no-binary=${PACKAGE_NAME} ${PACKAGE_NAME}${VERSION==''?'':'=='+VERSION}
                                             py2dsc-deb --debian-version=${DEB_VERSION_SUFFIX} \
                                                         --dist-dir ./deb_dist ${PACKAGE_NAME}-[0-9]*.tar.gz
                                             ls -la deb_dist
