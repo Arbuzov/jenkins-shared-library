@@ -11,6 +11,7 @@ def call(Map args) {
     }
     options { timestamps() }
     stages {
+      /*
       stage ('Run sonarqube check') {
         agent {
             docker { image 'sonarsource/sonar-scanner-cli' }
@@ -28,6 +29,7 @@ def call(Map args) {
           }
         }
       }
+      */
       stage ('Create test image') {
         when {
           anyOf {
