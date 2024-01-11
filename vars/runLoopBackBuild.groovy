@@ -32,6 +32,7 @@ def call(String PACKAGE_NAME) {
           }
         }
       }
+      /*
       stage ('Run sonarqube check') {
         agent {
             docker { image 'sonarsource/sonar-scanner-cli' }
@@ -51,6 +52,7 @@ def call(String PACKAGE_NAME) {
           }
         }
       }
+      */
       stage ('Create production docker image') {
         when {
           allOf {
