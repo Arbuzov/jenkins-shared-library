@@ -9,7 +9,10 @@ def call(Map args) {
     agent {
       label 'farmer-docker-ubuntu'
     }
-    options { timestamps() }
+    options {
+      buildDiscarder(logRotator(daysToKeepStr: '183', artifactDaysToKeepStr: '183'))
+      timestamps()
+    }
     stages {
       stage ('Run sonarqube check') {
         agent {
