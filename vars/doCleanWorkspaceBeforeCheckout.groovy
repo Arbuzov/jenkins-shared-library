@@ -10,6 +10,7 @@
 //       subsequent stages.
 
 def call() {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	echo "Deleting all workspace contents before checkout, in stage ${env.STAGE_NAME} ..."
 	cleanWs deleteDirs: true, disableDeferredWipeout: true
 }

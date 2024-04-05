@@ -9,7 +9,7 @@
 // function doCleanGitWorkTree() instead.
 
 def call() {
-
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
 	sh '''#!/bin/sh
 # Require that Git repository work tree is clean
 

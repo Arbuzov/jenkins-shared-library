@@ -1,6 +1,7 @@
 import org.apache.commons.io.FilenameUtils;
 
 def call(String nodeId, Integer internalPort, String crId) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   def port = internalPort;
   def remote = [:]
   withCredentials([

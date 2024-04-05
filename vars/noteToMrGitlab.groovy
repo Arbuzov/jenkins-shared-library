@@ -1,6 +1,9 @@
 import groovy.json.JsonOutput;
 
-def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true) {
+def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true, String apiSecretId = gitLabAPISecret) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  if (gitLabAPISecret == null) throw new Exception("Variable 'gitLabAPISecret' is undefined. You must set this variable before function call.");
+  
   println "======== Comment to GitLab: " + body.toString() + " ========"
   if (mrIid == null) {
     return;

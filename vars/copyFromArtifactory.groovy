@@ -6,6 +6,7 @@ import org.apache.commons.io.FilenameUtils;
 
 @NonCPS
 ArrayList call(String repoPath, String serverName = 'artifactory', String destDirectory = '', String artifactVersion = '') {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   def server = Artifactory.server(serverName);
   
   ArrayList selectedFiles = []

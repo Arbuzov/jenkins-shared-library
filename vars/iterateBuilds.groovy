@@ -3,6 +3,7 @@ import hudson.triggers.*
 
 @NonCPS
 def call() {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   for(rootJob in Hudson.instance.items) {
     switch ( rootJob.class ) {
       case hudson.model.FreeStyleProject:

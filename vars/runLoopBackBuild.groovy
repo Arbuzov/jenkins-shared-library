@@ -1,4 +1,5 @@
 def call(String PACKAGE_NAME) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
     agent none
     options {

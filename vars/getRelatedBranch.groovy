@@ -13,6 +13,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 def call (String relatedProjectOriginUrl, String apiSecretId = '') {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	int pageNum = 0;
 	int itemsOnPageCount = 0;     // items on page
 	int forksCount = 0;

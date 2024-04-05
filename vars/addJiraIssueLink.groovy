@@ -1,5 +1,5 @@
 def call(issueId, link, title = '', credentialsId = 'jira-username-password') {
-
+    reportUsage(getClass().protectionDomain.codeSource.location.path)
     def issueInfo = getIssueInfo(issueId)
     def linksUrl  = issueInfo.self+'/remotelink'
 

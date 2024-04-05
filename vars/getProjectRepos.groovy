@@ -1,7 +1,7 @@
 package utils;
 import java.util.regex.*;
 static call(String projectName, String webRootUrl, String gitRootUrl) {
-
+    reportUsage(getClass().protectionDomain.codeSource.location.path)
     def nullTrustManager = [
         checkClientTrusted: { chain, authType ->  },
         checkServerTrusted: { chain, authType ->  },

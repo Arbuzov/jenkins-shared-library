@@ -11,8 +11,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 
-def call (String gitUrl, String tagName, String ref, String message = '', String release = '',Boolean skipIfExist = true, String apiSecretId = '') {
-	
+def call (String gitUrl, String tagName, String ref, String message = '', String release = '',Boolean skipIfExist = true, String apiSecretId = gitLabAPISecret) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   if (gitLabAPISecret == null) throw new Exception("Variable 'gitLabAPISecret' is undefined. You must set this variable before function call.");
 
 	URL url = new URL(gitUrl.replaceFirst(/:(?=[a-z])/,'/').replace('git@', 'https://'));

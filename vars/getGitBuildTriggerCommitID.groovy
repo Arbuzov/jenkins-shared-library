@@ -3,6 +3,7 @@
 // Recommended variable name: GIT_BUILD_TRIGGER_COMMIT_ID
 
 def call() {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	String buildTriggerCommitId = '2000000000000000000000000000000000000000'
 
 	if (env.getAt('GIT_COMMIT') == null) {

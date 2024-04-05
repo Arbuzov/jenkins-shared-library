@@ -20,5 +20,5 @@ def teamstemplate = '''
 '''
 
 def call(channel, message) {
-        
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
 }

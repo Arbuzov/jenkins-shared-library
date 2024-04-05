@@ -1,5 +1,5 @@
 def call(Map args) {
-
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   String PACKAGE_NAME = args.PACKAGE_NAME
   String NAMESPACE = args.NAMESPACE ?: 'spacebridge'
   String BASE_VERSION = args.BASE_VERSION ?: '1.0.0'

@@ -12,6 +12,7 @@
 //
 
 def call() {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	String triggerCommitId = getGitBuildTriggerCommitID()
 	String signatureStr = "Jenkins"
 	String buildNumberStr = ""

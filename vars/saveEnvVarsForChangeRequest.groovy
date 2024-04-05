@@ -9,6 +9,7 @@
 //
 
 def call() {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	int varsCount = 0;
 
 	if (env.getAt('CHANGE_ID') == null) {

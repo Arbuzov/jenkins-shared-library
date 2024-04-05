@@ -1,5 +1,6 @@
 def call(ArrayList stringList, ArrayList rowBrace = ["<li>", "</li>"], ArrayList listBrace = ["<ul style='list-style-type:none'>","</ul>"], boolean sort = true){
-	String result = "";
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
+  String result = "";
 
   if (sort) {
     Collections.sort(stringList);

@@ -1,4 +1,5 @@
 ArrayList call(String artifactsPattern, String repoPath, Boolean flattern = false, String credentialsId = '25d60c09-852c-4464-9bf1-877c7a165c2c') {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   def fileList = findFiles(glob: artifactsPattern).toList()
   ArrayList selectedFiles = []
   findFiles(glob: artifactsPattern).toList().each{

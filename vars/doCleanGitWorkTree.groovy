@@ -9,7 +9,7 @@
 // requireCleanGitWorkTree() instead.
 
 def call() {
-
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	sh '''#!/bin/sh
 # Clean Git repository work tree
 

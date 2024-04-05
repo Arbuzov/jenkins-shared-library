@@ -1,4 +1,5 @@
 def call() {
+	reportUsage(getClass().protectionDomain.codeSource.location.path)
 	def isWindows = true
 	try {
 		bat ""

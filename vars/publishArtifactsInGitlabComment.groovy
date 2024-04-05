@@ -1,6 +1,7 @@
 import groovy.json.JsonSlurper;
 
 def call(String secretId = 'gitlab-text-secret') {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   if (!env.GITLAB_OA_TARGET_GIT_SSH_URL || !env.CHANGE_ID) {
     return
   }
