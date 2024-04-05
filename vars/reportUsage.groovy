@@ -9,7 +9,7 @@ def call(String callerFilePath = "") {
         echo envString
         if (callerFunctionName) {
             def influxDBURL = 'http://192.168.67.55:8086/write?db=devops'
-            def influxDBData = "shared_call,function=${callerFunctionName},project=${env.GITLAB_PROJECT_NAME} value=1"
+            def influxDBData = "shared_call,function=${callerFunctionName},project=${env.JOB_NAME} value=1"
             httpRequest(
                 url: influxDBURL, 
                 contentType: 'APPLICATION_FORM', 
