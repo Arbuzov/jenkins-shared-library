@@ -6,11 +6,9 @@ def call(String callerFilePath = "") {
         envString = env.getEnvironment().collect { key, value ->
            "${key}=\"${value.replaceAll('"','')}\""
         }.join(',')
-        echo envString
         if (callerFunctionName) {
             def influxDBURL = 'http://192.168.67.55:8086/write?db=devops'
             def influxDBData = "shared_call,function=${callerFunctionName},project=${env.JOB_NAME} value=1,${envString}"
-            echo influxDBData
             httpRequest(
                 url: influxDBURL, 
                 contentType: 'APPLICATION_FORM', 

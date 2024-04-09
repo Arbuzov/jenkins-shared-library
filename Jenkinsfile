@@ -15,7 +15,10 @@ pipeline {
             credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
           ])
         )
+        echo (getBuildCause().toString())
 
+        print (getBuildCause().findAll{it.equals("io.jenkins.plugins.gitlabbranchsource.GitLabWebHookCause")})
+        
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
