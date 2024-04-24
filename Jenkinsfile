@@ -18,11 +18,11 @@ pipeline {
         echo (getBuildCause().toString())
 
         print (getBuildCause().findAll{it.equals("io.jenkins.plugins.gitlabbranchsource.GitLabWebHookCause")})
-        
+
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
-        
+
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='${getChangeRequestBuildNumber()}'"
 
@@ -35,11 +35,11 @@ pipeline {
         print(makeYMD())
         print(makeYMD('-'))
         createNewJiraVersion("1.1.0", 'DEVOPS')
-        
+
         // assignJiraFixVersion("1.1.0", 'DEVOPS', "In Progress")
 
         // iterateBuilds()
-        
+
         echo getLastTag()
 
         publishSummary(
@@ -50,7 +50,7 @@ pipeline {
           ),
           "Unversioned list"
         )
-        
+
         publishNexus('firmware/*', 'http://nexus.asatnet.net/repository/store/debug/')
 
         publishSummary(
