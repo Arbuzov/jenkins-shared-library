@@ -1,40 +1,41 @@
+ArrayList<String> getImageList() {
+  def images = []
+  def props = {}
+  if (fileExists('.env')) {
+    props = readProperties(
+      interpolate: true,
+      file: '.env'
+    )
+  }
+  def composeRaw = readFile(
+    file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
+  )
+  props.each{ key, val ->
+    composeRaw = composeRaw.replaceAll('\\$\\{'+key+'\\}', val)
+  }
+  readYaml(text: composeRaw).services.each{ key, val ->
+    images.add(val.image)
+  }
+  return images
+}
+
+def saveImages(ArrayList<String> images, dest ) {
+  sh "install -d -m 777 ./${dest}"
+  images.each{ im ->
+    def image = docker.image(im)
+    image.pull()
+    echo image.toString()
+    echo image.imageName().split('/').last()
+    sh "docker image save -o ${dest}/${image.imageName().split('/').last()} ${im}"
+  }
+}
+
+String makeclassifier() {
+  return INCLUDE_IMAGES.equals('true')?'offline':''
+}
+
 def call() {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
-  ArrayList<String> getImageList() {
-    def images = []
-    def props = {}
-    if (fileExists('.env')) {
-      props = readProperties(
-        interpolate: true,
-        file: '.env'
-      )
-    }
-    def composeRaw = readFile(
-      file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
-    )
-    props.each{ key, val ->
-      composeRaw = composeRaw.replaceAll('\\$\\{'+key+'\\}', val)
-    }
-    readYaml(text: composeRaw).services.each{ key, val ->
-      images.add(val.image)
-    }
-    return images
-  }
-
-  def saveImages(ArrayList<String> images, dest ) {
-    sh "install -d -m 777 ./${dest}"
-    images.each{ im ->
-      def image = docker.image(im)
-      image.pull()
-      echo image.toString()
-      echo image.imageName().split('/').last()
-      sh "docker image save -o ${dest}/${image.imageName().split('/').last()} ${im}"
-    }
-  }
-
-  String makeclassifier() {
-    return INCLUDE_IMAGES.equals('true')?'offline':''
-  }
 
   pipeline {
     agent {
