@@ -26,7 +26,7 @@ def saveImages(ArrayList<String> images, dest ) {
     image.pull()
     echo image.toString()
     echo image.imageName().split('/').last()
-    sh "docker image save -o ${dest}/${image.imageName().split('/').last()} ${im}"
+    sh "docker image save -o ${dest}/${image.imageName().split('/').last()}.tar ${im}"
   }
 }
 
