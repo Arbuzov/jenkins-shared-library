@@ -1,9 +1,9 @@
-def call(Map args) {
+def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
-  String PACKAGE_NAME = args.PACKAGE_NAME
-  String NAMESPACE = args.NAMESPACE ?: 'spacebridge'
-  String BASE_VERSION = args.BASE_VERSION ?: '1.0.0'
-  Boolean MULTI_BRANCH = args.MULTI_BRANCH ?: false
+  String PACKAGE_NAME = arg.PACKAGE_NAME
+  String NAMESPACE = arg.NAMESPACE ?: 'spacebridge'
+  String BASE_VERSION = arg.BASE_VERSION ?: '1.0.0'
+  Boolean MULTI_BRANCH = arg.MULTI_BRANCH ?: false
   
   pipeline {
     agent {
