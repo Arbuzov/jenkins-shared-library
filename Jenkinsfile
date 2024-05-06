@@ -15,14 +15,21 @@ pipeline {
             credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
           ])
         )
+        script {
+          // NOTE: publish under directory debug/firmware in Nexus
+          env.putAt('PIPELINE_BIN_REPO_FULL_PATH', getIDURepoPath(namespace: 'debug',
+                                                                  project: 'firmware',
+                                                                  use_commit_id: false))
+        }
+        print("PIPELINE_BIN_REPO_FULL_PATH = " + env.getAt('PIPELINE_BIN_REPO_FULL_PATH'))
         echo (getBuildCause().toString())
 
         print (getBuildCause().findAll{it.equals("io.jenkins.plugins.gitlabbranchsource.GitLabWebHookCause")})
-        
+
         requireCleanGitWorkTree()
         // doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
-        
+
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
         echo "CHANGE_REQUEST_BUILD_NUMBER='${getChangeRequestBuildNumber()}'"
 
@@ -35,11 +42,11 @@ pipeline {
         print(makeYMD())
         print(makeYMD('-'))
         createNewJiraVersion("1.1.0", 'DEVOPS')
-        
+
         // assignJiraFixVersion("1.1.0", 'DEVOPS', "In Progress")
 
         // iterateBuilds()
-        
+
         echo getLastTag()
 
         publishSummary(
@@ -50,8 +57,22 @@ pipeline {
           ),
           "Unversioned list"
         )
-        
-        publishNexus('firmware/*', 'http://nexus.asatnet.net/repository/store/debug/')
+
+        script {
+          String repo_full_path = env.getAt('PIPELINE_BIN_REPO_FULL_PATH')
+          print("repo_full_path = " + repo_full_path)
+          def pub_arr = publishNexus('resources/com/spacebridge/**/pipelinelib_functions.sh', "${repo_full_path}/", true)
+          String href_list = arrayToHrefList(pub_arr)
+          publishSummary(href_list, 'Files in Nexus')
+        }
+
+        script {
+          String repo_full_path = env.getAt('PIPELINE_BIN_REPO_FULL_PATH')
+          print("repo_full_path = " + repo_full_path)
+          def pub_arr = publishNexus('resources/com/spacebridge/**/pipelinelib_functions.sh', "${repo_full_path}/", false)
+          String href_list = arrayToHrefList(pub_arr)
+          publishSummary(href_list, 'Files in Nexus (not flattened)')
+        }
 
         publishSummary(
           arrayToString(
@@ -185,6 +206,53 @@ pipeline {
         echo getLatestApprover()
 
         //print mergeRequestsChangeLog('jenkins-violations-secret')
+
+        script {
+          String repo_full_path = getIDURepoPath()
+          String repo_top_path = getIDURepoTopPath()
+          String repo_version_path = getIDURepoVersionPath()
+
+          publishSummary("repo_full_path = " + repo_full_path + ", <br />" +
+                         "repo_top_path = " + repo_top_path + ", <br />" +
+                         "repo_version_path = " + repo_version_path + ", <br />",
+                         "IDU repository path example unknown")
+        }
+        script {
+          String repo_full_path = getIDURepoPath(project: 'example_project')
+          String repo_top_path = getIDURepoTopPath(project: 'example_project')
+          String repo_version_path = getIDURepoVersionPath(project: 'example_project')
+
+          publishSummary("repo_full_path = " + repo_full_path + ", <br />" +
+                         "repo_top_path = " + repo_top_path + ", <br />" +
+                         "repo_version_path = " + repo_version_path + ", <br />",
+                         "IDU repository path example known")
+        }
+        script {
+          String repo_full_path = getIDURepoPath(project: 'example_project',
+                                                    use_commit_id: true)
+          String repo_top_path = getIDURepoTopPath(project: 'example_project',
+                                                    use_commit_id: true)
+          String repo_version_path = getIDURepoVersionPath(project: 'example_project',
+                                                            use_commit_id: true)
+
+          publishSummary("repo_full_path = " + repo_full_path + ", <br />" +
+                         "repo_top_path = " + repo_top_path + ", <br />" +
+                         "repo_version_path = " + repo_version_path + ", <br />",
+                         "IDU repository path example with commit IDs")
+        }
+        script {
+          String repo_full_path = getIDURepoPath(project: 'example_project',
+                                                    use_commit_id: false)
+          String repo_top_path = getIDURepoTopPath(project: 'example_project',
+                                                    use_commit_id: false)
+          String repo_version_path = getIDURepoVersionPath(project: 'example_project',
+                                                            use_commit_id: false)
+
+          publishSummary("repo_full_path = " + repo_full_path + ", <br />" +
+                         "repo_top_path = " + repo_top_path + ", <br />" +
+                         "repo_version_path = " + repo_version_path + ", <br />",
+                         "IDU repository path example without commit IDs")
+        }
       }
       post {
         always {
