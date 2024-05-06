@@ -34,6 +34,14 @@ String makeclassifier() {
   return "${INCLUDE_IMAGES}".equals('true')?'offline':''
 }
 
+def inspectImages(ArrayList<String> images) {
+  images.each{ im ->
+    echo im.split('/').last()
+    sh "grype ${im} > ${im.split('/').last()}.grype.txt"
+    sh "syft ${im} > ${im.split('/').last()}.syft.txt"
+  }
+}
+
 def call() {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
 
@@ -69,6 +77,18 @@ def call() {
             dir: '.',
             exclude: 'Jenkinsfile'
           )
+        }
+      }
+      stage('Check images') {
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            args '--privileged'
+          }
+        }
+        steps {
+          inspectImages(getImageList())
+          archiveArtifacts artifacts: '**/*.txt'
         }
       }
       stage ('Publish test') {
