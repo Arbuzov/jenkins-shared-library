@@ -115,6 +115,9 @@ def call(Map arg) {
             args '--privileged'
           }
         }
+        environment {
+          VERSION = "${BASE_VERSION}-${changeDefinition()}b${BUILD_NUMBER}"
+        }
         steps {
           sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
           sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
@@ -127,6 +130,9 @@ def call(Map arg) {
             image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
             args '--privileged'
           }
+        }
+        environment {
+          VERSION = "${BASE_VERSION}-b${BUILD_NUMBER}"
         }
         steps {
           sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
