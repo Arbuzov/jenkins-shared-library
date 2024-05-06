@@ -108,6 +108,32 @@ def call(Map args) {
           }
         }
       }
+      stage('Inspect test image') {
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            args '--privileged'
+          }
+        }
+        steps {
+          sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          archiveArtifacts artifacts: '**/.syft.txt,**/.grype.txt,'
+        }
+      }
+      stage('Inspect production image') {
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            args '--privileged'
+          }
+        }
+        steps {
+          sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          archiveArtifacts artifacts: '**/.syft.txt,**/.grype.txt,'
+        }
+      }
     }
   }
 }
