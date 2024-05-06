@@ -127,7 +127,7 @@ def call(Map arg) {
         steps {
           sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
           sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
-          archiveArtifacts artifacts: '**/.syft.txt,**/.grype.txt,'
+          archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
         }
       }
       stage('Inspect production image') {
