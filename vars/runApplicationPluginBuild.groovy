@@ -31,7 +31,10 @@ def saveImages(ArrayList<String> images, dest ) {
 }
 
 String makeclassifier() {
-  return "${INCLUDE_IMAGES}".equals('true')?'offline':''
+  if (INCLUDE_IMAGES) {
+    return "${INCLUDE_IMAGES}".equals('true')?'offline':''
+  }
+  return ''
 }
 
 def inspectImages(ArrayList<String> images) {

@@ -128,6 +128,53 @@ def call(String PACKAGE_NAME) {
           }
         }
       }
+      stage('Inspect test image') {
+        when {
+          anyOf {
+            changeRequest()
+            not { branch 'master' }
+          }
+        }
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            args '--privileged'
+          }
+        }
+        environment {
+          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+        }
+        steps {
+          sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
+        }
+      }
+      stage('Inspect production image') {
+        when {
+          allOf {
+            anyOf {
+              branch 'master'
+              expression { return MULTI_BRANCH }
+            }
+            not { changeRequest() }
+          }
+        }
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            args '--privileged'
+          }
+        }
+        environment {
+          VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+        }
+        steps {
+          sh "grype registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
+        }
+      }
     }
   }
 }
