@@ -11,7 +11,7 @@ ArrayList<String> getImageList() {
     file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
   )
   props.each{ key, val ->
-    composeRaw = composeRaw.replaceAll('\\$\\{'+key+'\\}', val)
+    composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
   }
   readYaml(text: composeRaw).services.each{ key, val ->
     images.add(val.image)
