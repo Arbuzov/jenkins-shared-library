@@ -153,10 +153,7 @@ def call(String PACKAGE_NAME) {
       stage('Inspect production image') {
         when {
           allOf {
-            anyOf {
-              branch 'master'
-              expression { return MULTI_BRANCH }
-            }
+            branch 'master'
             not { changeRequest() }
           }
         }
