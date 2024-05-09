@@ -31,7 +31,7 @@ def saveImages(ArrayList<String> images, dest ) {
 }
 
 String makeclassifier() {
-  if (env.INCLUDE_IMAGES) {
+  if (params.INCLUDE_IMAGES) {
     return "${INCLUDE_IMAGES}".equals('true')?'offline':''
   }
   return ''
@@ -78,7 +78,7 @@ def call() {
             file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
             compress: true,
             dir: '.',
-            exclude: 'Jenkinsfile'
+            exclude: 'Jenkinsfile,sonar-project.properties'
           )
         }
       }
