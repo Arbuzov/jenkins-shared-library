@@ -31,8 +31,10 @@ def saveImages(ArrayList<String> images, dest ) {
 }
 
 String makeclassifier() {
+  echo params.toString()
   if (params.INCLUDE_IMAGES) {
-    return "${INCLUDE_IMAGES}".equals('true')?'offline':''
+    echo 'at condition'
+    return params.INCLUDE_IMAGES.equals('true')?'offline':''
   }
   return ''
 }
