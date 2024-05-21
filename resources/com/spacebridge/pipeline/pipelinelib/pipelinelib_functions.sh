@@ -189,8 +189,10 @@ pipelinelib_do_debug_show_info()
 	{ env || true ; }    >&2
 	{ id || true ; }    >&2
 
-	if { git rev-parse --is-inside-work-tree >/dev/null 2>&1 ; } ; then
-		{ git remote -v || true ; }    >&2
+	if git version >/dev/null ; then
+		if { git rev-parse --is-inside-work-tree >/dev/null 2>&1 ; } ; then
+			{ git remote -v || true ; }    >&2
+		fi
 	fi
 	echo "    debug: Listing home directory (home ${HOME} on $( hostname ), stage: ${STAGE_NAME})"    >&2
 	{ ls -la "${HOME}" || true ; }    >&2

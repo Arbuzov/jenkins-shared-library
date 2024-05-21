@@ -20,6 +20,11 @@ set -e
 
 require_git_clean_work_tree()
 {
+	if ! git version >/dev/null ; then
+		# NOTE: git binary must be present in container or on the host
+		echo "ERROR: git program is not working (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
+		exit 1
+	fi
 	if { git rev-parse --is-inside-work-tree >/dev/null 2>&1 ; } ; then
 		echo "debug: Checking that work tree is clean after SCM checkout (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
 		## HACK: Update filesystem cache with git status --porcelain, so that git reset --hard touches only changed files
