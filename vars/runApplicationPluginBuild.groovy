@@ -21,7 +21,7 @@ Set<String> getImageList() {
   return images
 }
 
-def saveImages(Set<String> images, dest ) {
+def saveImages(images, dest ) {
   sh "install -d -m 777 ./${dest}"
   images.each{ im ->
     def image = docker.image(im)
@@ -39,7 +39,7 @@ String makeclassifier() {
   return ''
 }
 
-def inspectImages(Set<String> images) {
+def inspectImages(images) {
   images.each{ im ->
     echo im.split('/').last()
     sh "grype ${im} > ${im.split('/').last()}.grype.txt"
