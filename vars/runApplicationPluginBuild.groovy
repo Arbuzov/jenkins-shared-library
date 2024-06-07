@@ -1,25 +1,27 @@
-ArrayList<String> getImageList() {
+Set<String> getImageList() {
   def images = []
-  def props = {}
-  if (fileExists('.env')) {
-    props = readProperties(
-      interpolate: true,
-      file: '.env'
-    )
-  }
   def composeRaw = readFile(
     file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
   )
-  props.each{ key, val ->
-    composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
+
+  if (fileExists('.env')) {
+    def props = readProperties(
+      interpolate: true,
+      file: '.env'
+    )
+    props.each{ key, val ->
+      echo "Replacing '${key}' with '${val}'"
+      composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
+    }
   }
+
   readYaml(text: composeRaw).services.each{ key, val ->
     images.add(val.image)
   }
   return images
 }
 
-def saveImages(ArrayList<String> images, dest ) {
+def saveImages(Set<String> images, dest ) {
   sh "install -d -m 777 ./${dest}"
   images.each{ im ->
     def image = docker.image(im)
@@ -37,7 +39,7 @@ String makeclassifier() {
   return ''
 }
 
-def inspectImages(ArrayList<String> images) {
+def inspectImages(Set<String> images) {
   images.each{ im ->
     echo im.split('/').last()
     sh "grype ${im} > ${im.split('/').last()}.grype.txt"
@@ -117,6 +119,21 @@ def call() {
               type: 'tar.gz',
             ]]
           )
+          nexusArtifactUploader(
+            nexusVersion: 'nexus3',
+            protocol: 'http',
+            nexusUrl: 'nexus.asatnet.net',
+            version: "${BASE_VERSION}.b${BUILD_ID}",
+            groupId: "com.spacebridge.application-plugin.${makeYMD().replaceAll('/','.')}",
+            repository: 'maven-snapshots',
+            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
+            artifacts: [[
+              artifactId: ARTIFACT_ID,
+              classifier: "${makeclassifier()}",
+              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
+              type: 'tar.gz',
+            ]]
+          )
           script {
             currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}"
           }
@@ -136,6 +153,21 @@ def call() {
             nexusUrl: 'nexus.asatnet.net',
             version: "${BASE_VERSION}.b${BUILD_ID}",
             groupId: 'com.spacebridge',
+            repository: 'maven-releases',
+            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
+            artifacts: [[
+              artifactId: ARTIFACT_ID,
+              classifier: "${makeclassifier()}",
+              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
+              type: 'tar.gz',
+            ]]
+          )
+          nexusArtifactUploader(
+            nexusVersion: 'nexus3',
+            protocol: 'http',
+            nexusUrl: 'nexus.asatnet.net',
+            version: "${BASE_VERSION}.b${BUILD_ID}",
+            groupId: 'com.spacebridge.application-plugin',
             repository: 'application-plugins',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
