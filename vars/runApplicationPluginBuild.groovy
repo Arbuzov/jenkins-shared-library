@@ -109,8 +109,8 @@ def call() {
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
             version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: "com.spacebridge.${makeYMD().replaceAll('/','.')}",
-            repository: 'application-plugins-dev',
+            groupId: "com.spacebridge.application-plugin.${makeYMD().replaceAll('/','.')}",
+            repository: 'maven-snapshots',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
               artifactId: ARTIFACT_ID,
@@ -124,8 +124,8 @@ def call() {
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
             version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: "com.spacebridge.application-plugin.${makeYMD().replaceAll('/','.')}",
-            repository: 'maven-snapshots',
+            groupId: "com.spacebridge.${makeYMD().replaceAll('/','.')}",
+            repository: 'application-plugins-dev',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
               artifactId: ARTIFACT_ID,
@@ -152,7 +152,7 @@ def call() {
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
             version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: 'com.spacebridge',
+            groupId: 'com.spacebridge.application-plugin',
             repository: 'maven-releases',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
@@ -167,7 +167,7 @@ def call() {
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
             version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: 'com.spacebridge.application-plugin',
+            groupId: 'com.spacebridge',
             repository: 'application-plugins',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
