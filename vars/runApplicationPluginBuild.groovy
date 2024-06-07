@@ -48,6 +48,7 @@ def inspectImages(Set<String> images) {
 }
 
 def call() {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
 
   pipeline {
     agent {
