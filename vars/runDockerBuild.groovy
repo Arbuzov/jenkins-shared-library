@@ -35,7 +35,12 @@ def call(Map arg) {
         when {
           anyOf {
             changeRequest()
-            not { branch 'master' }
+            not { 
+              anyOf {
+                branch 'master'
+                expression { return MULTI_BRANCH }
+              }
+            }
           }
         }
         environment {
@@ -129,6 +134,11 @@ def call(Map arg) {
           sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
           archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
         }
+        post {
+          cleanup {
+            cleanWs()
+          }
+        }
       }
       stage('Inspect production image') {
         when {
@@ -158,6 +168,9 @@ def call(Map arg) {
     }
     post {
       always {
+        cleanWs()
+      }
+      cleanup {
         cleanWs()
       }
     }
