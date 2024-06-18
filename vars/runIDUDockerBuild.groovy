@@ -37,6 +37,7 @@ def call(Map argm) {
 
     Map iminfo = [:]
     String usageCmds = ""
+    String commentSignatureStr = ""
     // Debug: Keep workspace in case of failed build, do not remove it
     boolean debugKeepWsWhenFailure = false
     String reportsAntPatterns = '' +
@@ -64,6 +65,7 @@ def call(Map argm) {
                     script {
                         iminfo = getIDUDockerImageInfo(argm)
                         currentBuild.displayName = iminfo.tag
+                        commentSignatureStr = getJenkinsCommentSignatureStr()
                     }
                 }
             }
@@ -130,9 +132,16 @@ def call(Map argm) {
                         if (env.CHANGE_ID) {
                             withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
                                 noteToMrGitlab("${env.GITLAB_OA_TARGET_GIT_SSH_URL}", "${env.CHANGE_ID}",
-                                               "Built the image.\n\n" +
-                                               "Image usage:\n\n" +
-                                               "```\n" + usageCmds + "```\n")
+                                               "Built the image.\n" +
+                                               "\n" +
+                                               "Image usage:\n" +
+                                               "\n" +
+                                               "```\n" +
+                                               usageCmds +
+                                               "```\n" +
+                                               "\n" +
+                                               commentSignatureStr +
+                                               "\n")
                             }
                         }
 
