@@ -1,73 +1,168 @@
-def call(Map args) {
+// runIDUDockerBuild(): return a pipeline to build a Docker image in the current project
+//
+// Used inside the Jenkinsfile to return a pipeline to build a Docker
+// image in the current project.
+//
+// Arguments in argm:
+//
+// namespace: top-level namespace (required, lowercase)
+// packageName: package name (required, lowercase)
+// baseVersion: version of the top level image (optional)
+//              Forwarded as --build-arg "BASE_VERSION=${baseVersion}"
+//              when building the Docker image from Dockerfile
+// branchForBV: branch which builds this baseVersion (optional).
+//              If argm.branchForBV is specified, and if the source
+//              or target branch name matches ${argm.branchForBV},
+//              the tag prefix is set to ${iminfo.baseVersion} and
+//              not the current branch name
+//
+// Returns: a pipeline to build a Docker image in the current project
+//
+// Usage example in Jenkinsfile:
+//
+//      @Library('asatnet@master')_
+//
+//      runIDUDockerBuild(
+//          namespace: 'my-ns',
+//          packageName: 'my-project',
+//          baseVersion: 'bver-20220531',
+//          branchForBV: 'master',
+//      )
+//
+// See also: getIDUDockerImageInfo()
+//
+
+def call(Map argm) {
     reportUsage(getClass().protectionDomain.codeSource.location.path)
 
     Map iminfo = [:]
+    String usageCmds = ""
     // Debug: Keep workspace in case of failed build, do not remove it
     boolean debugKeepWsWhenFailure = false
+    String reportsAntPatterns = '' +
+        "report-*-grype.txt, " +
+        "report-*-syft.txt, " +
+        ""
 
     pipeline {
         agent {
             label 'farmer-docker-ubuntu'
         }
         options {
-            buildDiscarder(logRotator(daysToKeepStr: '183', artifactDaysToKeepStr: '183'))
+            buildDiscarder(logRotator(artifactDaysToKeepStr: '183', artifactNumToKeepStr: '10',
+                                      daysToKeepStr: '3653', numToKeepStr: '100000'))
             disableConcurrentBuilds()
+            disableResume()
             timestamps()
         }
         stages {
             stage('Prepare') {
                 steps {
+                    sh '''env -0 | LC_ALL=C.UTF-8 sort -z | tr '\\000' '\\012' '''
+                    // Clean the work space before running SonarScanner
                     doCleanGitWorkTree()
                     script {
-                        iminfo = getIDUDockerImageInfo(args)
-                        currentBuild.displayName = iminfo['tag']
+                        iminfo = getIDUDockerImageInfo(argm)
+                        currentBuild.displayName = iminfo.tag
                     }
-                    sh '''env -0 | LC_ALL=C.UTF-8 sort -z | tr '\\000' '\\012' '''
                 }
             }
             stage('Run SonarScanner') {
+                agent {
+                    docker {
+                        image 'sonarsource/sonar-scanner-cli'
+                        // Use the same node and workspace and do not create workspace@1 directory
+                        reuseNode true
+                    }
+                }
                 steps {
-                    // FIXME: TODO: Add Sonar scanner step
-                    echo "Add Run SonarScanner steps"
+                    script {
+                        if (env.CHANGE_ID) {
+                            env.putAt('SONAR_PULLREQUEST_KEY', env.CHANGE_ID)
+                            env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
+                            env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
+                        }
+                    }
+                    sh '''env -0 | LC_ALL=C.UTF-8 sort -z | tr '\\000' '\\012' '''
+                    withSonarQubeEnv('SonarQube Server') {
+                        sh """sonar-scanner"""
+                    }
+                    sh '''rm -f report-task.txt report-*.txt'''
                 }
             }
             stage('Create image') {
                 steps {
+                    // Clean the work space after running SonarScanner
+                    doCleanGitWorkTree()
                     script {
-                        docker.withRegistry(iminfo['registryUrl'], iminfo['credentialsId']) {
+                        docker.withRegistry(iminfo.registryUrl, iminfo.credentialsId) {
                             String buildArgs = ""
 
-                            if (args['baseVersion']) {
-                                buildArgs = buildArgs + " --build-arg \"BASE_VERSION=${args['baseVersion']}\""
+                            if (argm.baseVersion) {
+                                buildArgs = buildArgs + " --build-arg \"BASE_VERSION=${argm.baseVersion}\""
                             }
-                            for (xTag in iminfo["prevTags"]) {
+                            for (xTag in iminfo.prevTags) {
                                 try {
-                                    echo "Trying to pull image ${iminfo['imageID']}:${xTag}..."
-                                    def oldImage = docker.image("${iminfo['imageID']}:${xTag}")
+                                    echo "Trying to pull image ${iminfo.imageID}:${xTag}..."
+                                    def oldImage = docker.image("${iminfo.imageID}:${xTag}")
                                     oldImage.pull()
                                 } catch (Exception e) {
                                     echo "Could not pull image (${e.message}), continuing execution..."
                                 }
                             }
 
-                            def image = docker.build("${iminfo['imageID']}:${iminfo['tag']}",
-                                                     "${buildArgs} \"${WORKSPACE}\"")
+                            def image = docker.build("${iminfo.imageID}:${iminfo.tag}",
+                                                     "${buildArgs} \"${env.WORKSPACE}\"")
                             image.push()
-                            for (xTag in iminfo["extraTags"]) {
-                                image.push(xTag)
+                            usageCmds = usageCmds + "docker pull ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag}\n"
+                            if (iminfo.extraTags) {
+                                usageCmds = usageCmds + "\n"
+                                for (xTag in iminfo.extraTags) {
+                                    image.push(xTag)
+                                    usageCmds = usageCmds + "docker pull ${iminfo.registryHost}/${iminfo.imageID}:${xTag}\n"
+                                }
                             }
                         }
-                        for (xTag in iminfo["prevTags"]) {
-                            sh """docker image remove "${iminfo['imageID']}:${xTag}" || echo 'This is not fatal' >&2 """
+
+                        publishSummary('<pre>' + usageCmds + '</pre>\n',
+                                       'Image usage')
+
+                        if (env.CHANGE_ID) {
+                            withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+                                noteToMrGitlab("${env.GITLAB_OA_TARGET_GIT_SSH_URL}", "${env.CHANGE_ID}",
+                                               "Built the image.\n\n" +
+                                               "Image usage:\n\n" +
+                                               "```\n" + usageCmds + "```\n")
+                            }
                         }
-                        sh """docker image remove "${iminfo['imageID']}:latest" || echo 'This is not fatal' >&2 """
+
+                        // for (xTag in iminfo.prevTags) {
+                        //     sh """docker image remove "${iminfo.imageID}:${xTag}" || echo 'This is not fatal' >&2 """
+                        // }
+                        // sh """docker image remove "${iminfo.imageID}:latest" || echo 'This is not fatal' >&2 """
+                    }
+                }
+                post {
+                    cleanup {
+                        // Clean the work space before Inspect image stage
+                        doCleanGitWorkTree()
                     }
                 }
             }
             stage('Inspect image') {
+                agent {
+                    docker {
+                        image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+                        args '--privileged'
+                        // Use the same node and workspace and do not create workspace@1 directory
+                        reuseNode true
+                    }
+                }
                 steps {
-                    // FIXME: TODO: Add steps
-                    echo "Add Inspect image steps"
+                    sh """grype ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-grype.txt" """
+                    sh """syft ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                    archiveArtifacts artifacts: reportsAntPatterns
+                    sh """rm -f "report-${iminfo.packageName}-${iminfo.tag}-grype.txt" "report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
                 }
             }
         }
