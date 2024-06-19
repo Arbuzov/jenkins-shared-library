@@ -15,6 +15,8 @@
 //              or target branch name matches ${argm.branchForBV},
 //              the tag prefix is set to ${iminfo.baseVersion} and
 //              not the current branch name
+// runSyft:     run syft on image (optional, default: true)
+//              Disable on very large images (> 1 GB)
 // runGrype:    run grype on image (optional, default: true)
 //              Disable on very large images (> 1 GB)
 //
@@ -46,6 +48,7 @@ def call(Map argm) {
         "report-*-grype.txt, " +
         "report-*-syft.txt, " +
         ""
+    boolean runSyft = false
     boolean runGrype = false
 
     pipeline {
@@ -69,6 +72,7 @@ def call(Map argm) {
                         iminfo = getIDUDockerImageInfo(argm)
                         currentBuild.displayName = iminfo.tag
                         commentSignatureStr = getJenkinsCommentSignatureStr()
+                        runSyft = ((argm.containsKey('runSyft')) ? argm.runSyft : false)
                         runGrype = ((argm.containsKey('runGrype')) ? argm.runGrype : false)
                     }
                 }
@@ -171,9 +175,16 @@ def call(Map argm) {
                         reuseNode true
                     }
                 }
+                when {
+                    expression {
+                        return (runSyft || runGrype)
+                    }
+                }
                 steps {
                     script {
-                        sh """syft ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                        if (runSyft) {
+                            sh """syft ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                        }
                         if (runGrype) {
                             sh """grype ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-grype.txt" """
                         }
