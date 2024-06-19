@@ -48,8 +48,8 @@ def call(Map argm) {
         "report-*-grype.txt, " +
         "report-*-syft.txt, " +
         ""
-    boolean runSyft = false
-    boolean runGrype = false
+    boolean runSyft = true
+    boolean runGrype = true
 
     pipeline {
         agent {
@@ -72,8 +72,8 @@ def call(Map argm) {
                         iminfo = getIDUDockerImageInfo(argm)
                         currentBuild.displayName = iminfo.tag
                         commentSignatureStr = getJenkinsCommentSignatureStr()
-                        runSyft = ((argm.containsKey('runSyft')) ? argm.runSyft : false)
-                        runGrype = ((argm.containsKey('runGrype')) ? argm.runGrype : false)
+                        runSyft = ((argm.containsKey('runSyft')) ? argm.runSyft : true)
+                        runGrype = ((argm.containsKey('runGrype')) ? argm.runGrype : true)
                     }
                 }
             }
