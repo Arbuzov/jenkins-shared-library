@@ -15,6 +15,8 @@
 //              or target branch name matches ${argm.branchForBV},
 //              the tag prefix is set to ${iminfo.baseVersion} and
 //              not the current branch name
+// runGrype:    run grype on image (optional, default: true)
+//              Disable on very large images (> 1 GB)
 //
 // Returns: a pipeline to build a Docker image in the current project
 //
@@ -44,6 +46,7 @@ def call(Map argm) {
         "report-*-grype.txt, " +
         "report-*-syft.txt, " +
         ""
+    boolean runGrype = false
 
     pipeline {
         agent {
@@ -66,6 +69,7 @@ def call(Map argm) {
                         iminfo = getIDUDockerImageInfo(argm)
                         currentBuild.displayName = iminfo.tag
                         commentSignatureStr = getJenkinsCommentSignatureStr()
+                        runGrype = ((argm.containsKey('runGrype')) ? argm.runGrype : false)
                     }
                 }
             }
@@ -168,10 +172,14 @@ def call(Map argm) {
                     }
                 }
                 steps {
-                    sh """grype ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-grype.txt" """
-                    sh """syft ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
-                    archiveArtifacts artifacts: reportsAntPatterns
-                    sh """rm -f "report-${iminfo.packageName}-${iminfo.tag}-grype.txt" "report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                    script {
+                        sh """syft ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                        if (runGrype) {
+                            sh """grype ${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag} >"report-${iminfo.packageName}-${iminfo.tag}-grype.txt" """
+                        }
+                        archiveArtifacts artifacts: reportsAntPatterns
+                        sh """rm -f "report-${iminfo.packageName}-${iminfo.tag}-grype.txt" "report-${iminfo.packageName}-${iminfo.tag}-syft.txt" """
+                    }
                 }
             }
         }
