@@ -144,12 +144,6 @@ def call(Map argm) {
         iminfo.registryUrl = "http://registry.nexus.asatnet.net"
         iminfo.credentialsId = "local-registry-access"
     }
-    if (true) {
-        // FIXME: remove this at the end of development
-        iminfo.registryHost = "registry-dev.nexus.asatnet.net"
-        iminfo.registryUrl = "http://registry-dev.nexus.asatnet.net"
-        iminfo.credentialsId = "local-registry-access"
-    }
 
     iminfo.packageName = packageName
 
