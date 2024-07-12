@@ -154,6 +154,7 @@ pipeline {
             GIT_URL = env.GIT_URL;
           }
         }
+        tagToGitlab(GIT_URL, "rolling", env.GIT_COMMIT, "rolling tag", "deprecated", false);
         withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
           tagToGitlab(GIT_URL, "1", env.GIT_COMMIT);
           tagToGitlab(
@@ -252,6 +253,132 @@ pipeline {
                          "repo_top_path = " + repo_top_path + ", <br />" +
                          "repo_version_path = " + repo_version_path + ", <br />",
                          "IDU repository path example without commit IDs")
+        }
+        script {
+            Map envmap = [
+                CI: "true",
+                BRANCH_NAME: "MR-532",
+                BUILD_NUMBER: "4",
+                CHANGE_ID: "532",
+                CHANGE_BRANCH: "my-change",
+                CHANGE_TARGET: "long-term",
+                GITLAB_OA_TARGET_BRANCH: "long-term",
+                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            ]
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "Merge request to merge branch \"my-change\" into branch \"long-term\"",
+                namespace: 'my-ns',
+                packageName: 'my-project',
+                _envP: envmap,
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
+        }
+        script {
+            Map envmap = [
+                CI: "true",
+                BRANCH_NAME: "long-term",
+                BUILD_NUMBER: "210",
+                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            ]
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "Long term branch \"long-term\"",
+                namespace: 'my-ns',
+                packageName: 'my-project',
+                _envP: envmap,
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
+        }
+        script {
+            Map envmap = [
+                CI: "true",
+                BRANCH_NAME: "main",
+                BRANCH_IS_PRIMARY: "true",
+                BUILD_NUMBER: "321",
+                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            ]
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "Main long-term branch called \"main\" (set as default branch in GitLab)",
+                namespace: 'my-ns',
+                packageName: 'my-project',
+                _envP: envmap,
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
+        }
+        script {
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "This project",
+                namespace: 'my-ns-2',
+                packageName: 'my-project-2',
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
+        }
+        script {
+            Map envmap = [
+                CI: "true",
+                BRANCH_NAME: "MR-532",
+                BUILD_NUMBER: "4",
+                CHANGE_ID: "532",
+                CHANGE_BRANCH: "my-change",
+                CHANGE_TARGET: "long-term",
+                GITLAB_OA_TARGET_BRANCH: "long-term",
+                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            ]
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "Merge request to merge branch \"my-change\" into branch \"long-term\", with baseVersion",
+                namespace: 'my-ns',
+                packageName: 'my-project',
+                baseVersion: 'bver-20220531',
+                branchForBV: 'long-term',
+                _envP: envmap,
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
+        }
+        script {
+            Map envmap = [
+                CI: "true",
+                BRANCH_NAME: "long-term",
+                BUILD_NUMBER: "210",
+                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            ]
+            Map iminfo
+            iminfo = getIDUDockerImageInfo(
+                _dbgComment: "Long term branch \"long-term\", with baseVersion",
+                namespace: 'my-ns',
+                packageName: 'my-project',
+                baseVersion: 'bver-20220531',
+                branchForBV: 'long-term',
+                _envP: envmap,
+            )
+
+            String str = IDUDockerImageInfoToString(iminfo)
+
+            publishSummary('<pre>\n' + str + '</pre>\n',
+                           "Get Docker image info")
         }
       }
       post {
