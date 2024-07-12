@@ -83,6 +83,13 @@ def call(String PACKAGE_NAME) {
                 ),
                 "Image usage"
               )
+              tagToGitlab(
+                "${env.GIT_URL}",
+                "${PACKAGE_NAME}",
+                "${env.GIT_COMMIT}",
+                "This tag ${env.VERSION} was automaticaly created by Jenkins pipeline.",
+                "## Release ${VERSION}\n\n__Build reference:__ ${BUILD_URL}\n\n### Build result\n\ndocker pull registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}"
+              )
             }
           }
         }
