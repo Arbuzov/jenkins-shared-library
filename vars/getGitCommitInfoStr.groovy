@@ -26,8 +26,8 @@ def call(Map argm) {
         }
     }
 
-    String cmdA = "git log --format='format:commit %H%nCommitDate: %cd%n%n%s' --date='format:%Y-%m-%d %H:%M:%S %z' -n 1 ${commit_Id}"
-    String cmdB = "git log --format='format:%b' -n 1 ${commit_Id}"
+    String cmdA = "git log --format='format:commit %H%nCommitDate: %cd%n%n%s' --date='format:%Y-%m-%d %H:%M:%S %z' -n 1 '${commit_Id}'"
+    String cmdB = "git log --format='format:%b' -n 1 '${commit_Id}'"
     String cmdFold = """fold -s -w 100 | sed -r -e 's/[[:blank:]]+\$//g'"""
 
     lastCommitMsgHead = sh(script: """${cmdA} | ${cmdFold}""",
