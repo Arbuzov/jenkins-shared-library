@@ -380,6 +380,21 @@ pipeline {
             publishSummary('<pre>\n' + str + '</pre>\n',
                            "Get Docker image info")
         }
+        script {
+            String commit_1_info_str = getGitCommitInfoStr(commitId: 'df080764493676d5cfd8fae55d336875647e59db')
+            String commit_2_info_str = getGitCommitInfoStr()
+            String sum_text = ''
+
+            sum_text = sum_text +
+                        "<p>Some commit information:</p>\n" +
+                        "<pre>" + commit_1_info_str + "</pre>\n"
+
+            sum_text = sum_text +
+                        "<p>Last commit information:</p>\n" +
+                        "<pre>" + commit_2_info_str + "</pre>\n"
+
+            publishSummary(sum_text, "Last commit information")
+        }
       }
       post {
         always {
