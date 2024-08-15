@@ -152,7 +152,7 @@ def call(Map arg) {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b3'
             args '--privileged'
           }
         }
