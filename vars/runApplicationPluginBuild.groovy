@@ -87,7 +87,7 @@ def call() {
       stage('Check images') {
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.0-b2'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b5'
             args '--privileged'
           }
         }
