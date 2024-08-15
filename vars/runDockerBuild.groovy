@@ -122,7 +122,7 @@ def call(Map arg) {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b9'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b11'
             args '--privileged'
           }
         }
@@ -130,7 +130,7 @@ def call(Map arg) {
           VERSION = "${BASE_VERSION}-${changeDefinition()}b${BUILD_NUMBER}"
         }
         steps {
-          sh "grype registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
           sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
           archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
         }
@@ -152,7 +152,7 @@ def call(Map arg) {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b9'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b11'
             args '--privileged'
           }
         }
@@ -160,7 +160,7 @@ def call(Map arg) {
           VERSION = "${BASE_VERSION}-b${BUILD_NUMBER}"
         }
         steps {
-          sh "grype -vv registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
           sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
           archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
         }
