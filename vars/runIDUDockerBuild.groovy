@@ -169,7 +169,7 @@ def call(Map argm) {
             stage('Inspect image') {
                 agent {
                     docker {
-                        image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b11'
+                        image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:latest'
                         args '--privileged'
                         // Use the same node and workspace and do not create workspace@1 directory
                         reuseNode true
