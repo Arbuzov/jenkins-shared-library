@@ -174,7 +174,7 @@ def call(String PACKAGE_NAME) {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
         }
         steps {
-          sh "grype registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "grype -vv registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
           sh "syft registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
           archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
         }
