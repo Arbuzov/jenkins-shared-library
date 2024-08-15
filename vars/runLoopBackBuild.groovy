@@ -144,7 +144,7 @@ def call(String PACKAGE_NAME) {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b5'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b7'
             args '--privileged'
           }
         }
@@ -166,7 +166,7 @@ def call(String PACKAGE_NAME) {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b5'
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.1-b7'
             args '--privileged'
           }
         }
