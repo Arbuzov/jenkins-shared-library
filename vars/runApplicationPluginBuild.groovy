@@ -47,7 +47,7 @@ def inspectImages(images) {
   }
 }
 
-def call() {
+def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
 
   pipeline {
@@ -180,6 +180,18 @@ def call() {
           script {
             currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}"
           }
+        }
+      }
+      stage ('Create Jira Version') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
         }
       }
     }

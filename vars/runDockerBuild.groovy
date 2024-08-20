@@ -165,6 +165,18 @@ def call(Map arg) {
           archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
         }
       }
+      stage ('Create Jira Version') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
+        }
+      }
     }
     post {
       always {
