@@ -1,0 +1,21 @@
+def call(Map arg) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
+  String TITLE = arg.TITLE ?: 'New page'
+  String SPACE = arg.SPACE ?: 'SPACE'
+  String ROOT = arg.ROOT ?: ''
+  String CONTENT = arg.CONTENT ?: ''
+  String credentialsId = arg.credentialsId ?: 'jira-username-password'
+
+  def postContentUrl = "${CONFLUENCE_API}/content"
+  def newReleaseContent = "{\"type\":\"page\",\"title\":\"${TITLE}\",\"ancestors\":[{\"id\":\"${ROOT}\"}],\"space\":{\"key\":\"${SPACE}\"},\"body\":{\"storage\":{\"value\":\"${CONTENT.replaceAll('"','\'')}\",\"representation\":\"storage\"}}}"
+  def releaseResponce = httpRequest(
+    url: newReleaseUrl,
+    httpMode: 'POST',
+    consoleLogResponseBody: false,
+    contentType: 'APPLICATION_JSON',
+    authentication: credentialsId,
+    requestBody: newReleaseContent
+  )
+
+}
