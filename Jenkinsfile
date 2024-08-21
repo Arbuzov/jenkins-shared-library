@@ -23,8 +23,10 @@ pipeline {
         }
 /*
         script {
+          // This is a test for confluence publishing please ceep it commented
           def bind = [
             TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+            STRINGIFY: true,
             date: new Date().format('yyyy-MM-dd'),
             images: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
             version: '1.0.0',
