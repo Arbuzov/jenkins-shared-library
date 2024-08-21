@@ -21,6 +21,17 @@ Set<String> getImageList() {
   return images
 }
 
+String loadReports (mask) {
+  def filesContent = ''
+  def fileList = findFiles(glob: mask)
+  fileList.each { file ->
+      def content = readFile(file.path)
+      content = content.replaceAll(/(\r\n|\r|\n)/, '\\n')
+      filesContent += content
+  }
+  return filesContent
+}
+
 def saveImages(images, dest ) {
   sh "install -d -m 777 ./${dest}"
   images.each{ im ->
@@ -94,6 +105,7 @@ def call(Map arg) {
         steps {
           inspectImages(getImageList())
           archiveArtifacts artifacts: '**/*.txt'
+          stash name: 'reports', includes: '**/*.txt'
         }
       }
       stage ('Publish test') {
@@ -192,6 +204,36 @@ def call(Map arg) {
         }
         steps {
           createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
+        }
+      }
+      stage ('Create Release notes') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+            expression { return arg.CONFLUENCE_SPACE }
+            expression { return arg.ROOT_PAGE }
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          echo "Creating release notes(not implemented)"
+          unstash 'reports'
+          createConfluencePage(
+            TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+            SPACE: arg.CONFLUENCE_SPACE,
+            ROOT: arg.ROOT_PAGE,
+            CONTENT: inflateTemplate(
+              TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+              date: new Date().format('yyyy-MM-dd')
+              images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+              version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+              projectId: arg.JIRA_PROJECT,
+              pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}.b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}.tar.gz",
+              boms: loadReports ("*.syft.txt"),
+              vulnerability: loadReports ("*.grype.txt")
+            )
+          )
         }
       }
     }

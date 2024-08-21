@@ -21,6 +21,26 @@ pipeline {
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
         }
+/*
+        script {
+          def bind = [
+            TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+            date: new Date().format('yyyy-MM-dd'),
+            images: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
+            version: '1.0.0',
+            projectId: 'EH',
+            pluginUrl: 'https://confluence.atlassian.com/display/CONF/Confluence+Documentation',
+            boms: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
+            vulnerability: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"])
+          ]
+          createConfluencePage(
+            TITLE: "Test page ${env.BUILD_NUMBER}",
+            SPACE: '~arbuzov',
+            ROOT: '181239839',
+            CONTENT: inflateTemplate(bind)
+          )
+        }
+*/
         print("PIPELINE_BIN_REPO_FULL_PATH = " + env.getAt('PIPELINE_BIN_REPO_FULL_PATH'))
         echo (getBuildCause().toString())
 
