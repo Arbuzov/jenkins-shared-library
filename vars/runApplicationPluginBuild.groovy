@@ -225,7 +225,7 @@ def call(Map arg) {
             ROOT: arg.ROOT_PAGE,
             CONTENT: inflateTemplate(
               TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
-              date: new Date().format('yyyy-MM-dd')
+              date: new Date().format('yyyy-MM-dd'),
               images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
               version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
               projectId: arg.JIRA_PROJECT,
