@@ -1,0 +1,26 @@
+NAME           INSTALLED  FIXED-IN   TYPE  VULNERABILITY   SEVERITY 
+busybox        1.36.1-r5  1.36.1-r6  apk   CVE-2023-42366  Medium    
+busybox        1.36.1-r5  1.36.1-r7  apk   CVE-2023-42365  Medium    
+busybox        1.36.1-r5  1.36.1-r7  apk   CVE-2023-42364  Medium    
+busybox        1.36.1-r5  1.36.1-r7  apk   CVE-2023-42363  Medium    
+busybox-binsh  1.36.1-r5  1.36.1-r6  apk   CVE-2023-42366  Medium    
+busybox-binsh  1.36.1-r5  1.36.1-r7  apk   CVE-2023-42365  Medium    
+busybox-binsh  1.36.1-r5  1.36.1-r7  apk   CVE-2023-42364  Medium    
+busybox-binsh  1.36.1-r5  1.36.1-r7  apk   CVE-2023-42363  Medium    
+libcrypto3     3.1.4-r5   3.1.6-r0   apk   CVE-2024-5535   Critical  
+libcrypto3     3.1.4-r5   3.1.5-r0   apk   CVE-2024-4603   Medium    
+libcrypto3     3.1.4-r5   3.1.6-r0   apk   CVE-2024-4741   Unknown   
+libcrypto3     3.1.4-r5   3.1.4-r6   apk   CVE-2024-2511   Unknown   
+libssl3        3.1.4-r5   3.1.6-r0   apk   CVE-2024-5535   Critical  
+libssl3        3.1.4-r5   3.1.5-r0   apk   CVE-2024-4603   Medium    
+libssl3        3.1.4-r5   3.1.6-r0   apk   CVE-2024-4741   Unknown   
+libssl3        3.1.4-r5   3.1.4-r6   apk   CVE-2024-2511   Unknown   
+nginx          1.25.4-r1             apk   CVE-2024-7347   Medium    
+nginx          1.25.4-r1             apk   CVE-2024-35200  Medium    
+nginx          1.25.4-r1             apk   CVE-2024-34161  Medium    
+nginx          1.25.4-r1             apk   CVE-2024-32760  Medium    
+nginx          1.25.4-r1             apk   CVE-2024-31079  Medium    
+ssl_client     1.36.1-r5  1.36.1-r6  apk   CVE-2023-42366  Medium    
+ssl_client     1.36.1-r5  1.36.1-r7  apk   CVE-2023-42365  Medium    
+ssl_client     1.36.1-r5  1.36.1-r7  apk   CVE-2023-42364  Medium    
+ssl_client     1.36.1-r5  1.36.1-r7  apk   CVE-2023-42363  Medium

@@ -21,28 +21,38 @@ pipeline {
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
         }
-/*
-        script {
-          // This is a test for confluence publishing please ceep it commented
-          def bind = [
-            TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
-            STRINGIFY: true,
-            date: new Date().format('yyyy-MM-dd'),
-            images: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
-            version: '1.0.0',
-            projectId: 'EH',
-            pluginUrl: 'https://confluence.atlassian.com/display/CONF/Confluence+Documentation',
-            boms: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
-            vulnerability: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"])
-          ]
-          createConfluencePage(
-            TITLE: "Test page ${env.BUILD_NUMBER}",
-            SPACE: '~arbuzov',
-            ROOT: '181239839',
-            CONTENT: inflateTemplate(bind)
-          )
-        }
-*/
+
+        // script {
+        //   // This is a test for confluence publishing please keep it commented
+        //   String loadReports (mask) {
+        //     def filesContent = ''
+        //     def fileList = findFiles(glob: mask)
+        //     fileList.each { file ->
+        //         def content = readFile(file.path)
+        //           content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+        //           filesContent += content + '\\n'
+        //     }
+        //     return filesContent
+        //   }
+        //   def bind = [
+        //     TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+        //     STRINGIFY: true,
+        //     date: new Date().format('yyyy-MM-dd'),
+        //     images: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),
+        //     version: '1.0.0',
+        //     projectId: 'EH',
+        //     pluginUrl: 'https://confluence.atlassian.com/display/CONF/Confluence+Documentation',
+        //     boms: loadReports ("resources/com/spacebridge/test/*.syft.txt"),
+        //     vulnerability: loadReports ("resources/com/spacebridge/test/*.grype.txt")
+        //   ]
+        //   createConfluencePage(
+        //     TITLE: "Test page ${env.BUILD_NUMBER}",
+        //     SPACE: '~arbuzov',
+        //     ROOT: '181239839',
+        //     CONTENT: inflateTemplate(bind)
+        //   )
+        // }
+
         print("PIPELINE_BIN_REPO_FULL_PATH = " + env.getAt('PIPELINE_BIN_REPO_FULL_PATH'))
         echo (getBuildCause().toString())
 

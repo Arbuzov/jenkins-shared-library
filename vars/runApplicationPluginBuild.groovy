@@ -26,8 +26,8 @@ String loadReports (mask) {
   def fileList = findFiles(glob: mask)
   fileList.each { file ->
       def content = readFile(file.path)
-      content = content.replaceAll(/(\r\n|\r|\n)/, '\\n')
-      filesContent += content
+        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+        filesContent += file.name + '\\n' +content + '\\n'
   }
   return filesContent
 }
@@ -224,6 +224,7 @@ def call(Map arg) {
             SPACE: arg.CONFLUENCE_SPACE,
             ROOT: arg.ROOT_PAGE,
             CONTENT: inflateTemplate(
+              STRINGIFY: true,
               TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
               date: new Date().format('yyyy-MM-dd'),
               images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
