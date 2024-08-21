@@ -120,24 +120,9 @@ def call(Map arg) {
             nexusVersion: 'nexus3',
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
-            version: "${BASE_VERSION}.b${BUILD_ID}",
+            version: "${BASE_VERSION}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT",
             groupId: "com.spacebridge.application-plugin.${makeYMD().replaceAll('/','.')}",
             repository: 'maven-snapshots',
-            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
-            artifacts: [[
-              artifactId: ARTIFACT_ID,
-              classifier: "${makeclassifier()}",
-              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
-              type: 'tar.gz',
-            ]]
-          )
-          nexusArtifactUploader(
-            nexusVersion: 'nexus3',
-            protocol: 'http',
-            nexusUrl: 'nexus.asatnet.net',
-            version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: "com.spacebridge.${makeYMD().replaceAll('/','.')}",
-            repository: 'application-plugins-dev',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
               artifactId: ARTIFACT_ID,
