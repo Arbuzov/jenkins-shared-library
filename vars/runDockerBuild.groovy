@@ -130,8 +130,15 @@ def call(Map arg) {
           VERSION = "${BASE_VERSION}-${changeDefinition()}b${BUILD_NUMBER}"
         }
         steps {
-          sh "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
-          sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          sh (
+            script: "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt",
+            returnStatus: true
+          )
+          sh (
+            script: "syft registry.nexus.asatnet.net/${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt",
+            returnStatus: true
+          )
+          stash name: 'reports', includes: '**/*.syft.txt,**/*.grype.txt'
           archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
         }
         post {
@@ -160,8 +167,15 @@ def call(Map arg) {
           VERSION = "${BASE_VERSION}-b${BUILD_NUMBER}"
         }
         steps {
-          sh "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
-          sh "syft registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          sh (
+            script: "grype -v registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt",
+            returnStatus: true
+          )
+          sh (
+            script: "syft registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt",
+            returnStatus: true
+          )
+          stash name: 'reports', includes: '**/*.syft.txt,**/*.grype.txt'
           archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
         }
       }
@@ -175,6 +189,20 @@ def call(Map arg) {
         }
         steps {
           createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
+        }
+      }
+      stage ('Create Confluence description') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+            expression { return arg.CONFLUENCE_SPACE }
+            expression { return arg.ROOT_PAGE }
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          sh "create a description"
         }
       }
     }
