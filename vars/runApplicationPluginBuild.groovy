@@ -204,20 +204,22 @@ def call(Map arg) {
         steps {
           echo "Creating release notes(not implemented)"
           unstash 'reports'
-          createConfluencePage(
-            TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
-            SPACE: arg.CONFLUENCE_SPACE,
-            ROOT: arg.ROOT_PAGE,
-            CONTENT: inflateTemplate(
-              STRINGIFY: true,
-              TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
-              date: new Date().format('yyyy-MM-dd'),
-              images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
-              version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
-              projectId: arg.JIRA_PROJECT,
-              pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}.b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}.tar.gz",
-              boms: loadReports ("*.syft.txt"),
-              vulnerability: loadReports ("*.grype.txt")
+          publishSummary(
+            createConfluencePage(
+              TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+              SPACE: arg.CONFLUENCE_SPACE,
+              ROOT: arg.ROOT_PAGE,
+              CONTENT: inflateTemplate(
+                STRINGIFY: true,
+                TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+                date: new Date().format('yyyy-MM-dd'),
+                images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+                version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+                projectId: arg.JIRA_PROJECT,
+                pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}.b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}.tar.gz",
+                boms: loadReports ("*.syft.txt"),
+                vulnerability: loadReports ("*.grype.txt")
+              )
             )
           )
         }
