@@ -70,7 +70,10 @@ def call(String PACKAGE_NAME) {
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${PACKAGE_NAME}",
-                env.collect { key, value -> "--build-arg ${key}=${value}" }.join(' ')
+                env.getEnvironment()
+                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
+                  .collect { key, value -> "--build-arg ${key}='${value}'" }
+                  .join(' ')
               )
               image.push('latest')
               image.push(VERSION)
@@ -120,7 +123,10 @@ def call(String PACKAGE_NAME) {
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
-                env.collect { key, value -> "--build-arg ${key}=${value}" }.join(' ')
+                env.getEnvironment()
+                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
+                  .collect { key, value -> "--build-arg ${key}='${value}'" }
+                  .join(' ')
               )
               image.push(VERSION)
               currentBuild.displayName = VERSION
