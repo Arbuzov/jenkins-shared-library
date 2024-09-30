@@ -48,7 +48,6 @@ def call(Map arg) {
         }
         steps {
           script {
-            sh "env"
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
               image.push(VERSION)

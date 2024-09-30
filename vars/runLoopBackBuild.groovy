@@ -67,13 +67,15 @@ def call(String PACKAGE_NAME) {
         }
         steps {
           script {
+            sh "env"
+            def dockerENV = env.getEnvironment()
+                  .collect { key, value -> "--build-arg ${key}='${value.replaceAll("(\\r|\\n)", "")}'" }
+                  .join(' ')
+            echo dockerENV
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${PACKAGE_NAME}",
-                """${WORKSPACE} ${env.getEnvironment()
-                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
-                  .collect { key, value -> "--build-arg ${key}='${value}'" }
-                  .join(' ')}"""
+                "${WORKSPACE} ${dockerENV}"
               )
               image.push('latest')
               image.push(VERSION)
@@ -121,17 +123,15 @@ def call(String PACKAGE_NAME) {
         steps {
           script {
             sh "env"
-            echo env.getEnvironment()
+            def dockerENV = env.getEnvironment()
                   .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
-                  .collect { key, value -> "--build-arg ${key}='${value}'" }
+                  .collect { key, value -> "--build-arg ${key}='${value.replaceAll("(\\r|\\n)", "")}'" }
                   .join(' ')
+            echo dockerENV
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
-                """${WORKSPACE} ${env.getEnvironment()
-                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
-                  .collect { key, value -> "--build-arg ${key}='${value}'" }
-                  .join(' ')}"""
+                "${WORKSPACE} ${dockerENV}"
               )
               image.push(VERSION)
               currentBuild.displayName = VERSION

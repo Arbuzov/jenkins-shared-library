@@ -21,7 +21,6 @@ pipeline {
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
         }
-
         // script {
         //   // This is a test for confluence publishing please keep it commented
         //   String loadReports (mask) {
