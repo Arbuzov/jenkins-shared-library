@@ -67,11 +67,19 @@ def call(String PACKAGE_NAME) {
         }
         steps {
           script {
-            sh "env"
-            def dockerENV = env.getEnvironment()
+            def envMap = [:]
+            sh(script: 'env', returnStdout: true).trim().split('\n').each { line ->
+                def index = line.indexOf('=')
+                if (index != -1) {
+                    def key = line.substring(0, index)
+                    def value = line.substring(index + 1)
+                    envMap[key] = value
+                }
+            }
+            def dockerENV = envMap
+                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
                   .collect { key, value -> "--build-arg ${key}='${value.replaceAll("(\\r|\\n)", "")}'" }
                   .join(' ')
-            echo dockerENV
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${PACKAGE_NAME}",
@@ -122,12 +130,19 @@ def call(String PACKAGE_NAME) {
         }
         steps {
           script {
-            sh "env"
-            def dockerENV = env.getEnvironment()
+            def envMap = [:]
+            sh(script: 'env', returnStdout: true).trim().split('\n').each { line ->
+                def index = line.indexOf('=')
+                if (index != -1) {
+                    def key = line.substring(0, index)
+                    def value = line.substring(index + 1)
+                    envMap[key] = value
+                }
+            }
+            def dockerENV = envMap
                   .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
                   .collect { key, value -> "--build-arg ${key}='${value.replaceAll("(\\r|\\n)", "")}'" }
                   .join(' ')
-            echo dockerENV
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
