@@ -120,6 +120,11 @@ def call(String PACKAGE_NAME) {
         }
         steps {
           script {
+            sh "env"
+            echo env.getEnvironment()
+                  .findAll { key, value -> value != null && value.toString().isAllWhitespace() == false }
+                  .collect { key, value -> "--build-arg ${key}='${value}'" }
+                  .join(' ')
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
                 "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
