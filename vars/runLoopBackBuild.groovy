@@ -68,7 +68,10 @@ def call(String PACKAGE_NAME) {
         steps {
           script {
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-              def image = docker.build("spacebridge/${PACKAGE_NAME}")
+              def image = docker.build(
+                "spacebridge/${PACKAGE_NAME}",
+                env.collect { key, value -> "--build-arg ${key}=${value}" }.join(' ')
+              )
               image.push('latest')
               image.push(VERSION)
               currentBuild.displayName = VERSION
@@ -115,7 +118,10 @@ def call(String PACKAGE_NAME) {
         steps {
           script {
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-              def image = docker.build("spacebridge/${makeYMD()}/" + PACKAGE_NAME)
+              def image = docker.build(
+                "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
+                env.collect { key, value -> "--build-arg ${key}=${value}" }.join(' ')
+              )
               image.push(VERSION)
               currentBuild.displayName = VERSION
               publishSummary(
