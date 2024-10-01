@@ -58,6 +58,18 @@ def inspectImages(images) {
   }
 }
 
+def updateManifestRelease() {
+  def manifest = readJSON(file: 'manifest.json')
+  manifest.version = "${manifest.version}.b${BUILD_ID}"
+  writeJSON(file: 'manifest.json', json: manifest)
+}
+
+def updateManifestTest() {
+  def manifest = readJSON(file: 'manifest.json')
+  manifest.version = "${manifest.version}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT"
+  writeJSON(file: 'manifest.json', json: manifest)
+}
+
 def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
 
@@ -85,8 +97,32 @@ def call(Map arg) {
           )
         }
       }
-      stage ('Build archive') {
+      stage ('Build archive release') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+          }
+        }
         steps {
+          updateManifestRelease()
+          tar(
+            file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
+            compress: true,
+            dir: '.',
+            exclude: 'Jenkinsfile,sonar-project.properties'
+          )
+        }
+      }
+      stage ('Build archive test') {
+        when {
+          anyOf {
+            changeRequest()
+            not { branch 'master' }
+          }
+        }
+        steps {
+          updateManifestTest()
           tar(
             file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
             compress: true,
