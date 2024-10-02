@@ -60,14 +60,16 @@ def inspectImages(images) {
 
 def updateManifestRelease() {
   def manifest = readJSON(file: 'manifest.json')
-  manifest.version = "${manifest.version}.b${BUILD_ID}"
-  writeJSON(file: 'manifest.json', json: manifest)
+  manifest.version = "${manifest.version}.b${BUILD_ID}".toString()
+  println(manifest)
+  writeJSON(file: 'manifest.json', json: manifest, pretty: true)
 }
 
 def updateManifestTest() {
   def manifest = readJSON(file: 'manifest.json')
-  manifest.version = "${manifest.version}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT"
-  writeJSON(file: 'manifest.json', json: manifest)
+  manifest.version = "${manifest.version}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT".toString()
+  println(manifest)
+  writeJSON(file: 'manifest.json', json: manifest, pretty: true)
 }
 
 def call(Map arg) {
