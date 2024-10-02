@@ -6,13 +6,16 @@ String call(Map arg) {
   String ROOT = arg.ROOT ?: ''
   String CONTENT = arg.CONTENT ?: ''
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
-  // echo CONTENT
+  Boolean DEBUG = arg.DEBUG ?: false
+  if (DEBUG) {
+    echo CONTENT
+  }
   def postContentUrl = "${CONFLUENCE_API}/content"
   def newReleaseContent = "{\"type\":\"page\",\"title\":\"${TITLE}\",\"ancestors\":[{\"id\":\"${ROOT}\"}],\"space\":{\"key\":\"${SPACE}\"},\"body\":{\"storage\":{\"value\":\"${CONTENT.replaceAll('"','\'')}\",\"representation\":\"storage\"}}}"
   def releaseResponce = httpRequest(
     url: postContentUrl,
     httpMode: 'POST',
-    consoleLogResponseBody: false,
+    consoleLogResponseBody: DEBUG,
     contentType: 'APPLICATION_JSON',
     authentication: CREDENTIALS_ID,
     requestBody: newReleaseContent

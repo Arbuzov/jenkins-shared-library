@@ -58,17 +58,9 @@ def inspectImages(images) {
   }
 }
 
-def updateManifestRelease() {
+def updateManifest(buildVersion) {
   def manifest = readJSON(file: 'manifest.json')
-  manifest.version = "${manifest.version}.b${BUILD_ID}".toString()
-  println(manifest)
-  writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
-}
-
-def updateManifestTest() {
-  def manifest = readJSON(file: 'manifest.json')
-  manifest.version = "${manifest.version}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT".toString()
-  println(manifest)
+  manifest.version = buildVersion
   writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
 }
 
@@ -106,8 +98,11 @@ def call(Map arg) {
             not { changeRequest() }
           }
         }
+        environment {
+          BUILD_VERSION="${BASE_VERSION}.b${BUILD_ID}".toString()
+        }
         steps {
-          updateManifestRelease()
+          updateManifest(BUILD_VERSION)
           tar(
             file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
             compress: true,
@@ -123,8 +118,11 @@ def call(Map arg) {
             not { branch 'master' }
           }
         }
+        environment {
+          BUILD_VERSION="${BASE_VERSION}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT".toString()
+        }
         steps {
-          updateManifestTest()
+          updateManifest(BUILD_VERSION)
           tar(
             file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
             compress: true,
@@ -170,7 +168,7 @@ def call(Map arg) {
             ]]
           )
           script {
-            currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}"
+            currentBuild.displayName = "${BASE_VERSION}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT"
           }
         }
       }
@@ -189,21 +187,6 @@ def call(Map arg) {
             version: "${BASE_VERSION}.b${BUILD_ID}",
             groupId: 'com.spacebridge.application-plugin',
             repository: 'maven-releases',
-            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
-            artifacts: [[
-              artifactId: ARTIFACT_ID,
-              classifier: "${makeclassifier()}",
-              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
-              type: 'tar.gz',
-            ]]
-          )
-          nexusArtifactUploader(
-            nexusVersion: 'nexus3',
-            protocol: 'http',
-            nexusUrl: 'nexus.asatnet.net',
-            version: "${BASE_VERSION}.b${BUILD_ID}",
-            groupId: 'com.spacebridge',
-            repository: 'application-plugins',
             credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
             artifacts: [[
               artifactId: ARTIFACT_ID,
