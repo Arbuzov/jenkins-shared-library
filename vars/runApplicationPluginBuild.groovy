@@ -62,14 +62,14 @@ def updateManifestRelease() {
   def manifest = readJSON(file: 'manifest.json')
   manifest.version = "${manifest.version}.b${BUILD_ID}".toString()
   println(manifest)
-  writeJSON(file: 'manifest.json', json: manifest, pretty: true)
+  writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
 }
 
 def updateManifestTest() {
   def manifest = readJSON(file: 'manifest.json')
   manifest.version = "${manifest.version}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT".toString()
   println(manifest)
-  writeJSON(file: 'manifest.json', json: manifest, pretty: true)
+  writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
 }
 
 def call(Map arg) {
