@@ -7,6 +7,7 @@ String call(Map arg) {
   String CONTENT = arg.CONTENT ?: ''
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   Boolean DEBUG = arg.DEBUG ?: false
+  String LABEL = arg.LABEL ?: ''
   if (DEBUG) {
     echo CONTENT
   }
@@ -20,5 +21,13 @@ String call(Map arg) {
     authentication: CREDENTIALS_ID,
     requestBody: newReleaseContent
   )
+  if (!LABEL.isEmpty()) {
+    labelConfluencePage(
+      ID: readJSON(text: releaseResponce.getContent()).id,
+      LABEL: LABEL,
+      CREDENTIALS_ID: CREDENTIALS_ID,
+      DEBUG: DEBUG
+    )
+  }
   return 'https://confluence.spacebridge.com/pages/viewpage.action?pageId=' + readJSON(text: releaseResponce.getContent()).id
 }
