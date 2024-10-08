@@ -5,7 +5,7 @@ changeSets.each { changeSet ->
     def browser = changeSet.browser
 %>
 <h${headerLevel?: '2'}>
-  <a target='_blank' href='${rootURL}/${build.url}/changes'>${build.displayName}(<i>${formattedTimestamp}</i>)</a>
+  <a target='_blank' href='${rootURL}/${build.url}'>${build.displayName}(<i>${formattedTimestamp}</i>)</a>
 </h${headerLevel?: '2'}>
 <ol>
 <% changeSet.eachWithIndex { c, loopIndex -> %>
