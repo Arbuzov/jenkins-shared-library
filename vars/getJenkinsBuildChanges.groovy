@@ -5,10 +5,10 @@
 def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   def build = arg.BUILD
-  def HEADER = argv.HEADER ?: '2'
-  if (argv.PROJECT_ID) {
-    def project = Jenkins.instance.getItemByFullName(argv.PROJECT_ID)
-    if (project && argv.BUILD_NUMBER) {
+  def HEADER = arg.HEADER ?: '2'
+  if (arg.PROJECT_ID) {
+    def project = Jenkins.instance.getItemByFullName(arg.PROJECT_ID)
+    if (project && arg.BUILD_NUMBER) {
       build = project.getBuild(BUILD_NUMBER)
     }
   }
