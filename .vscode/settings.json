@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "http-sonarqube-asatnet-net",
+    "projectKey": "devops_base-docker-images_jenkins-server-image_AYvYMBM3dfS1JZHR0j10"
+  }
+}

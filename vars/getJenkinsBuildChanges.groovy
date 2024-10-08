@@ -15,11 +15,14 @@ def call(Map arg) {
     if (DEBUG) {
       println(project.toString())
     }
-    if (project && arg.BUILD_NUMBER) {
+    if (project && arg.BUILD_NUMBER.toString()) {
       if (DEBUG) {
-        println(project.toString())
+        println(arg.BUILD_NUMBER.toString())
       }
-      build = project.getBuild(BUILD_NUMBER.toString())
+      build = project.getBuild(arg.BUILD_NUMBER.toString())
+      if (DEBUG) {
+        println(build.toString())
+      }
     }
   }
   if (build) {

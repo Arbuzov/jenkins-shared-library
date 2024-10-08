@@ -21,7 +21,10 @@ pipeline {
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
         }
-        // script {
+        script {
+          println(getJenkinsBuildChanges(
+            PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
+          ))
         //   // This is a test for confluence publishing please keep it commented
         //   String loadReports (mask) {
         //     def filesContent = ''
@@ -50,7 +53,7 @@ pipeline {
         //     ROOT: '181239839',
         //     CONTENT: inflateTemplate(bind)
         //   )
-        // }
+        }
 
         print("PIPELINE_BIN_REPO_FULL_PATH = " + env.getAt('PIPELINE_BIN_REPO_FULL_PATH'))
         echo (getBuildCause().toString())
