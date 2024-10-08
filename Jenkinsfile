@@ -34,7 +34,7 @@ pipeline {
         //     return filesContent
         //   }
         //   def bind = [
-        //     TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+        //     TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
         //     STRINGIFY: true,
         //     date: new Date().format('yyyy-MM-dd'),
         //     images: arrayToString(["adasdas", "asdasd"], ["<li>", "</li>"], ["<ul>", "</ul>"]),

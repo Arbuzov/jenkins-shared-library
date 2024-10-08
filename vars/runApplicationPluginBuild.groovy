@@ -233,7 +233,7 @@ def call(Map arg) {
                 ROOT: arg.ROOT_PAGE,
                 CONTENT: inflateTemplate(
                   STRINGIFY: true,
-                  TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.template.html'),
+                  TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",

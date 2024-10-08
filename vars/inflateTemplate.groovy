@@ -1,9 +1,12 @@
 import groovy.text.SimpleTemplateEngine;
 
-def call(Map arg) {
+String call(Map arg) {
   def engine = new SimpleTemplateEngine()
   def STRINGIFY = arg.STRINGIFY ?: false
-  def TEMPLATE = STRINGIFY ? arg.TEMPLATE.replaceAll(/(\r\n|\r|\n)/, '') : arg.TEMPLATE
+  def TEMPLATE = arg.TEMPLATE ?: ''
   def template = engine.createTemplate(TEMPLATE).make(arg)
+  if (STRINGIFY) {
+    template = template.replaceAll(/(\r\n|\r|\n)/, '')
+  }
   return template.toString()
 }
