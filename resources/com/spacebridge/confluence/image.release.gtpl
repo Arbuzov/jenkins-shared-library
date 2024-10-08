@@ -47,11 +47,9 @@
           <td class="confluenceTd">
             <div class="content-wrapper">
               <p>
-                <img class="editor-inline-macro" height="18" width="88"
-                  alt="Status"
-                  src="/plugins/servlet/status-macro/placeholder?title=Draft" data-macro-name="status"
-                  data-macro-id="9d75aa42-a373-4d11-ac43-58c3b1a13a73" data-macro-parameters="title=Draft"
-                  data-macro-schema-version="1"/>
+                <ac:structured-macro ac:name="status" ac:schema-version="1" ac:macro-id="a76e32d7-de84-4563-913b-a6c44ab68b62">
+                  <ac:parameter ac:name="title">draft</ac:parameter>
+                </ac:structured-macro>
               </p>
             </div>
           </td>
