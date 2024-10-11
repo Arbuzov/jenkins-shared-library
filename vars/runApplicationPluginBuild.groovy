@@ -159,7 +159,7 @@ def call(Map arg) {
             version: "${BASE_VERSION}.b${BUILD_ID}mr${CHANGE_ID}-SNAPSHOT",
             groupId: "com.spacebridge.application-plugin.${makeYMD().replaceAll('/','.')}",
             repository: 'maven-snapshots',
-            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
+            credentialsId: 'jira-username-password',
             artifacts: [[
               artifactId: ARTIFACT_ID,
               classifier: "${makeclassifier()}",
@@ -187,7 +187,7 @@ def call(Map arg) {
             version: "${BASE_VERSION}.b${BUILD_ID}",
             groupId: 'com.spacebridge.application-plugin',
             repository: 'maven-releases',
-            credentialsId: '25d60c09-852c-4464-9bf1-877c7a165c2c',
+            credentialsId: 'jira-username-password',
             artifacts: [[
               artifactId: ARTIFACT_ID,
               classifier: "${makeclassifier()}",

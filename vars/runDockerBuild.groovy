@@ -187,7 +187,7 @@ def call(Map arg) {
           }
         }
         steps {
-          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
+          createNewJiraVersion("${ARTIFACT_ID}-${VERSION}", arg.JIRA_PROJECT)
         }
       }
       stage ('Create Confluence description') {
