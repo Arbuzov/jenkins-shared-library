@@ -211,6 +211,20 @@ def call(String PACKAGE_NAME) {
           archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
         }
       }
+      stage('Publish release notes') {
+        when {
+          allOf {
+            branch 'master'
+            not { changeRequest() }
+            expression { return arg.CONFLUENCE_SPACE }
+            expression { return arg.ROOT_PAGE }
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          sh "env"
+        }
+      }
     }
   }
 }
