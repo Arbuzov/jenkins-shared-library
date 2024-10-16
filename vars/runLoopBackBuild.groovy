@@ -213,16 +213,34 @@ def call(String PACKAGE_NAME) {
       }
       stage('Publish release notes') {
         when {
-          allOf {
-            branch 'master'
             not { changeRequest() }
-            expression { return arg.CONFLUENCE_SPACE }
-            expression { return arg.ROOT_PAGE }
-            expression { return arg.JIRA_PROJECT }
           }
         }
         steps {
-          sh "env"
+          script {
+            def APPLICATION_DATA = readJSON(file: 'package.json')
+            if (APPLICATION_DATA.spacebridge?.confluence?.notes && APPLICATION_DATA.spacebridge?.confluence?.space && APPLICATION_DATA.spacebridge?.jira?.project) {
+              def CONFLUENCE_SPACE = APPLICATION_DATA.spacebridge.confluence.space
+              def ROOT_PAGE = APPLICATION_DATA.spacebridge.confluence.notes
+              def JIRA_PROJECT = APPLICATION_DATA.spacebridge.jira.project
+              publishSummary(
+                arrayToHrefList([
+                  createConfluencePage(
+                    TITLE: "Release ${PACKAGE_NAME}-${VERSION}",
+                    SPACE: CONFLUENCE_SPACE,
+                    ROOT: ROOT_PAGE,
+                    CONTENT: inflateTemplate(
+                      STRINGIFY: true,
+                      TEMPLATE: libraryResource('com/spacebridge/confluence/image.release.gtpl'),
+                      build: currentBuild,
+                      version: "${SPACEBRIDGE_PROJECT_VERSION}",
+                      imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
+                      projectId: JIRA_PROJECT
+                    )
+                  )
+                ])
+              )
+          }
         }
       }
     }
