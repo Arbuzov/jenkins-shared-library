@@ -218,6 +218,11 @@ def call(String PACKAGE_NAME) {
         when {
             not { changeRequest() }
         }
+        agent {
+          docker {
+            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:latest'
+          }
+        }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
