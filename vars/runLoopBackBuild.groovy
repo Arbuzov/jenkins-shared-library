@@ -64,6 +64,7 @@ def call(String PACKAGE_NAME) {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -127,6 +128,7 @@ def call(String PACKAGE_NAME) {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -182,6 +184,7 @@ def call(String PACKAGE_NAME) {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
@@ -214,7 +217,10 @@ def call(String PACKAGE_NAME) {
       stage('Publish release notes') {
         when {
             not { changeRequest() }
-          }
+        }
+        environment {
+          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -240,6 +246,7 @@ def call(String PACKAGE_NAME) {
                   )
                 ])
               )
+            }
           }
         }
       }
