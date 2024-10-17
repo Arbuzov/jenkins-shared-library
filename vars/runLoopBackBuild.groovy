@@ -1,4 +1,4 @@
-def call(String PACKAGE_NAME) {
+def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
     agent none
@@ -230,6 +230,8 @@ def call(String PACKAGE_NAME) {
         steps {
           script {
             def APPLICATION_DATA = readJSON(file: 'package.json')
+            println("APPLICATION_DATA: ${APPLICATION_DATA}")
+            sh 'env'
             if (APPLICATION_DATA.spacebridge?.confluence?.notes && APPLICATION_DATA.spacebridge?.confluence?.space && APPLICATION_DATA.spacebridge?.jira?.project) {
               def CONFLUENCE_SPACE = APPLICATION_DATA.spacebridge.confluence.space
               def ROOT_PAGE = APPLICATION_DATA.spacebridge.confluence.notes
