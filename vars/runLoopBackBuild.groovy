@@ -225,7 +225,7 @@ def call(String PACKAGE_NAME = '') {
           }
         }
         environment {
-          VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-${env.BRANCH_NAME.equals('master')?'':env.BRANCH_NAME}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
