@@ -147,7 +147,7 @@ def call(String PACKAGE_NAME = '') {
                   .join(' ')
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
-                "spacebridge/${makeYMD()}/" + PACKAGE_NAME,
+                "spacebridge/${makeYMD()}/${env.PACKAGE_NAME}",
                 "${WORKSPACE} ${dockerENV}"
               )
               image.push(VERSION)
@@ -207,6 +207,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           sh "grype -vv registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
