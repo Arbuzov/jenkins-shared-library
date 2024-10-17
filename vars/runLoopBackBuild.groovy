@@ -224,7 +224,7 @@ def call(String PACKAGE_NAME) {
           }
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
@@ -244,7 +244,7 @@ def call(String PACKAGE_NAME) {
                       STRINGIFY: true,
                       TEMPLATE: libraryResource('com/spacebridge/confluence/image.release.gtpl'),
                       build: currentBuild,
-                      version: "${SPACEBRIDGE_PROJECT_VERSION}",
+                      version: "${VERSION}",
                       imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
                       projectId: JIRA_PROJECT
                     )
