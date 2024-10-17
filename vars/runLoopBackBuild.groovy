@@ -1,12 +1,19 @@
 def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
-    agent none
+    agent {
+      docker {
+        image 'registry.nexus.asatnet.net/spacebridge/debian:bullseye-20240812-b2'
+      }
+    }
     options {
       buildDiscarder(logRotator(daysToKeepStr: '20', artifactDaysToKeepStr: '7'))
       disableConcurrentBuilds()
       preserveStashes(buildCount: 5)
       timestamps()
+    }
+    environment {
+      PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
     }
     stages {
       stage ('Build') {
@@ -64,7 +71,6 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -83,7 +89,7 @@ def call(String PACKAGE_NAME = '') {
                   .join(' ')
             docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
               def image = docker.build(
-                "spacebridge/${PACKAGE_NAME}",
+                "spacebridge/${env.PACKAGE_NAME}",
                 "${WORKSPACE} ${dockerENV}"
               )
               image.push('latest')
@@ -92,8 +98,8 @@ def call(String PACKAGE_NAME = '') {
               publishSummary(
                 arrayToString(
                 [
-                  "docker pull registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
-                  "docker pull registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:latest",
+                  "docker pull registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION}",
+                  "docker pull registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:latest",
                 ],
                 ["<li>","</li>"],
                 ["<ul>","</ul>"]
@@ -105,7 +111,7 @@ def call(String PACKAGE_NAME = '') {
                 "${env.VERSION}",
                 "${env.GIT_COMMIT}",
                 "This tag ${env.VERSION} was automaticaly created by Jenkins pipeline.",
-                "## Release ${VERSION}\n\n__Build reference:__ ${BUILD_URL}\n\n### Build result\n\ndocker pull registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}"
+                "## Release ${VERSION}\n\n__Build reference:__ ${BUILD_URL}\n\n### Build result\n\ndocker pull registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION}"
               )
             }
           }
@@ -128,7 +134,6 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -154,7 +159,7 @@ def call(String PACKAGE_NAME = '') {
               currentBuild.displayName = VERSION
               publishSummary(
                 arrayToString (
-                  ["docker pull registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION}"],
+                  ["docker pull registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${env.PACKAGE_NAME}:${VERSION}"],
                   ["<li>","</li>"],
                   ["<ul>","</ul>"]
                 ),
@@ -184,11 +189,10 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
-          sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
-          sh "syft registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
+          sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.syft.txt"
           archiveArtifacts artifacts: '**/*.syft.txt,**/*.grype.txt,'
         }
       }
@@ -207,12 +211,11 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
-          sh "grype -vv registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
-          sh "syft registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.syft.txt"
-          archiveArtifacts artifacts: "**/*${PACKAGE_NAME}:${VERSION}.syft.txt,**/*${PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "grype -vv registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
+          sh "syft registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.syft.txt"
+          archiveArtifacts artifacts: "**/*${env.PACKAGE_NAME}:${VERSION}.syft.txt,**/*${env.PACKAGE_NAME}:${VERSION}.grype.txt"
         }
       }
       stage('Publish release notes') {
@@ -221,12 +224,11 @@ def call(String PACKAGE_NAME = '') {
         }
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:latest'
+            image 'registry.nexus.asatnet.net/spacebridge/debian:bullseye-20240812-b2'
           }
         }
         environment {
           VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -240,7 +242,7 @@ def call(String PACKAGE_NAME = '') {
               publishSummary(
                 arrayToHrefList([
                   createConfluencePage(
-                    TITLE: "Release ${PACKAGE_NAME}-${VERSION}",
+                    TITLE: "Release ${env.PACKAGE_NAME}-${VERSION}",
                     SPACE: CONFLUENCE_SPACE,
                     ROOT: ROOT_PAGE,
                     CONTENT: inflateTemplate(
@@ -248,7 +250,7 @@ def call(String PACKAGE_NAME = '') {
                       TEMPLATE: libraryResource('com/spacebridge/confluence/image.release.gtpl'),
                       build: currentBuild,
                       version: "${VERSION}",
-                      imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
+                      imageUri: "registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION}",
                       projectId: JIRA_PROJECT
                     )
                   )
