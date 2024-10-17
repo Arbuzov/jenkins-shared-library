@@ -1,19 +1,12 @@
 def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
-    agent {
-      docker {
-        image 'registry.nexus.asatnet.net/spacebridge/debian:bullseye-20240812-b2'
-      }
-    }
+    agent none
     options {
       buildDiscarder(logRotator(daysToKeepStr: '20', artifactDaysToKeepStr: '7'))
       disableConcurrentBuilds()
       preserveStashes(buildCount: 5)
       timestamps()
-    }
-    environment {
-      PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
     }
     stages {
       stage ('Build') {
@@ -71,6 +64,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -134,6 +128,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
@@ -189,6 +184,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
@@ -211,6 +207,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           sh "grype -vv registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
@@ -229,6 +226,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           script {
