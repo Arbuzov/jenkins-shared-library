@@ -207,6 +207,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
         }
         steps {
           sh "grype -vv registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION} > ${PACKAGE_NAME}:${VERSION}.grype.txt"
