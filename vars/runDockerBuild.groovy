@@ -27,6 +27,10 @@ def call(Map arg) {
         agent {
             docker { image 'sonarsource/sonar-scanner-cli' }
         }
+        environment {
+          SONAR_DOCKER_FILE_PATTERNS = "*.dockerfile"
+          SONAR_LANG_PATTERNS_DOCKERFILE = "Dockerfile"
+        }
         steps {
           script {
             if (env.CHANGE_ID) {
