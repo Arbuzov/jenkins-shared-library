@@ -64,7 +64,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
           script {
@@ -127,8 +127,8 @@ def call(String PACKAGE_NAME = '') {
           label 'farmer-docker-ubuntu'
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
+          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME.replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
           script {
@@ -184,7 +184,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
           sh "grype registry.nexus.asatnet.net/spacebridge/${makeYMD()}/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
@@ -207,7 +207,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
           sh "grype -vv registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION} > ${env.PACKAGE_NAME}:${VERSION}.grype.txt"
@@ -226,7 +226,7 @@ def call(String PACKAGE_NAME = '') {
         }
         environment {
           VERSION = "${readJSON(file: 'package.json').version}-${env.BRANCH_NAME.equals('master')?'':env.BRANCH_NAME}b${BUILD_NUMBER}"
-          PACKAGE_NAME = "${readJSON(file: 'package.json').name}"
+          PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
           script {
