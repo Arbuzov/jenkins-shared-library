@@ -14,6 +14,15 @@ def call(Map arg) {
       timestamps()
     }
     stages {
+      stage ('Run hadolint check') {
+        agent {
+          docker { image 'docker.io/hadolint/hadolint:latest-alpine' }
+        }
+        steps {
+          sh 'hadolint --no-fail -f checkstyle Dockerfile > hadolint-report.xml'
+          stash name: 'hadolint', includes: 'hadolint-report.xml'
+        }
+      }
       stage ('Run sonarqube check') {
         agent {
             docker { image 'sonarsource/sonar-scanner-cli' }
@@ -26,6 +35,7 @@ def call(Map arg) {
               env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
             }
           }
+          unstash 'hadolint'
           withSonarQubeEnv('SonarQube Server') {
             sh "sonar-scanner"
           }
