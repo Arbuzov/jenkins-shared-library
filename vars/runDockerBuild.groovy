@@ -41,7 +41,7 @@ def call(Map arg) {
           }
           unstash 'hadolint'
           withSonarQubeEnv('SonarQube Server') {
-            sh "sonar-scanner"
+            sh "sonar-scanner -Dsonar.docker.file.patterns=*.dockerfile -Dsonar.lang.patterns.dockerfile=Dockerfile"
           }
         }
       }
