@@ -1,12 +1,18 @@
 <!--
 Template variables:
-  build
+  date
   version
-  imageUri
   projectId
+  buildUrl
+  keyComponents
+  installationPage
+  installationSpace
+  isoUrl
+  fwUrl
+  boms
+  vulnerability
 -->
-<h2>Version information</h2>
-<ac:structured-macro ac:name="details" ac:schema-version="1"
+<h2>Version information</h2><ac:structured-macro ac:name="details" ac:schema-version="1"
   ac:macro-id="26c82d28-bffd-478b-bdfe-9664ee12e71e">
   <ac:parameter ac:name="id">sb-changelog-page</ac:parameter><ac:rich-text-body>
     <p class="auto-cursor-target"><br /></p>
@@ -25,7 +31,7 @@ Template variables:
               <p>
                 <span style="color: rgb(112,112,112);">
                   <span style="background-color: rgb(245,245,245);">
-                    <em><time datetime="${new Date().format('yyyy-MM-dd')}" />&nbsp;<br /></em>
+                    <em><time datetime="${date}" />&nbsp;<br /></em>
                   </span>
                 </span>
               </p>
@@ -66,7 +72,15 @@ Template variables:
           <th>Build</th>
           <td>
             <div class="content-wrapper">
-              <p><a href="${build.getAbsoluteUrl()}">${build.getAbsoluteUrl()}</a></p>
+              <p><a href="${buildUrl}">${buildUrl}</a></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <th>Key components</th>
+          <td>
+            <div class="content-wrapper">
+              ${keyComponents}
             </div>
           </td>
         </tr>
@@ -75,35 +89,40 @@ Template variables:
     <p class="auto-cursor-target"><br /></p>
   </ac:rich-text-body>
 </ac:structured-macro>
-<h2>Usage</h2>
-<ac:structured-macro ac:name="code" ac:schema-version="1" ac:macro-id="df2d4001-ebaa-480b-8c12-2d68c8a2fd5c">
-  <ac:parameter ac:name="language">bash</ac:parameter>
-  <ac:parameter ac:name="theme">Midnight</ac:parameter>
-  <ac:plain-text-body><![CDATA[docker pull ${imageUri}]]></ac:plain-text-body>
+<h2>Installation packages</h2>
+<ul>
+  <li><a href="${isoUrl}">${isoUrl}</a></li>
+  <li><a href="${fwUrl}">${fwUrl}</a></li>
+</ul>
+<h2>BOMs</h2>
+<ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
+  <ac:rich-text-body>
+    <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="6ae95228-7a8b-46fb-8801-47392f3a97c1">
+      <ac:plain-text-body>
+        <![CDATA[${boms}]]>
+      </ac:plain-text-body>
+    </ac:structured-macro>
+  </ac:rich-text-body>
 </ac:structured-macro>
-<h2>Changes</h2>
-<p>
-<%
-def hadChanges = false
-build.changeSets.each { changeSet -> 
-    hadChanges = true
-    def browser = changeSet.browser
-%>
-<ol>
-<% changeSet.eachWithIndex { c, loopIndex -> %>
-  <li value='${c.revision.class.name == "java.lang.Integer" ? c.revision : null}'>
-    ${c.msgAnnotated}
-    &#8212;
-    <a target='_blank' href='https://jenkins.asatnet.net/${c.author.url}/' class='model-link inside'>${c.author.displayName}</a> /
-    
-    <% def cslink = browser.getChangeSetLink(c) %>
-    <% if (cslink) { %>
-      <a target='_blank' href='${cslink}'>${browser.descriptor.displayName}</a>
-    <% } else { %>
-      <a target='_blank' href='${build.number}/changes#detail${loopIndex}'>Detail</a>
-    <% } %>
-  </li>
-<% } %>
-</ol>
-<% } %>
-</p>
+<h2>Vulnerability report</h2>
+<ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
+  <ac:rich-text-body>
+    <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="6ae95228-7a8b-46fb-8801-47392f3a97c1">
+      <ac:plain-text-body>
+        <![CDATA[${vulnerability}]]>
+      </ac:plain-text-body>
+    </ac:structured-macro>
+  </ac:rich-text-body>
+</ac:structured-macro>
+<h2>Installation instructions</h2>
+<ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
+  <ac:rich-text-body>
+    <ac:structured-macro ac:name="include" ac:schema-version="1" ac:macro-id="428ea52c-de8b-4747-afe0-ce6df429fd8b">
+      <ac:parameter ac:name="">
+        <ac:link>
+          <ri:page ri:space-key="${installationSpace}" ri:content-title="${installationPage}" />
+        </ac:link>
+      </ac:parameter>
+    </ac:structured-macro>
+  </ac:rich-text-body>
+</ac:structured-macro>

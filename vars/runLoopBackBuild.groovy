@@ -245,7 +245,7 @@ def call(String PACKAGE_NAME = '') {
                     ROOT: ROOT_PAGE,
                     CONTENT: inflateTemplate(
                       STRINGIFY: true,
-                      TEMPLATE: libraryResource('com/spacebridge/confluence/image.release.gtpl'),
+                      TEMPLATE: libraryResource('com/spacebridge/confluence/docker.release.gtpl'),
                       build: currentBuild,
                       version: "${VERSION}",
                       imageUri: "registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION}",
