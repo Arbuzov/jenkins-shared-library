@@ -119,7 +119,7 @@ def call(Map arg) {
           }
         }
         environment {
-          BUILD_VERSION="${BASE_VERSION}.mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT".toString()
+          BUILD_VERSION="${BASE_VERSION}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT".toString()
         }
         steps {
           updateManifest(BUILD_VERSION)
@@ -156,7 +156,7 @@ def call(Map arg) {
             nexusVersion: 'nexus3',
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
-            version: "${BASE_VERSION}.mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT",
+            version: "${BASE_VERSION}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT",
             groupId: "com.spacebridge.application-plugin",
             repository: 'maven-snapshots',
             credentialsId: 'jira-username-password',
@@ -168,7 +168,7 @@ def call(Map arg) {
             ]]
           )
           script {
-            currentBuild.displayName = "${BASE_VERSION}.mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT"
+            currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT"
           }
         }
       }
