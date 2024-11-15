@@ -99,7 +99,7 @@ def call(Map arg) {
           }
         }
         environment {
-          BUILD_VERSION="${BASE_VERSION}.b${BUILD_ID}".toString()
+          BUILD_VERSION="${BASE_VERSION}-b${BUILD_ID}".toString()
         }
         steps {
           updateManifest(BUILD_VERSION)
@@ -184,7 +184,7 @@ def call(Map arg) {
             nexusVersion: 'nexus3',
             protocol: 'http',
             nexusUrl: 'nexus.asatnet.net',
-            version: "${BASE_VERSION}.b${BUILD_ID}",
+            version: "${BASE_VERSION}-b${BUILD_ID}",
             groupId: 'com.spacebridge.application-plugin',
             repository: 'maven-releases',
             credentialsId: 'jira-username-password',
@@ -196,7 +196,7 @@ def call(Map arg) {
             ]]
           )
           script {
-            currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}"
+            currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}"
           }
         }
       }
@@ -209,7 +209,7 @@ def call(Map arg) {
           }
         }
         steps {
-          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}", arg.JIRA_PROJECT)
+          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}", arg.JIRA_PROJECT)
         }
       }
       stage ('Create Release notes') {
@@ -228,7 +228,7 @@ def call(Map arg) {
           publishSummary(
             arrayToHrefList([
               createConfluencePage(
-                TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+                TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}",
                 SPACE: arg.CONFLUENCE_SPACE,
                 ROOT: arg.ROOT_PAGE,
                 CONTENT: inflateTemplate(
@@ -236,9 +236,9 @@ def call(Map arg) {
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
-                  version: "${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}",
+                  version: "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}",
                   projectId: arg.JIRA_PROJECT,
-                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}.b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}.b${BUILD_ID}.tar.gz",
+                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}-b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}.tar.gz",
                   boms: loadReports ("*.syft.txt"),
                   vulnerability: loadReports ("*.grype.txt")
                 )
