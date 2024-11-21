@@ -1,7 +1,7 @@
 def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
-    agent none
+    agent any
     options {
       buildDiscarder(logRotator(daysToKeepStr: '20', artifactDaysToKeepStr: '7'))
       disableConcurrentBuilds()
