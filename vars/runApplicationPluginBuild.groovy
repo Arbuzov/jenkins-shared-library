@@ -259,7 +259,7 @@ def call(Map arg) {
                   STRINGIFY: true,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
-                  images: arrayToString(getImageList(), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+                  images: arrayToString(new ArrayList<>(getImageList()), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}",
                   projectId: arg.JIRA_PROJECT,
                   pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}-b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}.tar.gz",
