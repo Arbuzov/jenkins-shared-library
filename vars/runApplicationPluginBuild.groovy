@@ -1,5 +1,5 @@
 Set<String> getImageList() {
-  def images = []
+  def images = new HashSet<String>()
   def composeRaw = readFile(
     file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
   )
@@ -55,6 +55,7 @@ def inspectImages(images) {
     echo im.split('/').last()
     sh "grype ${im} > ${im.split('/').last()}.grype.txt"
     sh "syft ${im} > ${im.split('/').last()}.syft.txt"
+    writeFile(file: "images.txt", text: im, encoding: "UTF-8")
   }
 }
 
@@ -80,6 +81,11 @@ def call(Map arg) {
       BASE_VERSION="${readJSON(file: 'manifest.json').version}"
     }
     stages {
+      stage ('Service step') {
+        steps {
+          echo 'Service step to create an extra pipelines and checks'
+        }
+      }
       stage ('Save images') {
         when {
           environment name: 'INCLUDE_IMAGES', value: "true"
@@ -160,12 +166,20 @@ def call(Map arg) {
             groupId: "com.spacebridge.application-plugin",
             repository: 'maven-snapshots',
             credentialsId: 'jira-username-password',
-            artifacts: [[
-              artifactId: ARTIFACT_ID,
-              classifier: "${makeclassifier()}",
-              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
-              type: 'tar.gz',
-            ]]
+            artifacts: [
+              [
+                artifactId: ARTIFACT_ID,
+                classifier: "${makeclassifier()}",
+                file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
+                type: 'tar.gz',
+              ],
+              [
+                artifactId: ARTIFACT_ID,
+                classifier: "images",
+                file: "images.txt",
+                type: 'txt',
+              ]
+            ]
           )
           script {
             currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT"
@@ -188,12 +202,20 @@ def call(Map arg) {
             groupId: 'com.spacebridge.application-plugin',
             repository: 'maven-releases',
             credentialsId: 'jira-username-password',
-            artifacts: [[
-              artifactId: ARTIFACT_ID,
-              classifier: "${makeclassifier()}",
-              file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
-              type: 'tar.gz',
-            ]]
+            artifacts: [
+              [
+                artifactId: ARTIFACT_ID,
+                classifier: "${makeclassifier()}",
+                file: "${ARTIFACT_ID}.${BUILD_ID}.tar.gz",
+                type: 'tar.gz',
+              ],
+              [
+                artifactId: ARTIFACT_ID,
+                classifier: "images",
+                file: "images.txt",
+                type: 'txt',
+              ]
+            ]
           )
           script {
             currentBuild.displayName = "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}"
@@ -240,7 +262,8 @@ def call(Map arg) {
                   projectId: arg.JIRA_PROJECT,
                   pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}-b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}.tar.gz",
                   boms: loadReports ("*.syft.txt"),
-                  vulnerability: loadReports ("*.grype.txt")
+                  vulnerability: loadReports ("*.grype.txt"),
+                  build: currentBuild
                 )
               )
             ])

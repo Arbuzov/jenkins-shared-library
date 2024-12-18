@@ -96,6 +96,32 @@ ${images}
     </tr>
   </tbody>
 </table>
+<h2>Changes</h2>
+<p>
+<%
+def hadChanges = false
+build.changeSets.each { changeSet -> 
+    hadChanges = true
+    def browser = changeSet.browser
+%>
+<ol>
+<% changeSet.eachWithIndex { c, loopIndex -> %>
+  <li value='${c.revision.class.name == "java.lang.Integer" ? c.revision : null}'>
+    ${c.msgAnnotated}
+    &#8212;
+    <a target='_blank' href='https://jenkins.asatnet.net/${c.author.url}/' class='model-link inside'>${c.author.displayName}</a> /
+    
+    <% def cslink = browser.getChangeSetLink(c) %>
+    <% if (cslink) { %>
+      <a target='_blank' href='${cslink}'>${browser.descriptor.displayName}</a>
+    <% } else { %>
+      <a target='_blank' href='${build.number}/changes#detail${loopIndex}'>Detail</a>
+    <% } %>
+  </li>
+<% } %>
+</ol>
+<% } %>
+</p>
 <h2>Installation instructions</h2>
 <p>
   <ac:structured-macro ac:name="include" ac:schema-version="1" ac:macro-id="428ea52c-de8b-4747-afe0-ce6df429fd8b">
