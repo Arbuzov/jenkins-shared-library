@@ -55,8 +55,12 @@ def inspectImages(images) {
     echo im.split('/').last()
     sh "grype ${im} > ${im.split('/').last()}.grype.txt"
     sh "syft ${im} > ${im.split('/').last()}.syft.txt"
-    writeFile(file: "images.txt", text: im, encoding: "UTF-8")
   }
+  writeFile(
+    file: "images.txt",
+    text: arrayToString(new ArrayList<>(images), ["", "\n"]),
+    encoding: "UTF-8"
+  )
 }
 
 def updateManifest(buildVersion) {
