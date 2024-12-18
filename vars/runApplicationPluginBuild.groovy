@@ -158,6 +158,7 @@ def call(Map arg) {
           }
         }
         steps {
+          unstash 'reports'
           nexusArtifactUploader(
             nexusVersion: 'nexus3',
             protocol: 'http',
@@ -194,6 +195,7 @@ def call(Map arg) {
           }
         }
         steps {
+          unstash 'reports'
           nexusArtifactUploader(
             nexusVersion: 'nexus3',
             protocol: 'http',
