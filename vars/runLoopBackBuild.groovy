@@ -1,3 +1,14 @@
+String loadReports (mask) {
+  def filesContent = ''
+  def fileList = findFiles(glob: mask)
+  fileList.each { file ->
+      def content = readFile(file.path)
+        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+        filesContent += file.name + '\\n' +content + '\\n'
+  }
+  return filesContent
+}
+
 def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
@@ -250,7 +261,9 @@ def call(String PACKAGE_NAME = '') {
                       build: currentBuild,
                       version: "${VERSION}",
                       imageUri: "registry.nexus.asatnet.net/spacebridge/${env.PACKAGE_NAME}:${VERSION}",
-                      projectId: JIRA_PROJECT
+                      projectId: JIRA_PROJECT,
+                      boms: loadReports ("**/*.syft.txt"),
+                      vulnerability: loadReports ("**/*.grype.txt")
                     )
                   )
                 ])

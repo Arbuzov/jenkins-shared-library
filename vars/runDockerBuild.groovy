@@ -1,9 +1,53 @@
+String loadReports (mask) {
+  def filesContent = ''
+  def fileList = findFiles(glob: mask)
+  fileList.each { file ->
+      def content = readFile(file.path)
+        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+        filesContent += file.name + '\\n' +content + '\\n'
+  }
+  return filesContent
+}
+
+String getKeyComponentsInfo(PACKAGE_NAME, VERSION) {
+    def componentLines = readFile("${PACKAGE_NAME}:${VERSION}.syft.txt").readLines()
+    def result = []
+    KEY_COMPONENTS.each { component, details ->
+        def componentInfo = ''
+        def lineWithVersion = componentLines.find { it.contains(component) }
+        def changesInfo = false
+        def version = 'unknown'
+        if (lineWithVersion) {
+            version = lineWithVersion.split("\\s+")[1]
+            componentInfo += "<h3>Component: ${component}&nbsp;${version}</h3>"
+            def matcher = (lineWithVersion =~ details['buildMask'])
+            if (matcher.find()) {
+                def buildNumber = matcher.group()
+                changesInfo = getJenkinsBuildChanges(
+                  PROJECT_ID: details['project'],
+                  HEADER: '4',
+                  BUILD_NUMBER: buildNumber,
+                  DEBUG: false
+                )
+            }
+        }
+        if (changesInfo) {
+            componentInfo += changesInfo
+        } else {
+            componentInfo += "Build for ${version} not found"
+        }
+        result.add(componentInfo)
+    }
+    return result
+}
+
 def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   String PACKAGE_NAME = arg.PACKAGE_NAME
   String NAMESPACE = arg.NAMESPACE ?: 'spacebridge'
   String BASE_VERSION = arg.BASE_VERSION ?: '1.0.0'
   Boolean MULTI_BRANCH = arg.MULTI_BRANCH ?: false
+  Map KEY_COMPONENTS = arg.KEY_COMPONENTS ?: [:]
   
   pipeline {
     agent {
@@ -215,7 +259,27 @@ def call(Map arg) {
           }
         }
         steps {
-          sh "create a description"
+          unstash 'reports'
+          publishSummary(
+            arrayToHrefList([
+              createConfluencePage(
+                TITLE: "Release ${PACKAGE_NAME}-${VERSION}",
+                SPACE: arg.CONFLUENCE_SPACE,
+                ROOT: arg.ROOT_PAGE,
+                CONTENT: inflateTemplate(
+                  STRINGIFY: true,
+                  TEMPLATE: libraryResource('com/spacebridge/confluence/docker.release.gtpl'),
+                  build: currentBuild,
+                  keyComponents: getKeyComponentsInfo(PACKAGE_NAME, VERSION).join(""),
+                  version: "${VERSION}",
+                  imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
+                  projectId: arg.JIRA_PROJECT,
+                  boms: loadReports ("**/*.syft.txt"),
+                  vulnerability: loadReports ("**/*.grype.txt")
+                )
+              )
+            ])
+          )
         }
       }
     }
