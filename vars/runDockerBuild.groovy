@@ -270,7 +270,7 @@ def call(Map arg) {
                   STRINGIFY: true,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/docker.release.gtpl'),
                   build: currentBuild,
-                  keyComponents: getKeyComponentsInfo(PACKAGE_NAME, VERSION).join(""),
+                  keyComponents: getKeyComponentsInfo(PACKAGE_NAME, "${BASE_VERSION}-b${BUILD_NUMBER}").join(""),
                   version: "${BASE_VERSION}-b${BUILD_NUMBER}",
                   imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
                   projectId: arg.JIRA_PROJECT,
