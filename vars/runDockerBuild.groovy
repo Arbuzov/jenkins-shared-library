@@ -245,7 +245,7 @@ def call(Map arg) {
           }
         }
         steps {
-          createNewJiraVersion("${PACKAGE_NAME}-${VERSION}", arg.JIRA_PROJECT)
+          createNewJiraVersion("${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}", arg.JIRA_PROJECT)
         }
       }
       stage ('Create Confluence description') {
@@ -263,7 +263,7 @@ def call(Map arg) {
           publishSummary(
             arrayToHrefList([
               createConfluencePage(
-                TITLE: "Release ${PACKAGE_NAME}-${VERSION}",
+                TITLE: "Release ${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}",
                 SPACE: arg.CONFLUENCE_SPACE,
                 ROOT: arg.ROOT_PAGE,
                 CONTENT: inflateTemplate(
@@ -271,8 +271,8 @@ def call(Map arg) {
                   TEMPLATE: libraryResource('com/spacebridge/confluence/docker.release.gtpl'),
                   build: currentBuild,
                   keyComponents: getKeyComponentsInfo(PACKAGE_NAME, VERSION).join(""),
-                  version: "${VERSION}",
-                  imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${VERSION}",
+                  version: "${BASE_VERSION}-b${BUILD_NUMBER}",
+                  imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
                   projectId: arg.JIRA_PROJECT,
                   boms: loadReports ("**/*.syft.txt"),
                   vulnerability: loadReports ("**/*.grype.txt")
