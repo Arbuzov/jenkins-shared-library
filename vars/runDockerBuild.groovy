@@ -9,7 +9,7 @@ String loadReports (mask) {
   return filesContent
 }
 
-String getKeyComponentsInfo(PACKAGE_NAME, VERSION) {
+String getKeyComponentsInfo(PACKAGE_NAME, VERSION, KEY_COMPONENTS = [:]) {
     def componentLines = readFile("${PACKAGE_NAME}:${VERSION}.syft.txt").readLines()
     def result = []
     KEY_COMPONENTS.each { component, details ->
@@ -270,7 +270,7 @@ def call(Map arg) {
                   STRINGIFY: true,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/docker.release.gtpl'),
                   build: currentBuild,
-                  keyComponents: getKeyComponentsInfo(PACKAGE_NAME, "${BASE_VERSION}-b${BUILD_NUMBER}").join(""),
+                  keyComponents: getKeyComponentsInfo(PACKAGE_NAME, "${BASE_VERSION}-b${BUILD_NUMBER}", KEY_COMPONENTS).join(""),
                   version: "${BASE_VERSION}-b${BUILD_NUMBER}",
                   imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
                   projectId: arg.JIRA_PROJECT,
