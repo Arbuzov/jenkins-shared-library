@@ -60,7 +60,7 @@ def call(Map arg) {
     stages {
       stage ('Run hadolint check') {
         agent {
-          docker { image 'hadolint:latest-alpine' }
+          docker { image 'hadolint/hadolint:latest-alpine' }
         }
         steps {
           sh 'hadolint --no-fail -f checkstyle Dockerfile > hadolint-report.xml'
