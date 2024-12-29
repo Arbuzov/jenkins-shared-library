@@ -240,7 +240,7 @@ pipeline {
 
         echo getLatestApprover()
 
-        //print mergeRequestsChangeLog('jenkins-violations-secret')
+        //print mergeRequestsChangeLog('gitlab-text-secret')
 
         script {
           String repo_full_path = getIDURepoPath()
@@ -453,7 +453,7 @@ pipeline {
 
         // Find a related branch for this merge request - BEGIN
         sh "env"
-        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
+        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'gitlab-text-secret')
         sh "env"
         // Find a related branch for this merge request - END
 
@@ -470,7 +470,7 @@ pipeline {
           env.putAt('GITLAB_OA_SOURCE_BRANCH', 'z_branch_240')
         }
         sh "env"
-        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'jenkins-violations-secret')
+        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'gitlab-text-secret')
         sh "env"
 
         script {
