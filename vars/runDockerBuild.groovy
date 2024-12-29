@@ -278,7 +278,8 @@ def call(Map arg) {
                   vulnerability: loadReports ("**/*.grype.txt")
                 )
               )
-            ])
+            ]),
+            "Release notes"
           )
         }
       }

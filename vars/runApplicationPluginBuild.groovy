@@ -272,7 +272,8 @@ def call(Map arg) {
                   build: currentBuild
                 )
               )
-            ])
+            ]),
+            "Release notes"
           )
         }
       }
