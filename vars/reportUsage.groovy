@@ -14,6 +14,7 @@ def call(String callerFilePath = "") {
                 contentType: 'APPLICATION_FORM', 
                 httpMode: 'POST', 
                 requestBody: influxDBData,
+                quiet: true
             )
             echo "Data sent to InfluxDB: Function: ${callerFunctionName}, Project: ${env.JOB_NAME}"
         }
