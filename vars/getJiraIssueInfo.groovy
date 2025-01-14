@@ -6,7 +6,8 @@ call(issueId, credentialsId = 'jira-username-password') {
     httpMode: 'GET',
     consoleLogResponseBody: false,
     contentType: 'APPLICATION_JSON',
-    authentication: credentialsId
+    authentication: credentialsId,
+    quiet: true
   )
   return readJSON(text: issueResponce.getContent())
 }

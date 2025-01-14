@@ -19,7 +19,8 @@ String call(Map arg) {
     consoleLogResponseBody: DEBUG,
     contentType: 'APPLICATION_JSON',
     authentication: CREDENTIALS_ID,
-    requestBody: newReleaseContent
+    requestBody: newReleaseContent,
+    quiet: true
   )
   if (!LABEL.isEmpty()) {
     labelConfluencePage(

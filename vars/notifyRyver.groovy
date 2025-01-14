@@ -7,6 +7,7 @@ def call(String companyName, String apiToken, String message, String header="") 
         httpMode: 'POST',
         consoleLogResponseBody: false,
         contentType : 'TEXT_PLAIN',
-        requestBody: sendMessage
+        requestBody: sendMessage,
+        quiet: true
     )
 }
