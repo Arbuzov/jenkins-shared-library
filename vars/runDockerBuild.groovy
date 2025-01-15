@@ -68,8 +68,8 @@ def call(Map arg) {
             causeString: 'Triggered by image deletion',
             printContributedVariables: true,
             printPostContent: true,
-            regexpFilterText: '$ACTION $REPOSITORY_NAME',
-            regexpFilterExpression: '^DELETED registry\\-host$'
+            regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
+            regexpFilterExpression: "^DELETED registry\\-host .+${PACKAGE_NAME}$"
         )
     }
     stages {
@@ -80,8 +80,10 @@ def call(Map arg) {
         steps {
           sh 'env'
           script {
+            println(arg)
             currentBuild.displayName = COMPONENT_VERSION
             currentBuild.result = 'ABORTED'
+            error("Aborting the build")
           }
         }
       }
