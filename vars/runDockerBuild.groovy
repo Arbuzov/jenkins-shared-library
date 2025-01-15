@@ -69,7 +69,7 @@ def call(Map arg) {
             printContributedVariables: true,
             printPostContent: true,
             regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
-            regexpFilterExpression: "^DELETED registry\\-host .+${PACKAGE_NAME}$"
+            regexpFilterExpression: "^DELETED registry\\-host .+${PACKAGE_NAME}\$"
         )
     }
     stages {
