@@ -13,6 +13,7 @@ def call(issueId, link, title = '', credentialsId = 'jira-username-password') {
       consoleLogResponseBody: false,
       contentType: 'APPLICATION_JSON',
       authentication: credentialsId,
-      requestBody: data
+      requestBody: data,
+      quiet: true
     )
 }

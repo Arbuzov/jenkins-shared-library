@@ -57,7 +57,31 @@ def call(Map arg) {
       buildDiscarder(logRotator(daysToKeepStr: '183', artifactDaysToKeepStr: '183'))
       timestamps()
     }
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ACTION', value: '$.action', expressionType: 'JSONPath'],
+                [key: 'REPOSITORY_NAME', value: '$.repositoryName', expressionType: 'JSONPath'],
+                [key: 'COMPONENT_NAME', value: '$.component.name', expressionType: 'JSONPath'],
+                [key: 'COMPONENT_VERSION', value: '$.component.version', expressionType: 'JSONPath']
+            ],
+            causeString: DELETE_CAUSE_STRING,
+            printContributedVariables: true,
+            printPostContent: true,
+            regexpFilterText: '$ACTION $REPOSITORY_NAME',
+            regexpFilterExpression: '^DELETED registry\\-host$'
+        )
+    }
     stages {
+      stage ('Clean old version') {
+        when {
+            triggeredBy 'GenericCause'
+        }
+        steps {
+          sh 'env'
+          currentBuild.result = 'ABORTED'
+        }
+      }
       stage ('Run hadolint check') {
         agent {
           docker { image 'hadolint/hadolint:latest-alpine' }
