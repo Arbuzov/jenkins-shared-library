@@ -145,6 +145,7 @@ def call(Map arg) {
                   url: "https://confluence.spacebridge.com/rest/api/content/${note.id}",
                   authentication: 'jira-username-password',
                   httpMode: 'DELETE',
+                  contentType: 'APPLICATION_JSON',
                   acceptType: 'APPLICATION_JSON',
                   consoleLogResponseBody: false,
                   quiet: true
