@@ -97,7 +97,6 @@ def call(Map arg) {
             def version = jsonVersions.find {elem -> elem.name.equals(imageName+'-'+COMPONENT_VERSION) }
             if (version) {
               echo "Found version: ${version.name}"
-              echo "Jira version: ${version.toString()}"
               def responseAffected = httpRequest(
                 url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/relatedIssueCounts",
                 authentication: 'jira-username-password',
@@ -137,7 +136,7 @@ def call(Map arg) {
             )
             def jsonNotes = readJSON(text: responceNotes.content)
             if (jsonNotes?.results.size() > 0) {
-              if (jsonNotes?.results[0].vesion.number>1) {
+              if (jsonNotes?.results[0].version.number>1) {
                 echo "Note ${jsonNotes.results[0].title} has ${jsonNotes.results[0].version.number} version will not be deleted"
               } else {
                 def note = jsonNotes.results[0]
