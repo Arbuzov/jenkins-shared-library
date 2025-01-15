@@ -118,6 +118,7 @@ def call(Map arg) {
                   authentication: 'jira-username-password',
                   httpMode: 'POST',
                   contentType: 'APPLICATION_JSON',
+                  requestBody: "{}",
                   acceptType: 'APPLICATION_JSON',
                   consoleLogResponseBody: true,
                   quiet: false
