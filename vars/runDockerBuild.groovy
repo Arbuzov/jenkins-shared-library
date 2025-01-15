@@ -114,12 +114,12 @@ def call(Map arg) {
               } else {
                 echo "Version ${version.name} has no issues"
                 def responseDelete = httpRequest(
-                  url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}",
+                  url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/removeAndSwap",
                   authentication: 'jira-username-password',
-                  httpMode: 'DELETE',
+                  httpMode: 'POST',
                   acceptType: 'APPLICATION_JSON',
-                  consoleLogResponseBody: false,
-                  quiet: true
+                  consoleLogResponseBody: true,
+                  quiet: false
                 )
                 echo "Version ${version.name} deleted"
               }
