@@ -83,7 +83,7 @@ def call(Map arg) {
         steps {
           sh 'env'
           script {
-            println(arg)
+            currentBuild.displayName = COMPONENT_VERSION
             def responseVersions = httpRequest(
               url: "https://jira.spacebridge.com/rest/api/2/project/${arg.JIRA_PROJECT}/versions",
               authentication: 'jira-username-password',
@@ -117,6 +117,7 @@ def call(Map arg) {
                   url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/removeAndSwap",
                   authentication: 'jira-username-password',
                   httpMode: 'POST',
+                  contentType: 'APPLICATION_JSON',
                   acceptType: 'APPLICATION_JSON',
                   consoleLogResponseBody: true,
                   quiet: false
@@ -126,7 +127,6 @@ def call(Map arg) {
             } else {
               echo "Version with name ${imageName}-${COMPONENT_VERSION} not found"
             }
-            currentBuild.displayName = COMPONENT_VERSION
             currentBuild.result = 'ABORTED'
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
