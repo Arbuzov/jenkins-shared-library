@@ -73,7 +73,7 @@ def call(Map arg) {
         )
     }
     stages {
-      stage ('Clean old version') {
+      stage ('Clean the old Jira version') {
         when {
           allOf {
             triggeredBy 'GenericCause'
@@ -107,7 +107,6 @@ def call(Map arg) {
                 quiet: true
               )
               def jsonAffected = readJSON(text: responseAffected.content)
-              println(jsonAffected)
               if (jsonAffected.issuesFixedCount + jsonAffected.issuesAffectedCount + jsonAffected.issueCountWithCustomFieldsShowingVersion > 0) {
                 echo "Version ${version.name} has ${jsonAffected.issueCount} issues"
                 echo "Version ${version.name} will not be deleted"
@@ -118,7 +117,7 @@ def call(Map arg) {
                   authentication: 'jira-username-password',
                   httpMode: 'POST',
                   contentType: 'APPLICATION_JSON',
-                  requestBody: "{}",
+                  requestBody: "{\"moveAffectedIssuesTo\": \"\"}",
                   acceptType: 'APPLICATION_JSON',
                   consoleLogResponseBody: true,
                   quiet: false
@@ -130,6 +129,48 @@ def call(Map arg) {
             }
             currentBuild.result = 'ABORTED'
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
+          }
+        }
+      }
+      stage ('Clean the old Release notes') {
+        when {
+          allOf {
+            triggeredBy 'GenericCause'
+            expression { return arg.CONFLUENCE_SPACE }
+          }
+        }
+        steps {
+          script {
+            def imageName = COMPONENT_NAME.split('/')[-1]
+            def responceNotes = httpRequest(
+              url: "https://confluence.spacebridge.com/rest/api/content/search?cql=space=${arg.CONFLUENCE_SPACE}%20AND%20type=page%20AND%20title=%27Release%20${imageName}-${COMPONENT_VERSION}%27&expand=version",
+              authentication: 'jira-username-password',
+              httpMode: 'GET',
+              acceptType: 'APPLICATION_JSON',
+              consoleLogResponseBody: true,
+              quiet: false
+            )
+            def jsonNotes = readJSON(text: responceNotes.content)
+            if (jsonNotes?.results.size() > 0) {
+              if (jsonNotes?.results[0].vesion.number>1) {
+                echo "Note ${jsonNotes.results[0].title} has ${jsonNotes.results[0].version.number} version will not be deleted"
+              } else {
+                def note = jsonNotes.results[0]
+                print(note)
+                echo "Note ${note.title} deleted"
+                def responseDelete = httpRequest(
+                  url: "https://confluence.spacebridge.com/rest/api/content/${note.id}",
+                  authentication: 'jira-username-password',
+                  httpMode: 'DELETE',
+                  acceptType: 'APPLICATION_JSON',
+                  consoleLogResponseBody: true,
+                  quiet: false
+                )
+              }
+            } else {
+              echo "No notes found"
+            }
+            print(jsonNotes)
           }
         }
       }
