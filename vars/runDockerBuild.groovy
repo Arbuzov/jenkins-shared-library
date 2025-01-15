@@ -75,15 +75,60 @@ def call(Map arg) {
     stages {
       stage ('Clean old version') {
         when {
+          allOf {
             triggeredBy 'GenericCause'
+            expression { return arg.JIRA_PROJECT }
+          }
         }
         steps {
           sh 'env'
           script {
             println(arg)
+            def responseVersions = httpRequest(
+              url: "https://jira.spacebridge.com/rest/api/2/project/${arg.JIRA_PROJECT}/versions",
+              authentication: 'jira-username-password',
+              httpMode: 'GET',
+              acceptType: 'APPLICATION_JSON',
+              consoleLogResponseBody: false,
+              quiet: true
+            )
+            def jsonVersions = readJSON(text: responseVersions.content)
+            def imageName = COMPONENT_NAME.split('/')[-1]
+            def version = jsonVersions.find {elem -> elem.name.equals(imageName+'-'+COMPONENT_VERSION) }
+            if (version) {
+              echo "Found version: ${version.name}"
+              echo "Jira version: ${version.toString()}"
+              def responseAffected = httpRequest(
+                url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/relatedIssueCounts",
+                authentication: 'jira-username-password',
+                httpMode: 'GET',
+                acceptType: 'APPLICATION_JSON',
+                consoleLogResponseBody: false,
+                quiet: true
+              )
+              def jsonAffected = readJSON(text: responseAffected.content)
+              println(jsonAffected)
+              if (jsonAffected.issuesFixedCount + jsonAffected.issuesAffectedCount + jsonAffected.issueCountWithCustomFieldsShowingVersion > 0) {
+                echo "Version ${version.name} has ${jsonAffected.issueCount} issues"
+                echo "Version ${version.name} will not be deleted"
+              } else {
+                echo "Version ${version.name} has no issues"
+                def responseDelete = httpRequest(
+                  url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}",
+                  authentication: 'jira-username-password',
+                  httpMode: 'DELETE',
+                  acceptType: 'APPLICATION_JSON',
+                  consoleLogResponseBody: false,
+                  quiet: true
+                )
+                echo "Version ${version.name} deleted"
+              }
+            } else {
+              echo "Version with name ${imageName}-${COMPONENT_VERSION} not found"
+            }
             currentBuild.displayName = COMPONENT_VERSION
             currentBuild.result = 'ABORTED'
-            error("Aborting the build")
+            throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
         }
       }
