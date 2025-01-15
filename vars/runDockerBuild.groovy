@@ -79,7 +79,10 @@ def call(Map arg) {
         }
         steps {
           sh 'env'
-          currentBuild.result = 'ABORTED'
+          script {
+            currentBuild.displayName = COMPONENT_VERSION
+            currentBuild.result = 'ABORTED'
+          }
         }
       }
       stage ('Run hadolint check') {
