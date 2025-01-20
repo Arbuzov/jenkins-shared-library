@@ -94,6 +94,32 @@ Template variables:
   <li><a href="${isoUrl}">${isoUrl}</a></li>
   <li><a href="${fwUrl}">${fwUrl}</a></li>
 </ul>
+<h2>Changes</h2>
+<p>
+<%
+def hadChanges = false
+build.changeSets.each { changeSet -> 
+    hadChanges = true
+    def browser = changeSet.browser
+%>
+<ol>
+<% changeSet.eachWithIndex { c, loopIndex -> %>
+  <li value='${c.revision.class.name == "java.lang.Integer" ? c.revision : null}'>
+    ${c.msgAnnotated}
+    &#8212;
+    <a target='_blank' href='https://jenkins.asatnet.net/${c.author.url}/' class='model-link inside'>${c.author.displayName}</a> /
+    
+    <% def cslink = browser.getChangeSetLink(c) %>
+    <% if (cslink) { %>
+      <a target='_blank' href='${cslink}'>${browser.descriptor.displayName}</a>
+    <% } else { %>
+      <a target='_blank' href='${build.number}/changes#detail${loopIndex}'>Detail</a>
+    <% } %>
+  </li>
+<% } %>
+</ol>
+<% } %>
+</p>
 <h2>BOMs</h2>
 <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
   <ac:rich-text-body>
