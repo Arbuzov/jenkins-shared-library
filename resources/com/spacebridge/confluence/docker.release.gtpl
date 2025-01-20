@@ -85,7 +85,7 @@ Template variables:
 <p>
 <%
 def hadChanges = false
-build.changeSets.each { changeSet -> 
+build?.changeSets.each { changeSet -> 
     hadChanges = true
     def browser = changeSet.browser
 %>
