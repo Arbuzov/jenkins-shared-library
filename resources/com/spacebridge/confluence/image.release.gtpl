@@ -143,7 +143,7 @@ build?.changeSets.each { changeSet ->
       <th scope="col">Name</th>
       <th scope="col">Version</th>
     </tr>
-    <% bomChangeset?.added.eachWithIndex { pack, ver -> %>
+    <% bomChangeset?.added.each { pack, ver -> %>
       <tr>
         <td>${pack}</td>
         <td>${ver}</td>
@@ -161,7 +161,7 @@ build?.changeSets.each { changeSet ->
       <th scope="col">Name</th>
       <th scope="col">Version</th>
     </tr>
-    <% bomChangeset?.removed.eachWithIndex { pack, ver -> %>
+    <% bomChangeset?.removed.each { pack, ver -> %>
       <tr>
         <td>${pack}</td>
         <td>${ver}</td>
@@ -179,7 +179,7 @@ build?.changeSets.each { changeSet ->
       <th scope="col">Name</th>
       <th scope="col">Version</th>
     </tr>
-    <% bomChangeset?.updated.eachWithIndex { pack, ver -> %>
+    <% bomChangeset?.updated.each { pack, ver -> %>
       <tr>
         <td>${pack}</td>
         <td>${ver}</td>
