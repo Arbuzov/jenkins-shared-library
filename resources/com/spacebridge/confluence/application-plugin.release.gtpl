@@ -76,7 +76,7 @@ ${images}
     <tbody>
     <tr>
       <th scope="col">Name</th>
-      <th scope="col">Version</th></tr>
+      <th scope="col">Version</th>
     </tr>
     <% bomChangeset?.added.eachWithIndex { pack, ver -> %>
       <tr>
@@ -94,7 +94,7 @@ ${images}
     <tbody>
     <tr>
       <th scope="col">Name</th>
-      <th scope="col">Version</th></tr>
+      <th scope="col">Version</th>
     </tr>
     <% bomChangeset?.removed.eachWithIndex { pack, ver -> %>
       <tr>
@@ -112,7 +112,7 @@ ${images}
     <tbody>
     <tr>
       <th scope="col">Name</th>
-      <th scope="col">Version</th></tr>
+      <th scope="col">Version</th>
     </tr>
     <% bomChangeset?.updated.eachWithIndex { pack, ver -> %>
       <tr>
