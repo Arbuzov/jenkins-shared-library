@@ -133,7 +133,9 @@ build?.changeSets.each { changeSet ->
   </ac:rich-text-body>
 </ac:structured-macro>
 <% if (binding.hasVariable('bomChangeset') && bomChangeset != null) { %>
+<% if (bomChangeset?.removed?.size() || bomChangeset?.added?.size() || bomChangeset?.updated?.size()) { %>
 <h2>BOM changes</h2>
+<% } %>
   <% if (bomChangeset?.added?.size()>0) { %>
     <h3>Added Packages</h3>
     <table>
