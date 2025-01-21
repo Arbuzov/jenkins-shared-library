@@ -71,12 +71,57 @@ ${images}
 <h2>BOM changes</h2>
   <% if (bomChangeset?.added?.size()>0) { %>
     <h3>Added Packages</h3>
+    <table>
+    <colgroup><col/><col/></colgroup>
+    <tbody>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Version</th></tr>
+    </tr>
+    <% bomChangeset?.added.eachWithIndex { pack, ver -> %>
+      <tr>
+        <td>${pack}</td>
+        <td>${ver}</td>
+      </tr>
+    <% } %>
+    </tbody>
+    </table>
   <% } %>
   <% if (bomChangeset?.removed?.size()>0) { %>
     <h3>Removed Packages</h3>
+    <table>
+    <colgroup><col/><col/></colgroup>
+    <tbody>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Version</th></tr>
+    </tr>
+    <% bomChangeset?.removed.eachWithIndex { pack, ver -> %>
+      <tr>
+        <td>${pack}</td>
+        <td>${ver}</td>
+      </tr>
+    <% } %>
+    </tbody>
+    </table>
   <% } %>
   <% if (bomChangeset?.updated?.size()>0) { %>
     <h3>Updated Packages</h3>
+    <table>
+    <colgroup><col/><col/></colgroup>
+    <tbody>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Version</th></tr>
+    </tr>
+    <% bomChangeset?.updated.eachWithIndex { pack, ver -> %>
+      <tr>
+        <td>${pack}</td>
+        <td>${ver}</td>
+      </tr>
+    <% } %>
+    </tbody>
+    </table>
   <% } %>
 <% } %>
 <h2>Vulnerability report</h2>
