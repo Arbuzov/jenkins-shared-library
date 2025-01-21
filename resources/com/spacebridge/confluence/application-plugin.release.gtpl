@@ -67,19 +67,16 @@ ${images}
     </ac:structured-macro>
   </ac:rich-text-body>
 </ac:structured-macro>
-<% if (binding.hasVariable('bomChangeset') && build != null) { %>
+<% if (binding.hasVariable('bomChangeset') && bomChangeset != null) { %>
 <h2>BOM changes</h2>
-  <% if (bomChangeset.hasVariable('added') && bomChangeset.added.size()>0) { %>
+  <% if (bomChangeset?.added?.size()>0) { %>
     <h3>Added Packages</h3>
   <% } %>
-  <% if (bomChangeset.hasVariable('removed') && bomChangeset.removed.size()>0) { %>
+  <% if (bomChangeset?.removed?.size()>0) { %>
     <h3>Removed Packages</h3>
   <% } %>
-  <% if (bomChangeset.hasVariable('updated') && bomChangeset.updated.size()>0) { %>
+  <% if (bomChangeset?.updated?.size()>0) { %>
     <h3>Updated Packages</h3>
-  <% } %>
-  {% if(!bomChangeset.added?.size() && !bomChangeset.removed?.size() && !bomChangeset.updated?.size()) { %}
-    <p>No changes</p>
   <% } %>
 <% } %>
 <h2>Vulnerability report</h2>
