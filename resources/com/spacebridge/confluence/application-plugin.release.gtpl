@@ -155,11 +155,12 @@ ${images}
     </tr>
   </tbody>
 </table>
+<% if (binding.hasVariable('build') && build != null) { %>
 <h2>Changes</h2>
 <p>
 <%
 def hadChanges = false
-build.changeSets.each { changeSet -> 
+build?.changeSets.each { changeSet -> 
     hadChanges = true
     def browser = changeSet.browser
 %>
@@ -181,6 +182,7 @@ build.changeSets.each { changeSet ->
 </ol>
 <% } %>
 </p>
+<% } %>
 <h2>Installation instructions</h2>
 <p>
   <ac:structured-macro ac:name="include" ac:schema-version="1" ac:macro-id="428ea52c-de8b-4747-afe0-ce6df429fd8b">

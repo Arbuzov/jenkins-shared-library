@@ -81,6 +81,7 @@ Template variables:
   <ac:parameter ac:name="theme">Midnight</ac:parameter>
   <ac:plain-text-body><![CDATA[docker pull ${imageUri}]]></ac:plain-text-body>
 </ac:structured-macro>
+<% if (binding.hasVariable('build') && build != null) { %>
 <h2>Changes</h2>
 <p>
 <%
@@ -107,6 +108,7 @@ build?.changeSets.each { changeSet ->
 </ol>
 <% } %>
 </p>
+<% } %>
 <h2>BOMs</h2>
 <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
   <ac:rich-text-body>
