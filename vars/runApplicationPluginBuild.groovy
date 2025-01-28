@@ -112,7 +112,7 @@ def call(Map arg) {
           script {
             currentBuild.displayName = COMPONENT_VERSION
             currentBuild.result = 'ABORTED'
-            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber(env.BUILD_NUMBER as int - 1)
+            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber((env.BUILD_NUMBER as int) - 1)
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
         }
