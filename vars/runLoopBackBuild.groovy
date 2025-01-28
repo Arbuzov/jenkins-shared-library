@@ -117,7 +117,7 @@ def call(String PACKAGE_NAME = '') {
             } else {
               echo "No notes found"
             }
-            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber(env.BUILD_NUMBER-1)
+            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber(env.BUILD_NUMBER as int - 1)
             currentBuild.result = 'ABORTED'
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
