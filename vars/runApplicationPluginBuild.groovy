@@ -79,12 +79,44 @@ def call(Map arg) {
     options {
       timestamps()
     }
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ACTION', value: '$.action', expressionType: 'JSONPath'],
+                [key: 'REPOSITORY_NAME', value: '$.repositoryName', expressionType: 'JSONPath'],
+                [key: 'COMPONENT_NAME', value: '$.component.name', expressionType: 'JSONPath'],
+                [key: 'COMPONENT_VERSION', value: '$.component.version', expressionType: 'JSONPath']
+            ],
+            causeString: DELETE_CAUSE_STRING,
+            printContributedVariables: true,
+            printPostContent: true,
+            regexpFilterText: '$ACTION $REPOSITORY_NAME',
+            regexpFilterExpression: '^DELETED maven\\-releases$'
+        )
+    }
     parameters { booleanParam(name: 'INCLUDE_IMAGES', defaultValue: false, description: 'Include images from docker-compose.yml into archive') }
     environment {
       ARTIFACT_ID="${readJSON(file: 'manifest.json').name}"
       BASE_VERSION="${readJSON(file: 'manifest.json').version}"
     }
     stages {
+      stage ('Clean the old version info') {
+        when {
+          allOf {
+            triggeredBy 'GenericCause'
+            expression { return arg.JIRA_PROJECT }
+          }
+        }
+        steps {
+          sh 'env'
+          script {
+            currentBuild.displayName = COMPONENT_VERSION
+            currentBuild.result = 'ABORTED'
+            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber(env.BUILD_NUMBER-1)
+            throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
+          }
+        }
+      }
       stage ('Service step') {
         steps {
           echo 'Service step to create an extra pipelines and checks'

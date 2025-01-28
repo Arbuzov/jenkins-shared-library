@@ -154,6 +154,7 @@ def call(Map arg) {
             } else {
               echo "No notes found"
             }
+            Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber(BUILD_NUMBER-1)
             currentBuild.result = 'ABORTED'
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
