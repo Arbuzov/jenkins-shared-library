@@ -9,6 +9,16 @@ String loadReports (mask) {
   return filesContent
 }
 
+def getApplicationData() {
+  node {
+    stage('Get application data') {
+      checkout scm
+      return readJSON(file: 'package.json')
+    }
+  }
+}
+
+
 def call(String PACKAGE_NAME = '') {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
@@ -31,7 +41,7 @@ def call(String PACKAGE_NAME = '') {
             printContributedVariables: true,
             printPostContent: true,
             regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
-            regexpFilterExpression: "^DELETED registry\\-host .+"${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','').replaceAll('-','\\-')}"\$"
+            regexpFilterExpression: "^DELETED registry\\-host .+${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','').replaceAll('-','\\-')}\$"
         )
     }
     stages {
