@@ -41,7 +41,7 @@ def call(String PACKAGE_NAME = '') {
             printContributedVariables: true,
             printPostContent: true,
             regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
-            regexpFilterExpression: "^DELETED registry\\-host .+${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','').replaceAll('-','\\-')}\$"
+            regexpFilterExpression: "^DELETED registry\\-host .+${getApplicationData().name.replaceAll('/','-').replaceAll('@','').replaceAll('-','\\-')}\$"
         )
     }
     stages {
