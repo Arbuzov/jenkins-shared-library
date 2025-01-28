@@ -49,7 +49,6 @@ def call(String PACKAGE_NAME = '') {
         when {
           allOf {
             triggeredBy 'GenericCause'
-            expression { return arg.JIRA_PROJECT }
           }
         }
         steps {
