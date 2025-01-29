@@ -52,7 +52,6 @@ def call(String PACKAGE_NAME = '') {
           }
         }
         steps {
-          sh 'env'
           script {
             currentBuild.displayName = COMPONENT_VERSION
             def APPLICATION_DATA = readJSON(file: 'package.json')

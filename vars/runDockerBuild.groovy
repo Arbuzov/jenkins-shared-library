@@ -81,7 +81,6 @@ def call(Map arg) {
           }
         }
         steps {
-          sh 'env'
           script {
             currentBuild.displayName = COMPONENT_VERSION
             def responseVersions = httpRequest(

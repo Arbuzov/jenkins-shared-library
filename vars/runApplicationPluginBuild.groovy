@@ -21,6 +21,15 @@ Set<String> getImageList() {
   return images
 }
 
+def getManifestData() {
+  node {
+    stage('Get manifest data') {
+      checkout scm
+      return readJSON(file: 'manifest.json')
+    }
+  }
+}
+
 String loadReports (mask) {
   def filesContent = ''
   def fileList = findFiles(glob: mask)
@@ -90,8 +99,8 @@ def call(Map arg) {
             causeString: DELETE_CAUSE_STRING,
             printContributedVariables: true,
             printPostContent: true,
-            regexpFilterText: '$ACTION $REPOSITORY_NAME',
-            regexpFilterExpression: '^DELETED maven\\-releases$'
+            regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
+            regexpFilterExpression: "^DELETED maven\\-releases ${getManifestData().name.replaceAll('-','\\-')}\$"
         )
     }
     parameters { booleanParam(name: 'INCLUDE_IMAGES', defaultValue: false, description: 'Include images from docker-compose.yml into archive') }
@@ -108,9 +117,78 @@ def call(Map arg) {
           }
         }
         steps {
-          sh 'env'
           script {
             currentBuild.displayName = COMPONENT_VERSION
+            def PLUGIN_DATA = readJSON(file: 'manifest.json')
+            def responseVersions = httpRequest(
+              url: "https://jira.spacebridge.com/rest/api/2/project/${arg.JIRA_PROJECT}/versions",
+              authentication: 'jira-username-password',
+              httpMode: 'GET',
+              acceptType: 'APPLICATION_JSON',
+              consoleLogResponseBody: false,
+              quiet: true
+            )
+            def jsonVersions = readJSON(text: responseVersions.content)
+            def version = jsonVersions.find {elem -> elem.name.equals(PLUGIN_DATA.name+'-'+COMPONENT_VERSION) }
+            if (version) {
+              echo "Found version: ${version.name}"
+              def responseAffected = httpRequest(
+                url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/relatedIssueCounts",
+                authentication: 'jira-username-password',
+                httpMode: 'GET',
+                acceptType: 'APPLICATION_JSON',
+                consoleLogResponseBody: false,
+                quiet: true
+              )
+              def jsonAffected = readJSON(text: responseAffected.content)
+              if (jsonAffected.issuesFixedCount + jsonAffected.issuesAffectedCount + jsonAffected.issueCountWithCustomFieldsShowingVersion > 0) {
+                echo "Version ${version.name} has ${jsonAffected.issueCount} issues"
+                echo "Version ${version.name} will not be deleted"
+              } else {
+                echo "Version ${version.name} has no issues"
+                def responseDelete = httpRequest(
+                  url: "https://jira.spacebridge.com/rest/api/2/version/${version.id}/removeAndSwap",
+                  authentication: 'jira-username-password',
+                  httpMode: 'POST',
+                  contentType: 'APPLICATION_JSON',
+                  requestBody: "{\"moveAffectedIssuesTo\": \"\"}",
+                  acceptType: 'APPLICATION_JSON',
+                  consoleLogResponseBody: false,
+                  quiet: true
+                )
+                echo "Version ${version.name} deleted"
+              }
+            } else {
+              echo "Version with name ${imageName}-${COMPONENT_VERSION} not found"
+            }
+            def responceNotes = httpRequest(
+              url: "https://confluence.spacebridge.com/rest/api/content/search?cql=space=${arg.CONFLUENCE_SPACE}%20AND%20type=page%20AND%20title=%27Release%20${PLUGIN_DATA.name}-${COMPONENT_VERSION}%27&expand=version",
+              authentication: 'jira-username-password',
+              httpMode: 'GET',
+              acceptType: 'APPLICATION_JSON',
+              consoleLogResponseBody: false,
+              quiet: true
+            )
+            def jsonNotes = readJSON(text: responceNotes.content)
+            if (jsonNotes?.results.size() > 0) {
+              if (jsonNotes?.results[0].version.number>1) {
+                echo "Note ${jsonNotes.results[0].title} has ${jsonNotes.results[0].version.number} version will not be deleted"
+              } else {
+                def note = jsonNotes.results[0]
+                echo "Note ${note.title} deleted"
+                def responseDelete = httpRequest(
+                  url: "https://confluence.spacebridge.com/rest/api/content/${note.id}",
+                  authentication: 'jira-username-password',
+                  httpMode: 'DELETE',
+                  contentType: 'APPLICATION_JSON',
+                  acceptType: 'APPLICATION_JSON',
+                  consoleLogResponseBody: false,
+                  quiet: true
+                )
+              }
+            } else {
+              echo "No notes found"
+            }
             currentBuild.result = 'ABORTED'
             Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber((env.BUILD_NUMBER as int) - 1)
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
