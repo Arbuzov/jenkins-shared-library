@@ -159,7 +159,7 @@ def call(Map arg) {
                 echo "Version ${version.name} deleted"
               }
             } else {
-              echo "Version with name ${imageName}-${COMPONENT_VERSION} not found"
+              echo "Version with name ${PLUGIN_DATA.name}-${COMPONENT_VERSION} not found"
             }
             def responceNotes = httpRequest(
               url: "https://confluence.spacebridge.com/rest/api/content/search?cql=space=${arg.CONFLUENCE_SPACE}%20AND%20type=page%20AND%20title=%27Release%20${PLUGIN_DATA.name}-${COMPONENT_VERSION}%27&expand=version",
@@ -193,11 +193,6 @@ def call(Map arg) {
             Jenkins.instance.getItemByFullName(env.JOB_NAME).updateNextBuildNumber((env.BUILD_NUMBER as int) - 1)
             throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(hudson.model.Result.ABORTED)
           }
-        }
-      }
-      stage ('Service step') {
-        steps {
-          echo 'Service step to create an extra pipelines and checks'
         }
       }
       stage ('Save images') {
