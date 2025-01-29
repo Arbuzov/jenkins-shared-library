@@ -96,7 +96,7 @@ def call(Map arg) {
                 [key: 'COMPONENT_NAME', value: '$.component.name', expressionType: 'JSONPath'],
                 [key: 'COMPONENT_VERSION', value: '$.component.version', expressionType: 'JSONPath']
             ],
-            causeString: DELETE_CAUSE_STRING,
+            causeString: 'Triggered by application plugin deletion',
             printContributedVariables: true,
             printPostContent: true,
             regexpFilterText: '$ACTION $REPOSITORY_NAME $COMPONENT_NAME',
