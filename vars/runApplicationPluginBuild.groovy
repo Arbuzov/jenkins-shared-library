@@ -343,7 +343,7 @@ def call(Map arg) {
           allOf {
             branch 'master'
             not { changeRequest() }
-            expression { return arg.JIRA_PROJECT }
+            expression { return arg?.JIRA_PROJECT }
           }
         }
         steps {
@@ -355,9 +355,9 @@ def call(Map arg) {
           allOf {
             branch 'master'
             not { changeRequest() }
-            expression { return arg.CONFLUENCE_SPACE }
-            expression { return arg.ROOT_PAGE }
-            expression { return arg.JIRA_PROJECT }
+            expression { return arg?.CONFLUENCE_SPACE }
+            expression { return arg?.ROOT_PAGE }
+            expression { return arg?.JIRA_PROJECT }
           }
         }
         steps {
