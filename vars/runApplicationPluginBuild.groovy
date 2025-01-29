@@ -118,7 +118,7 @@ def call(Map arg) {
         }
         steps {
           script {
-            currentBuild.displayName = COMPONENT_VERSION
+            currentBuild.displayName = "${PLUGIN_DATA.name}-${COMPONENT_VERSION}"
             def PLUGIN_DATA = readJSON(file: 'manifest.json')
             def responseVersions = httpRequest(
               url: "https://jira.spacebridge.com/rest/api/2/project/${arg.JIRA_PROJECT}/versions",
