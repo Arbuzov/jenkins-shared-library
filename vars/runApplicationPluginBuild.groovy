@@ -24,6 +24,7 @@ Set<String> getImageList() {
 def getManifestData() {
   node {
     stage('Get manifest data') {
+      cleanWs()
       checkout scm
       return readJSON(file: 'manifest.json')
     }
