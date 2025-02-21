@@ -47,6 +47,7 @@ def call(Map arg) {
   String NAMESPACE = arg.NAMESPACE ?: 'spacebridge'
   String BASE_VERSION = arg.BASE_VERSION ?: '1.0.0'
   Boolean MULTI_BRANCH = arg.MULTI_BRANCH ?: false
+  Boolean ENFORCE_HADOLINT = arg.ENFORCE_HADOLINT ?: false
   Map KEY_COMPONENTS = arg.KEY_COMPONENTS ?: [:]
   
   pipeline {
