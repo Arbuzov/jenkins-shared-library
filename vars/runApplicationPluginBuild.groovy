@@ -104,7 +104,13 @@ def call(Map arg) {
             regexpFilterExpression: "^DELETED maven\\-releases ${getManifestData().name.replaceAll('-','\\-')}\$"
         )
     }
-    parameters { booleanParam(name: 'INCLUDE_IMAGES', defaultValue: false, description: 'Include images from docker-compose.yml into archive') }
+    parameters {
+      booleanParam(
+        name: 'INCLUDE_IMAGES',
+        defaultValue: arg.INCLUDE_IMAGES_DEFAULT?: false,
+        description: 'Include images from docker-compose.yml into archive'
+      )
+    }
     environment {
       ARTIFACT_ID="${readJSON(file: 'manifest.json').name}"
       BASE_VERSION="${readJSON(file: 'manifest.json').version}"
