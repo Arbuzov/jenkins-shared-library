@@ -135,7 +135,7 @@ def call(String PACKAGE_NAME = '') {
         agent {
           dockerfile {
             filename 'Dockerfile'
-            additionalBuildArgs "${readJSON(file: 'package.json')?.spacebridge?.devops?.multistage?.toBoolean() ? '--target=tools' : ''}"
+            additionalBuildArgs "${readJSON(file: 'package.json').spacebridge.devops.multistage?.toBoolean() ? '--target=tools' : ''}"
           }
         }
         steps {
