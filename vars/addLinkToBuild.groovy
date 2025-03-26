@@ -5,6 +5,7 @@ def call(Map arg) {
   Boolean blank = arg.BLANK ?: true
   String header = arg.HEADER ?: ''
   String icon = arg.ICON ?: 'folder.gif'
+  def summary=manager.createSummary(icon);
   if (!header.equals('')) {
     summary.appendText("<h2>${header}</h2>", false)
   }
