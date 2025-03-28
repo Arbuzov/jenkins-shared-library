@@ -8,46 +8,37 @@ def call(Map argv) {
   try {
     def xmlContent = readFile(fileName)
     def xml = new XmlSlurper().parseText(xmlContent)
-
-    def results = [testsuites: [], status: 'SUCCESS']
+    def results = [:]
+    results.testsuites = []
     xml.testsuite.each { suite ->
-      int errors = (suite.@errors ?: '0') as int
-      int failures = (suite.@failures ?: '0') as int
-
       def suiteResult = [
-        name: suite.@name.toString(),
-        errors: errors,
-        failures: failures,
-        skipped: (suite.@skipped ?: '0').toString(),
-        tests: (suite.@tests ?: '0').toString(),
-        time: (suite.@time ?: '0').toString(),
+        name: suite.getProperty('@name').toString(),
+        errors: suite.getProperty('@errors').toString(),
+        failures: suite.getProperty('@failures').toString(),
+        skipped: suite.getProperty('@skipped').toString(),
+        tests: suite.getProperty('@tests').toString(),
+        time: suite.getProperty('@time').toString(),
         testcases: []
       ]
-
-      // Update overall status
-      if (errors + failures > 0) {
-        results.status = 'FAILED'
-      }
-
+      results.status = suite.getProperty('@failures').toInteger()+suite.getProperty('@errors').toInteger() > 0 ? 'FAILED' : 'SUCCESS'
       suite.testcase.each { testcase ->
         def testcaseResult = [
-          classname: testcase.@classname.toString(),
-          name: testcase.@name.toString(),
-          time: testcase.@time.toString()
+          classname: testcase.getProperty('@classname').toString(),
+          name: testcase.getProperty('@name').toString(),
+          time: testcase.getProperty('@time').toString()
         ]
-
-        if (testcase.failure.size() > 0) {
+        if (testcase?.failure.size() > 0) {
           testcaseResult.failure = [
-            message: testcase.failure.@message.toString(),
-            type: testcase.failure.@type.toString(),
+            message: testcase.failure.getProperty('@message').toString(),
+            type: testcase.failure.getProperty('@type').toString(),
             content: testcase.failure.text().toString()
           ]
         }
         suiteResult.testcases << testcaseResult
       }
-
       results.testsuites << suiteResult
     }
+
     return results
   } catch (Exception e) {
     error("Failed to parse JUnit XML for file '${fileName}': ${e.message}")
