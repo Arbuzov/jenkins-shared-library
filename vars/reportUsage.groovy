@@ -2,8 +2,8 @@ import org.apache.commons.io.FilenameUtils
 
 def call(String callerFilePath = "") {
     try {
-        callerFunctionName = FilenameUtils.getBaseName(callerFilePath)
-        envString = env.getEnvironment().collect { key, value ->
+        def callerFunctionName = FilenameUtils.getBaseName(callerFilePath)
+        def envString = env.getEnvironment().collect { key, value ->
            "${key}=\"${value.replaceAll('"','')}\""
         }.join(',')
         if (callerFunctionName) {
