@@ -20,7 +20,7 @@ String call(Map arg) {
     contentType: 'APPLICATION_JSON',
     authentication: CREDENTIALS_ID,
     requestBody: newReleaseContent,
-    quiet: DEBUG
+    quiet: !DEBUG
   )
   if (!LABEL.isEmpty()) {
     labelConfluencePage(
