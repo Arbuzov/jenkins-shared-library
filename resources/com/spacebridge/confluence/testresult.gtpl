@@ -8,7 +8,7 @@
         <col style="width: 62.5611%;" />
       </colgroup>
       <tbody>
-        <% if (binding.hasVariable('setupName') && build != setupName) { %>
+        <% if (binding.hasVariable('setupName') && setupName != null) { %>
         <tr>
           <th scope="col">Tested at</th>
           <td scope="col">${setupName}</td>
@@ -25,7 +25,7 @@
         <tr>
           <th scope="col">Test pipeline</th>
           <td scope="col">
-            <% if (build.hasVariable('results') && build != null) { %>
+            <% if (binding.hasVariable('build') && build != null) { %>
             <a href="${build.getAbsoluteUrl()}">b${build.getNumber()}</a>
             <% } %>
           </td>
