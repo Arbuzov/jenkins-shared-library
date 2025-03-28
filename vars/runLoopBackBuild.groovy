@@ -359,9 +359,9 @@ def call(String PACKAGE_NAME = '') {
               def CONFLUENCE_SPACE = APPLICATION_DATA.spacebridge.confluence.space
               def ROOT_PAGE = APPLICATION_DATA.spacebridge.confluence.notes
               def JIRA_PROJECT = APPLICATION_DATA.spacebridge.jira.project
-              publishSummary(
-                arrayToHrefList([
-                  createConfluencePage(
+              addLinkToBuild(
+                HEADER: 'Test Results',
+                LINK: createConfluencePage(
                     TITLE: "Release ${env.PACKAGE_NAME}-${VERSION}",
                     SPACE: CONFLUENCE_SPACE,
                     ROOT: ROOT_PAGE,
@@ -375,8 +375,9 @@ def call(String PACKAGE_NAME = '') {
                       boms: loadReports ("**/*.syft.txt"),
                       vulnerability: loadReports ("**/*.grype.txt")
                     )
-                  )
-                ])
+                  ),
+                TEXT: "Release ${env.PACKAGE_NAME}-${VERSION} (Confluence)",
+                ICON: 'info.gif'
               )
             }
           }

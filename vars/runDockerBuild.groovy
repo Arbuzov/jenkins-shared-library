@@ -362,9 +362,9 @@ def call(Map arg) {
         }
         steps {
           unstash 'reports'
-          publishSummary(
-            arrayToHrefList([
-              createConfluencePage(
+          addLinkToBuild(
+            HEADER: 'Test Results',
+            LINK: createConfluencePage(
                 TITLE: "Release ${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}",
                 SPACE: arg.CONFLUENCE_SPACE,
                 ROOT: arg.ROOT_PAGE,
@@ -379,9 +379,9 @@ def call(Map arg) {
                   boms: loadReports ("**/*.syft.txt"),
                   vulnerability: loadReports ("**/*.grype.txt")
                 )
-              )
-            ]),
-            "Release notes"
+              ),
+            TEXT: "Release ${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER} (Confluence)",
+            ICON: 'info.gif'
           )
         }
       }

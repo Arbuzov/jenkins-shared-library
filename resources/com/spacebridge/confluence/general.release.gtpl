@@ -1,8 +1,8 @@
-<h2>Version information</h2><ac:structured-macro ac:name="details" ac:schema-version="1"
-  ac:macro-id="26c82d28-bffd-478b-bdfe-9664ee12e71e">
-  <ac:parameter ac:name="id">SBjirareport</ac:parameter><ac:rich-text-body>
-    <p class="auto-cursor-target"><br /></p>
-    <table class="relative-table wrapped" style="width: 50.5435%;">
+<h2>Version information</h2>
+<ac:structured-macro ac:name="details" ac:schema-version="1" ac:macro-id="26c82d28-bffd-478b-bdfe-9664ee12e71e">
+  <ac:parameter ac:name="id">SBjirareport</ac:parameter>
+  <ac:rich-text-body>
+    <table class="relative-table wrapped" style="width: 80%;">
       <colgroup>
         <col style="width: 17.7419%;" />
         <col style="width: 82.1506%;" />
@@ -86,7 +86,6 @@
         </tr>
       </tbody>
     </table>
-    <p class="auto-cursor-target"><br /></p>
   </ac:rich-text-body>
 </ac:structured-macro>
 <h2>Summary</h2>
@@ -183,5 +182,6 @@
     <ac:placeholder>FILLME more links &ndash; FILLME</ac:placeholder>
   </li>
 </ul>
-<p><br /></p>
-<p><br /></p>
+<% if (binding.hasVariable('footer') && footer != null) { %>
+${footer}
+<% } %>

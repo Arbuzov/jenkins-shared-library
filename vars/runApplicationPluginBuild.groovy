@@ -365,9 +365,9 @@ def call(Map arg) {
         steps {
           echo "Creating release notes(not implemented)"
           unstash 'reports'
-          publishSummary(
-            arrayToHrefList([
-              createConfluencePage(
+          addLinkToBuild(
+            HEADER: 'Test Results',
+            LINK: createConfluencePage(
                 TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}",
                 SPACE: arg.CONFLUENCE_SPACE,
                 ROOT: arg.ROOT_PAGE,
@@ -383,9 +383,9 @@ def call(Map arg) {
                   vulnerability: loadReports ("*.grype.txt"),
                   build: currentBuild
                 )
-              )
-            ]),
-            "Release notes"
+              ),
+            TEXT: "Release ${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID} (Confluence)",
+            ICON: 'info.gif'
           )
         }
       }
