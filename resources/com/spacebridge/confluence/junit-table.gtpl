@@ -39,7 +39,7 @@
           <ac:rich-text-body>
             <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="6ae95228-7a8b-46fb-8801-47392f3a97c1">
               <ac:plain-text-body>
-                <![CDATA[${testcase.failure?.content.replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/(\r\n|\r|\n)/, '\\\\n').replaceAll(/>\s+</, '><')}]]>
+                <![CDATA[${testcase.failure?.content.replaceAll("'", '&#39;').replaceAll(/(\r\n|\r|\n)/, '\\\\n').replaceAll(/>\s+</, '><')}]]>
               </ac:plain-text-body>
             </ac:structured-macro>
           </ac:rich-text-body>
