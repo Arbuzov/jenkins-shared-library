@@ -31,7 +31,7 @@
       <td>
         <% if (testcase.failure?.message) { %>
         <span>
-          <%= testcase.failure?.message %>
+          <%= testcase.failure?.message.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %>
         </span>
         <% } %>
         <% if (testcase.failure?.content) { %>
