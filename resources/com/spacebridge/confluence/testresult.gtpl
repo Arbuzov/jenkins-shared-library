@@ -118,7 +118,7 @@
     <% results?.testsuites?.each { testsuite -> %>
     <% testsuite?.testcases?.each { testcase -> %>
     <tr>
-      <td><%= testcase.name.replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '').replaceAll(/>\s+</, '><') %></td>
+      <td><%= testcase.name.replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '').replaceAll(/>\s+</, '><').replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
       <td>
         <div class="content-wrapper">
           <ac:structured-macro ac:name="status" ac:schema-version="1" ac:macro-id="ce178cd5-5503-4026-af1d-fa5c87aec3c6">
