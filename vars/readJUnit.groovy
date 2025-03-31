@@ -13,6 +13,13 @@ def processTestCase(testcase) {
       content: testcase.failure.text().toString()
     ]
   }
+  if (testcase.skipped.size() > 0) {
+    result.skipped = [
+      message: testcase.skipped?.@message.toString(),
+      type: testcase.skipped?.@type.toString(),
+      content: testcase.skipped?.text().toString()
+    ]
+  }
   return result
 }
 
