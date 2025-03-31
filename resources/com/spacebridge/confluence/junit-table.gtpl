@@ -27,7 +27,7 @@
         </div>
       </td>
       <td><%= testcase.time %></td>
-      <td><%= testcase.classname %></td>
+      <td><%= testcase.classname.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
       <td>
         <% if (testcase.failure?.message) { %>
         <span>
