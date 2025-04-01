@@ -63,10 +63,10 @@ Template variables:
         </tr>
         <tr>
           <th>Build</th>
-          <td>
-            <div class="content-wrapper">
-              <p><a href="${build.getAbsoluteUrl()}">${build.getAbsoluteUrl()}</a></p>
-            </div>
+          <td scope="col">
+            <% if (binding.hasVariable('build') && build != null) { %>
+            <a href="${build.getAbsoluteUrl()}">${build.getBuildCauses().last().shortDescription }</a>
+            <% } %>
           </td>
         </tr>
       </tbody>

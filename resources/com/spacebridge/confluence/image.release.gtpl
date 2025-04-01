@@ -32,7 +32,7 @@ Template variables:
               <p>
                 <span style="color: rgb(112,112,112);">
                   <span style="background-color: rgb(245,245,245);">
-                    <em><time datetime="${date}" />&nbsp;<br /></em>
+                    <em><time datetime="${new Date().format('yyyy-MM-dd')}" />&nbsp;<br /></em>
                   </span>
                 </span>
               </p>
@@ -71,10 +71,10 @@ Template variables:
         </tr>
         <tr>
           <th>Build</th>
-          <td>
-            <div class="content-wrapper">
-              <p><a href="${buildUrl}">${buildUrl}</a></p>
-            </div>
+          <td scope="col">
+            <% if (binding.hasVariable('build') && build != null) { %>
+            <a href="${build.getAbsoluteUrl()}">${build.getBuildCauses().last().shortDescription }</a>
+            <% } %>
           </td>
         </tr>
         <tr>

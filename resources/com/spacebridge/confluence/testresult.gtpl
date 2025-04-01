@@ -23,15 +23,7 @@
           </td>
         </tr>
         <tr>
-          <th scope="col">Test pipeline</th>
-          <td scope="col">
-            <% if (binding.hasVariable('build') && build != null) { %>
-            <a href="${build.getAbsoluteUrl()}">b${build.getNumber()}</a>
-            <% } %>
-          </td>
-        </tr>
-        <tr>
-          <th scope="col">Caused</th>
+          <th>Test</th>
           <td scope="col">
             <% if (binding.hasVariable('build') && build != null) { %>
             <a href="${build.getAbsoluteUrl()}">${build.getBuildCauses().last().shortDescription }</a>
