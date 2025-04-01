@@ -97,12 +97,12 @@ build?.changeSets.each { changeSet ->
 <h2>Tests for the package</h2>
 <ac:structured-macro ac:name="detailssummary" ac:schema-version="2" ac:macro-id="6ba6a98e-dd94-40c8-a96d-efd13ec4677a">
   <ac:parameter ac:name="headings">Caused,Status,Tested at,confd-basic,${packageName},mcd4-lite,ncc,</ac:parameter>
-  <ac:parameter ac:name="cql">label = &quot;test-report&quot; and space in (&quot;VeVa&quot;,&quot;DEVOPS&quot;) and text ~ &quot;${packageName}|${fakeVersion}&quot;</ac:parameter>
+  <ac:parameter ac:name="cql">label = &quot;test-report&quot; and space in (&quot;VeVa&quot;,&quot;DEVOPS&quot;) and text ~ &quot;${packageName}|${version}&quot;</ac:parameter>
 </ac:structured-macro>
 <h2>Releases including package</h2>
 <ac:structured-macro ac:name="detailssummary" ac:schema-version="2" ac:macro-id="02a56091-d447-4dfc-9662-e29dab0315e1">
   <ac:parameter ac:name="headings">Version,Build,Project,Status</ac:parameter>
-  <ac:parameter ac:name="cql">label = &quot;sb-changelog-page&quot; and space = &quot;PSIN&quot; and text ~ &quot;Key components|${fakeVersion}&quot;</ac:parameter>
+  <ac:parameter ac:name="cql">label = &quot;sb-changelog-page&quot; and space = &quot;PSIN&quot; and text ~ &quot;Key components|${version}&quot;</ac:parameter>
 </ac:structured-macro>
 <% if (binding.hasVariable('footer') && footer != null) { %>
 ${footer}

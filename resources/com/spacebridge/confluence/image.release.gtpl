@@ -85,6 +85,14 @@ Template variables:
             </div>
           </td>
         </tr>
+        <% if (binding.hasVariable('keyComponentsList') && keyComponentsList != null) { %>
+        <% keyComponentsList?.each { pack, ver -> %>
+        <tr>
+          <th scope="col">${pack}</th>
+          <td scope="col">${ver}</td>
+        </tr>
+        <% } %>
+        <% } %>
       </tbody>
     </table>
   </ac:rich-text-body>
@@ -214,6 +222,19 @@ build?.changeSets.each { changeSet ->
     </ac:structured-macro>
   </ac:rich-text-body>
 </ac:structured-macro>
+<h2>Known issues</h2>
+<ul>
+  <li>
+    <ac:placeholder>FILLME list of known issues, you may want to paste links to Jira tickets &ndash; FILLME
+    </ac:placeholder>
+  </li>
+</ul>
+<h2>Training required</h2>
+<ul>
+  <li>
+    <ac:placeholder>FILLME list of training for validation team and for end users &ndash; FILLME</ac:placeholder>
+  </li>
+</ul>
 <h2>Installation instructions</h2>
 <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
   <ac:rich-text-body>
