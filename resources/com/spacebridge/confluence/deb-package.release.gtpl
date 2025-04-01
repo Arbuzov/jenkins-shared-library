@@ -29,7 +29,7 @@
           <td>
             <div class="content-wrapper">
               <p>
-                ${version} / ${fakeVersion}(fake)
+                ${version}
               </p>
             </div>
           </td>
