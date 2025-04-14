@@ -3,7 +3,7 @@ def call(Map arg) {
   def credentialsId = arg.credentialsId ?: 'netbox'
 
   withCredentials([string(credentialsId: credentialsId, variable: 'TOKEN')]) {
-    def url = "${netboxUrl}api/tenancy/tenants/"
+    def url = "${netboxUrl}/api/dcim/racks/"
     def response = httpRequest(
       url: url,
       httpMode: 'GET',
