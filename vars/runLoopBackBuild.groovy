@@ -19,7 +19,7 @@ def getApplicationData() {
 }
 
 
-def call(String PACKAGE_NAME = '') {
+def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
     agent any

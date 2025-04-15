@@ -1,4 +1,4 @@
-def call(Map arg) {
+def call(Map arg = [:]) {
   def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
   def credentialsId = arg.credentialsId ?: 'netbox'
   def role = arg.role ?: false
