@@ -1,12 +1,16 @@
 pipeline {
+
   agent {label 'master'}
   options {
     disableConcurrentBuilds()
   }
+
   stages {
+
     stage('Test steps')
     {
       steps {
+
         library(
           identifier: "custom-lib@${env.GIT_BRANCH}",
           retriever: modernSCM([
@@ -15,12 +19,14 @@ pipeline {
             credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
           ])
         )
+
         script {
           // NOTE: publish under directory debug/firmware in Nexus
           env.putAt('PIPELINE_BIN_REPO_FULL_PATH', getIDURepoPath(namespace: 'debug',
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
         }
+
         script {
           println(getJenkinsBuildChanges(
             PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
@@ -181,6 +187,7 @@ pipeline {
             ["<ul>\n","</ul>\n"]
           )
         )
+
         script {
           if (env.GIT_URL == null) {
             GIT_URL = env.GIT_URL_1;
@@ -429,13 +436,52 @@ pipeline {
 
             publishSummary(sum_text, "Last commit information")
         }
+
+        script {
+          echo "Testing Confluence page creation..."
+
+          // Creating a page with a numeric ID (existing behavior)
+          def urlById = createConfluencePage(
+            TITLE     : "Numeric ID Test 1",
+            SPACE     : 'DEVOPS',
+            ROOT      : '592773125',         
+            CONTENT   : '<h2>Numeric ID test</h2>',
+            DEBUG     : true
+          )
+          echo "Created Confluence page by ID at: ${urlById}"
+
+          // Creating a page with a root name
+          def urlByName = createConfluencePage(
+            TITLE     : "Named Root Test 1",
+            SPACE     : 'DEVOPS',
+            ROOT_NAME : 'Debug',             
+            CONTENT   : '<h2>Named root test</h2>',
+            DEBUG     : true
+          )
+          echo "Created Confluence page by name at: ${urlByName}"
+
+          // Missing root (should fail)
+          try {
+            createConfluencePage(
+              TITLE   : "No Root Test 1",
+              SPACE   : 'DEVOPS',
+              CONTENT : '<h2>No root provided</h2>',
+              DEBUG   : true
+            )
+          } catch (Exception e) {
+            echo "Correctly failed with no root: ${e.message}"
+          }
+        }
+
       }
+
       post {
         always {
           cleanWs()
         }
       }
     }
+
     stage ('Tests for MR') {
       when {
         changeRequest()
@@ -485,6 +531,7 @@ pipeline {
       }
     }
   }
+  
   post {
     failure {
       echo "======== **Pipeline execution FAILED.** ========"
