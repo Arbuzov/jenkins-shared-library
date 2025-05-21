@@ -213,7 +213,7 @@ def call(Map arg) {
           )
         }
       }
-      stage ('Build archive release') {
+      stage ('Build release') {
         when {
           allOf {
             branch 'master'
@@ -233,7 +233,7 @@ def call(Map arg) {
           )
         }
       }
-      stage ('Build archive test') {
+      stage ('Build snapshot') {
         when {
           anyOf {
             changeRequest()
@@ -266,7 +266,7 @@ def call(Map arg) {
           stash name: 'reports', includes: '**/*.txt'
         }
       }
-      stage ('Publish test') {
+      stage ('Publish snapshot') {
         when {
           anyOf {
             changeRequest()
@@ -366,7 +366,7 @@ def call(Map arg) {
           echo "Creating release notes(not implemented)"
           unstash 'reports'
           addLinkToBuild(
-            HEADER: 'Test Results',
+            HEADER: 'Release',
             LINK: createConfluencePage(
                 TITLE: "Release ${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}",
                 SPACE: arg.CONFLUENCE_SPACE,

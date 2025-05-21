@@ -360,7 +360,7 @@ def call(Map arg = [:]) {
               def ROOT_PAGE = APPLICATION_DATA.spacebridge.confluence.notes
               def JIRA_PROJECT = APPLICATION_DATA.spacebridge.jira.project
               addLinkToBuild(
-                HEADER: 'Test Results',
+                HEADER: 'Release',
                 LINK: createConfluencePage(
                     TITLE: "Release ${env.PACKAGE_NAME}-${VERSION}",
                     SPACE: CONFLUENCE_SPACE,

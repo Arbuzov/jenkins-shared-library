@@ -363,7 +363,7 @@ def call(Map arg = [:]) {
         steps {
           unstash 'reports'
           addLinkToBuild(
-            HEADER: 'Test Results',
+            HEADER: 'Release',
             LINK: createConfluencePage(
                 TITLE: "Release ${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}",
                 SPACE: arg.CONFLUENCE_SPACE,
