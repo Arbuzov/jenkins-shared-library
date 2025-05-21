@@ -340,7 +340,7 @@ def call(Map arg) {
                   STRINGIFY: true,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
-                  images: arrayToString(new ArrayList<>(getImageList()), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+                  images: arrayToString(new ArrayList<>(IMAGES), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "${MANIFEST.name}-${MANIFEST.version}",
                   projectId: MANIFEST.jira.project,
                   pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-metaplugin/${MANIFEST.name}/${MANIFEST.version}/${MANIFEST.name}-${MANIFEST.version}-offline.tar.gz",
