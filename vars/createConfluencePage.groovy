@@ -1,11 +1,15 @@
 String call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
+  
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
   String TITLE = arg.TITLE ?: 'New page'
   String SPACE = arg.SPACE ?: 'SPACE'
   String ROOT = arg.ROOT ?: ''
   String ROOT_NAME = arg.ROOT_NAME ?: ''
   String CONTENT = arg.CONTENT ?: ''
+  def FILES = arg.FILES instanceof List
+              ? arg.FILES
+              : (arg.FILES ? [ arg.FILES ] : [])
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   Boolean DEBUG = arg.DEBUG ?: false
   String LABEL = arg.LABEL ?: ''
@@ -34,6 +38,19 @@ String call(Map arg) {
     error('You must supply either ROOT (numeric page ID) or ROOT_NAME (page title)')
   }
 
+  try {
+    if (DEBUG) echo "Verifying that parent page ID ${ROOT} exists in space '${SPACE}'"
+    httpRequest(
+      url:                    "${CONFLUENCE_API}/content/${ROOT}?expand=ancestors",
+      httpMode:               'GET',
+      authentication:         CREDENTIALS_ID,
+      consoleLogResponseBody: DEBUG,
+      quiet:                  !DEBUG
+    )
+  } catch (e) {
+    error("Parent page ID '${ROOT}' not found in Confluence space '${SPACE}'")
+  }
+
   if (DEBUG) {
     echo CONTENT
   }
@@ -59,11 +76,13 @@ String call(Map arg) {
       echo "Page already exists (pageId=${existingId}) – skipping creation."
     }
     return "https://confluence.spacebridge.com/pages/viewpage.action?pageId=${existingId}"
-  }
+  } 
+    
+  if (DEBUG) {echo "page is to be created"}
 
   def postContentUrl = "${CONFLUENCE_API}/content"
   def newReleaseContent = "{\"type\":\"page\",\"title\":\"${TITLE}\",\"ancestors\":[{\"id\":\"${ROOT}\"}],\"space\":{\"key\":\"${SPACE}\"},\"body\":{\"storage\":{\"value\":\"${CONTENT.replaceAll('"','\'')}\",\"representation\":\"storage\"}}}"
-  def releaseResponce = httpRequest(
+  def releaseResponse = httpRequest(
     url: postContentUrl,
     httpMode: 'POST',
     consoleLogResponseBody: DEBUG,
@@ -72,13 +91,34 @@ String call(Map arg) {
     requestBody: newReleaseContent,
     quiet: !DEBUG
   )
+  def responseJson = readJSON(text: releaseResponse.getContent())
+  def pageId = responseJson.id
+
+  if (!pageId) {
+      error("Failed to create Confluence page: No page ID returned in response")
+  }
+
+  if (DEBUG) {echo "page ${TITLE} is successfully created"}
   if (!LABEL.isEmpty()) {
     labelConfluencePage(
-      ID: readJSON(text: releaseResponce.getContent()).id,
+      ID: readJSON(text: releaseResponse.getContent()).id,
       LABEL: LABEL,
       CREDENTIALS_ID: CREDENTIALS_ID,
       DEBUG: DEBUG
     )
   }
-  return 'https://confluence.spacebridge.com/pages/viewpage.action?pageId=' + readJSON(text: releaseResponce.getContent()).id
+
+  if (FILES) {
+    if(DEBUG) {echo "found some files  needed to be attached"}
+    attachFilesToConfluencePage(
+      CONFLUENCE_API:  CONFLUENCE_API,
+      SPACE:           SPACE,
+      PAGE_ID:         pageId,
+      FILES:           FILES,       // <- pass the entire List here
+      CREDENTIALS_ID:  CREDENTIALS_ID,
+      DEBUG:           DEBUG
+    )
+    if(DEBUG) {echo "attached some files  needed to be attached"}
+  } else { if(DEBUG) {echo "no files to attach"}}
+  return 'https://confluence.spacebridge.com/pages/viewpage.action?pageId=' + readJSON(text: releaseResponse.getContent()).id
 }

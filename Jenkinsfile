@@ -473,6 +473,92 @@ pipeline {
           }
         }
 
+        
+        script {
+          echo "attaching files to confluence..."
+
+          writeFile file: 'test-attachment.txt', text: 'This is a test file for attachment'
+          writeFile file: 'test-attachment-1.txt', text: 'This is the first test file'
+          writeFile file: 'test-attachment-2.txt', text: 'This is the second test file'
+          writeFile file: 'test-attachment-3.txt', text: 'This is the third test file'
+
+
+          // Attach a single file (normal case)
+          try {
+              attachFilesToConfluencePage(
+                  PAGE_NAME    : 'Numeric ID Test',   
+                  FILES : 'test-attachment-1.txt',
+                  DEBUG : true
+              )
+              echo "Attached single file successfully"
+          } catch (Exception e) {
+              echo "Failed to attach single file: ${e.message}"
+          }
+          
+
+          
+          // Attach multiple files using a mask
+          try {
+              def files = findFiles(glob: 'test-*.txt')
+              if (files) {
+                  attachFilesToConfluencePage(
+                      SPACE : 'DEVOPS',
+                      PAGE_NAME    : 'Named Root Test',  
+                      FILES : files.collect { it.path },
+                      DEBUG : true
+                  )
+                  echo "Attached multiple files successfully"
+              } else {
+                  echo "No matching files found for mask"
+              }
+          } catch (Exception e) {
+              echo "Failed to attach multiple files: ${e.message}"
+          }
+          
+          // Non-existent file case
+          try {
+            attachFilesToConfluencePage(
+              ID    : '668434500',  
+              FILES : 'nonexistent-file.txt',
+              DEBUG : true
+            )
+          } catch (Exception e) {
+            echo "Correctly failed for missing file: ${e.message}"
+          }
+        }
+
+        script {
+          echo "\nCreating Report with files..."
+
+          // Prepare attachment files
+          writeFile file: 'attach-one.txt', text: 'Attach one file'
+          writeFile file: 'attach-a.txt',   text: 'Attach A'
+          writeFile file: 'attach-b.txt',   text: 'Attach B'
+
+          // Create page with a single attachment
+          def urlSingle = createConfluencePage(
+            TITLE   : "Single Attachment Test",
+            SPACE   : 'DEVOPS',
+            ROOT_NAME    : 'Debug',
+            CONTENT : '<h2>Single attach test</h2>',
+            FILES   : 'attach-onee.txt',
+            DEBUG   : true
+          )
+          echo "Created page with single file at: ${urlSingle}\n"
+
+          // Create page with multiple attachments via mask
+          def multiFiles = findFiles(glob: 'attach-*.txt').collect{it.toString()}
+          def urlMulti = createConfluencePage(
+            TITLE   : "Multiple Attachment Test",
+            SPACE   : 'DEVOPS',
+            ROOT_NAME    : 'Debug',
+            CONTENT : '<h2>Multiple attach test</h2>',
+            FILES   : multiFiles,
+            DEBUG   : true
+          )
+          echo "Created page with multiple files at: ${urlMulti}\n"
+        }
+
       }
 
       post {
