@@ -210,7 +210,7 @@ def call(Map arg = [:]) {
           script {
             sshagent(['efedb983-6b76-42ee-ad7f-ed211b08657a']) {
               docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-                def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
+                def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --ssh default --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
                 image.push(VERSION)
               }
             }
@@ -255,7 +255,7 @@ def call(Map arg = [:]) {
           script {
             sshagent(['efedb983-6b76-42ee-ad7f-ed211b08657a']) {
               docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-                def image = docker.build("${NAMESPACE}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
+                def image = docker.build("${NAMESPACE}/${PACKAGE_NAME}", "${WORKSPACE} --ssh default --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
                 image.push('latest')
                 image.push(VERSION)
                 sh "docker rmi ${NAMESPACE}/${PACKAGE_NAME}:latest"
