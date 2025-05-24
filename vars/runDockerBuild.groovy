@@ -208,9 +208,11 @@ def call(Map arg = [:]) {
         }
         steps {
           script {
-            docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-              def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
-              image.push(VERSION)
+            sshagent(['efedb983-6b76-42ee-ad7f-ed211b08657a']) {
+              docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
+                def image = docker.build("${NAMESPACE}/${makeYMD()}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
+                image.push(VERSION)
+              }
             }
             currentBuild.displayName = VERSION
             publishSummary(
@@ -251,11 +253,13 @@ def call(Map arg = [:]) {
         }
         steps {
           script {
-            docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
-              def image = docker.build("${NAMESPACE}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
-              image.push('latest')
-              image.push(VERSION)
-              sh "docker rmi ${NAMESPACE}/${PACKAGE_NAME}:latest"
+            sshagent(['efedb983-6b76-42ee-ad7f-ed211b08657a']) {
+              docker.withRegistry('http://registry.nexus.asatnet.net', 'local-registry-access') {
+                def image = docker.build("${NAMESPACE}/${PACKAGE_NAME}", "${WORKSPACE} --no-cache --build-arg BASE_VERSION=${BASE_VERSION}")
+                image.push('latest')
+                image.push(VERSION)
+                sh "docker rmi ${NAMESPACE}/${PACKAGE_NAME}:latest"
+              }
             }
             currentBuild.displayName = VERSION
             publishSummary(
