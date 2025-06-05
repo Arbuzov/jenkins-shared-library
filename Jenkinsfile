@@ -439,7 +439,23 @@ pipeline {
 
         script {
           echo "Testing Confluence page creation..."
-
+          print(inflateTemplate(
+            TEMPLATE: readFile(file: "resources/com/spacebridge/confluence/table.gtpl"),
+            values: [
+              ['Header 1', 'Header 2', 'Header 3'],
+              ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
+              ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
+            ],
+            renderHeader: true
+          ))
+          print(inflateTemplate(
+            TEMPLATE: readFile(file: "resources/com/spacebridge/confluence/table.gtpl"),
+            values: [
+              ['Header 1', 'Header 2', 'Header 3'],
+              ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
+              ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
+            ]
+          ))
           // Creating a page with a numeric ID (existing behavior)
           def urlById = createConfluencePage(
             TITLE     : "Numeric ID Test 1",
@@ -582,7 +598,9 @@ pipeline {
           ])
         )
         saveEnvVarsForChangeRequest()
-
+        noteToMrGitlab(
+          body: "**This is a test note from Jenkins new notation.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+        )
         // Find a related branch for this merge request - BEGIN
         sh "env"
         getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'gitlab-text-secret')

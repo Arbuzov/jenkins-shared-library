@@ -1,6 +1,6 @@
 import groovy.json.JsonOutput;
 
-def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true, String apiSecretId = gitLabAPISecret) {
+def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true, String apiSecretId = gitLabAPISecret, Boolean debug = false) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   if (gitLabAPISecret == null) throw new Exception("Variable 'gitLabAPISecret' is undefined. You must set this variable before function call.");
   
@@ -28,8 +28,21 @@ def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = t
   httpRequest(
     url: mrUrl.toString(),
     httpMode: 'POST',
-    consoleLogResponseBody: false,
+    consoleLogResponseBody: debug,
     contentType: 'APPLICATION_JSON',
     requestBody: JsonOutput.toJson([body: body])
   )
+}
+
+def call (Object args) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  def gitUrl = args.gitUrl ?: env.GITLAB_OA_TARGET_GIT_SSH_URL
+  def mrIid = args.mrIid ?: env.CHANGE_ID
+  def body = args.body ?: ''
+  def debug = args.debug != null ? args.debug : false
+  def skipIfExist = args.skipIfExist != null ? args.skipIfExist : true
+  def apiSecretId = args.apiSecretId ?: 'gitlab-text-secret'
+  withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
+    return this.call(gitUrl, mrIid, body, skipIfExist, gitLabAPISecret, debug)
+  }
 }
