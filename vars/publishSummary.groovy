@@ -6,3 +6,10 @@ def call(String summaryText, String header = '', String icon = 'folder.gif') {
   }
   summary.appendText(summaryText, false)
 }
+
+def call(Map params) {
+  def summaryText = params.summaryText ?: ''
+  def header = params.header ?: ''
+  def icon = params.icon ?: 'folder.gif'
+  return this.call(summaryText, header, icon)
+}

@@ -460,7 +460,7 @@ pipeline {
           def urlById = createConfluencePage(
             TITLE     : "Numeric ID Test 1",
             SPACE     : 'DEVOPS',
-            ROOT      : '592773125',         
+            ROOT      : '592773125',
             CONTENT   : '<h2>Numeric ID test</h2>',
             DEBUG     : true
           )
@@ -470,7 +470,7 @@ pipeline {
           def urlByName = createConfluencePage(
             TITLE     : "Named Root Test 1",
             SPACE     : 'DEVOPS',
-            ROOT_NAME : 'Debug',             
+            ROOT_NAME : 'Debug',
             CONTENT   : '<h2>Named root test</h2>',
             DEBUG     : true
           )
@@ -489,7 +489,6 @@ pipeline {
           }
         }
 
-        
         script {
           echo "attaching files to confluence..."
 
@@ -502,7 +501,7 @@ pipeline {
           // Attach a single file (normal case)
           try {
               attachFilesToConfluencePage(
-                  PAGE_NAME    : 'Numeric ID Test',   
+                  PAGE_NAME    : 'Numeric ID Test',
                   FILES : 'test-attachment-1.txt',
                   DEBUG : true
               )
@@ -510,16 +509,14 @@ pipeline {
           } catch (Exception e) {
               echo "Failed to attach single file: ${e.message}"
           }
-          
 
-          
           // Attach multiple files using a mask
           try {
               def files = findFiles(glob: 'test-*.txt')
               if (files) {
                   attachFilesToConfluencePage(
                       SPACE : 'DEVOPS',
-                      PAGE_NAME    : 'Named Root Test',  
+                      PAGE_NAME    : 'Named Root Test',
                       FILES : files.collect { it.path },
                       DEBUG : true
                   )
@@ -530,11 +527,11 @@ pipeline {
           } catch (Exception e) {
               echo "Failed to attach multiple files: ${e.message}"
           }
-          
+
           // Non-existent file case
           try {
             attachFilesToConfluencePage(
-              ID    : '668434500',  
+              ID    : '668434500',
               FILES : 'nonexistent-file.txt',
               DEBUG : true
             )
@@ -635,7 +632,7 @@ pipeline {
       }
     }
   }
-  
+
   post {
     failure {
       echo "======== **Pipeline execution FAILED.** ========"
@@ -659,13 +656,9 @@ pipeline {
     }
     success {
       echo "======== All stages in the pipeline have been completed. ========"
-      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-        noteToMrGitlab(
-          "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
-          "${env.CHANGE_ID}",
-          "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
-        )
-      }
+      noteToMrGitlab(
+        body: "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+      )
     }
     cleanup {
       echo "Deleting all workspace contents after completing the pipeline..."
