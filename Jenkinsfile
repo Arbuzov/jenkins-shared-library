@@ -1,14 +1,24 @@
 pipeline {
-
-  agent {label 'master'}
-  options {
-    disableConcurrentBuilds()
+  agent {
+    label 'master'
   }
-
+  options {
+    timestamps()
+    buildDiscarder(
+      logRotator(
+        daysToKeepStr: "183",
+        artifactDaysToKeepStr: "183"
+      )
+    )
+    ansiColor('xterm')
+    preserveStashes(buildCount: 5)
+    disableConcurrentBuilds()
+    skipStagesAfterUnstable()
+    timeout(time: 24, unit: 'HOURS')
+    newContainerPerStage()
+  }
   stages {
-
-    stage('Test steps')
-    {
+    stage('Test steps') {
       steps {
 
         library(
@@ -580,7 +590,6 @@ pipeline {
         }
       }
     }
-
     stage ('Tests for MR') {
       when {
         changeRequest()
@@ -631,8 +640,26 @@ pipeline {
         // Find a related branch for hardcoded inputs - END
       }
     }
+    stage ('Run SonarQube check') {
+      agent {
+        docker {
+          image 'registry.nexus.asatnet.net/base/sonar-scanner-cli:latest'
+        }
+      }
+      steps {
+        script {
+          if (env.CHANGE_ID) {
+            env.putAt('SONAR_PULLREQUEST_KEY', env.CHANGE_ID)
+            env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
+            env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
+          }
+        }
+        withSonarQubeEnv('SonarQube Server') {
+          sh "sonar-scanner"
+        }
+      }
+    }
   }
-
   post {
     failure {
       echo "======== **Pipeline execution FAILED.** ========"
