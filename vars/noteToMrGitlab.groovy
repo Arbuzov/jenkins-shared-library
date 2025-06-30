@@ -38,11 +38,11 @@ def call (Object args) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   def gitUrl = args.gitUrl ?: env.GITLAB_OA_TARGET_GIT_SSH_URL
   def mrIid = args.mrIid ?: env.CHANGE_ID
-  def body = args.body ?: ''
+  def comment = args.comment ?: ''
   def debug = args.debug != null ? args.debug : false
   def skipIfExist = args.skipIfExist != null ? args.skipIfExist : true
   def apiSecretId = args.apiSecretId ?: 'gitlab-text-secret'
   withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
-    return this.call(gitUrl, mrIid, body, skipIfExist, gitLabAPISecret, debug)
+    return this.call(gitUrl, mrIid, comment, skipIfExist, gitLabAPISecret, debug)
   }
 }
