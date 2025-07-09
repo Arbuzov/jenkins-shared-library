@@ -2,7 +2,16 @@
   <ac:rich-text-body>
     <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="b1edfa43-846e-4a6e-92cc-c7b376ea5fb7">
       <ac:plain-text-body>
-        <![CDATA[${data.replaceAll(/(\r\n|\r|\n)/, '\\\\n').replaceAll(/>\s+</, '><').replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '').replaceAll(/>\s+</, '><').replaceAll('>', '&gt;').replaceAll('<', '&lt;')}]]>
+        <![CDATA[${
+          data.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+              .replaceAll(/\n/, '')
+              .replaceAll(/>\s+</, '><')
+              .replaceAll('"', '&quot;')
+              .replaceAll("'", '&#39;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('µ', '&micro;')
+        }]]>
       </ac:plain-text-body>
     </ac:structured-macro>
   </ac:rich-text-body>
