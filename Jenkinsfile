@@ -605,7 +605,7 @@ pipeline {
         )
         saveEnvVarsForChangeRequest()
         noteToMrGitlab(
-          body: "**This is a test note from Jenkins new notation.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+          comment: "**This is a test note from Jenkins new notation.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
         )
         // Find a related branch for this merge request - BEGIN
         sh "env"
@@ -684,7 +684,7 @@ pipeline {
     success {
       echo "======== All stages in the pipeline have been completed. ========"
       noteToMrGitlab(
-        body: "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
+        comment: "All stages in the pipeline have been completed." + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
       )
     }
     cleanup {

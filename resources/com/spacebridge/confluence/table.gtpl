@@ -27,27 +27,29 @@
     </tr>
 <% } %>
 <% } %>
-  <% values?.each { row -> %>
-    <tr>
-      <% row.each { cell -> %>
-        <td class="snooker-col-series" data-snooker-col-series="numbers">
-          <div class="snooker-cell-content">
-            <div class="snooker-cell-content-inner">
-              ${
-                cell.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
-                    .replaceAll(/\n/, '')
-                    .replaceAll(/>\s+</, '><')
-                    .replaceAll('"', '&quot;')
-                    .replaceAll("'", '&#39;')
-                    .replaceAll('>', '&gt;')
-                    .replaceAll('<', '&lt;')
-                    .replaceAll('µ', '&micro;')
-              }
+  <% values?.eachWithIndex { row, idx -> %>
+    <% if ((idx > 0) || !(binding.hasVariable('renderHeader') && renderHeader)) { %>
+      <tr>
+        <% row.each { cell -> %>
+          <td class="snooker-col-series" data-snooker-col-series="numbers">
+            <div class="snooker-cell-content">
+              <div class="snooker-cell-content-inner">
+                ${
+                  cell.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+                      .replaceAll(/\n/, '')
+                      .replaceAll(/>\s+</, '><')
+                      .replaceAll('"', '&quot;')
+                      .replaceAll("'", '&#39;')
+                      .replaceAll('>', '&gt;')
+                      .replaceAll('<', '&lt;')
+                      .replaceAll('µ', '&micro;')
+                }
+              </div>
             </div>
-          </div>
-        </td>
-      <% } %>
-    </tr>
+          </td>
+        <% } %>
+      </tr>
+    <% } %>
   <% } %>
   </tbody>
 </table>

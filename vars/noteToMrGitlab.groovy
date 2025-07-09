@@ -39,6 +39,7 @@ def call (Object args) {
   def gitUrl = args.gitUrl ?: env.GITLAB_OA_TARGET_GIT_SSH_URL
   def mrIid = args.mrIid ?: env.CHANGE_ID
   def comment = args.comment ?: ''
+  if (comment == null || comment == '') throw new Exception("Variable 'comment' is empty or undefined.");
   def debug = args.debug != null ? args.debug : false
   def skipIfExist = args.skipIfExist != null ? args.skipIfExist : true
   def apiSecretId = args.apiSecretId ?: 'gitlab-text-secret'
