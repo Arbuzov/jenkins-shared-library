@@ -29,8 +29,7 @@
 <% } %>
   <% values?.each { row -> %>
     <tr>
-      <% row.each { cell,idx -> %>
-        <% if ((idx > 0) || !binding.hasVariable('renderHeader') || !renderHeader) { %>
+      <% row.each { cell -> %>
         <td class="snooker-col-series" data-snooker-col-series="numbers">
           <div class="snooker-cell-content">
             <div class="snooker-cell-content-inner">
@@ -47,7 +46,6 @@
             </div>
           </div>
         </td>
-        <% } %>
       <% } %>
     </tr>
   <% } %>
