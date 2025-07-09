@@ -13,7 +13,16 @@
 <% if (values?.size()) { %>
     <tr>
     <% values?.first()?.each { cell -> %>
-      <th scope="col">${cell}</th>
+      <th scope="col">${
+        cell.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+            .replaceAll(/\n/, '')
+            .replaceAll(/>\s+</, '><')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('µ', '&micro;')
+        }</th>
     <% } %>
     </tr>
 <% } %>
@@ -24,7 +33,16 @@
         <td class="snooker-col-series" data-snooker-col-series="numbers">
           <div class="snooker-cell-content">
             <div class="snooker-cell-content-inner">
-              ${cell}
+              ${
+                cell.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
+                    .replaceAll(/\n/, '')
+                    .replaceAll(/>\s+</, '><')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#39;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('µ', '&micro;')
+              }
             </div>
           </div>
         </td>
