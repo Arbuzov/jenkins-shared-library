@@ -18,5 +18,5 @@ String call(Map arg) {
   )
   def json = readJSON(text: response.content)
   def items = json.items
-  return items[0].maven2.version.toString()
+  return items[0]?.maven2?.version?.toString()
 }
