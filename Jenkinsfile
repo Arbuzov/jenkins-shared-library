@@ -1,4 +1,4 @@
-// import com.spacebridge.NetboxHelper
+import com.spacebridge.NetboxHelper
 
 pipeline {
   agent {
@@ -39,7 +39,7 @@ pipeline {
                                                                   use_commit_id: false))
         }
         print(getNetboxTenants())
-        // print(com.spacebridge.NetboxHelper.getNetboxTenants(this))
+        print(com.spacebridge.NetboxHelper.getNetboxTenants(this))
         script {
           println(getJenkinsBuildChanges(
             PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
