@@ -1,5 +1,3 @@
-// import com.spacebridge.NetboxHelper
-
 pipeline {
   agent {
     label 'master'
@@ -22,8 +20,8 @@ pipeline {
   stages {
     stage('Test steps') {
       steps {
-
-        library(
+        script {
+        def lib = library(
           identifier: "custom-lib@${env.GIT_BRANCH}",
           retriever: modernSCM([
             $class: 'GitSCMSource',
@@ -32,18 +30,18 @@ pipeline {
           ])
         )
 
-        script {
+        
           // NOTE: publish under directory debug/firmware in Nexus
           env.putAt('PIPELINE_BIN_REPO_FULL_PATH', getIDURepoPath(namespace: 'debug',
                                                                   project: 'firmware',
                                                                   use_commit_id: false))
-        }
         print(getNetboxTenants())
-        // print(com.spacebridge.NetboxHelper.getNetboxTenants(this))
-        script {
-          println(getJenkinsBuildChanges(
-            PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
-          ))
+        echo "==="
+        print(lib.com.spacebridge.NetboxHelper.getNetboxTenants(this))
+        
+        println(getJenkinsBuildChanges(
+          PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
+        ))
         //   // This is a test for confluence publishing please keep it commented
         //   String loadReports (mask) {
         //     def filesContent = ''
