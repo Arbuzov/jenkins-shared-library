@@ -37,7 +37,7 @@ pipeline {
                                                                   use_commit_id: false))
         print(getNetboxTenants())
         echo "==="
-        print(lib.com.spacebridge.NetboxHelper.getNetboxTenants(this))
+        print(lib.com.spacebridge.NetBox.getTenants())
         
         println(getJenkinsBuildChanges(
           PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
