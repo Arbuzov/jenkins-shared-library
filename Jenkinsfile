@@ -18,6 +18,22 @@ pipeline {
     newContainerPerStage()
   }
   stages {
+    stage('Unit Tests') {
+      agent {
+        docker {
+          image 'docker.nexus.asatnet.net/groovy:latest'
+          args '-v /tmp:/tmp'
+          registryUrl 'https://docker.nexus.asatnet.net/'
+        }
+      }
+      steps {
+        script {
+            sh '''curl -L -o /tmp/jenkins-pipeline-unit.jar https://repo1.maven.org/maven2/com/lesfurets/jenkins-pipeline-unit/1.1/jenkins-pipeline-unit-1.1.jar'''
+              // Запуск groovy-тестов Jenkins Pipeline Unit с указанием classpath и stub для NonCPS
+              sh 'groovy -cp "/tmp/jenkins-pipeline-unit.jar;test" test/NetboxFunctionsTest.groovy'
+        }
+      }
+    }
     stage('Test steps') {
       steps {
         script {
