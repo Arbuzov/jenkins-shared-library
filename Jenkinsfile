@@ -21,16 +21,32 @@ pipeline {
     stage('Unit Tests') {
       agent {
         docker {
-          image 'docker.nexus.asatnet.net/groovy:latest'
+          image 'docker.nexus.asatnet.net/maven:3.9.6-eclipse-temurin-11'
           args '-v /tmp:/tmp'
           registryUrl 'https://docker.nexus.asatnet.net/'
         }
       }
       steps {
-        script {
-            sh '''curl -L -o /tmp/jenkins-pipeline-unit.jar https://repo.jenkins-ci.org/releases/com/lesfurets/jenkins-pipeline-unit/1.20/jenkins-pipeline-unit-1.20.jar'''
-              sh 'groovy -cp "/tmp/jenkins-pipeline-unit.jar;test" test/NetboxFunctionsTest.groovy'
+        withMaven(
+          options: [
+            artifactsPublisher(),
+            dependenciesFingerprintPublisher(includeReleaseVersions: true),
+            pipelineGraphPublisher(),
+            mavenLinkerPublisher()
+          ],
+          traceability: true
+        ) {
+            sh '$MVN_CMD test site'
         }
+        junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+        publishHTML(
+          allowMissing: true,
+          alwaysLinkToLastBuild: true,
+          keepAll: false,
+          reportDir: 'target/site',
+          reportFiles: 'index.html',
+          reportName: 'Site'
+        )
       }
     }
     stage('Test steps') {
