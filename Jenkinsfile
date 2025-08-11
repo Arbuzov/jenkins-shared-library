@@ -36,7 +36,7 @@ pipeline {
           ],
           traceability: true
         ) {
-            sh '$MVN_CMD test site'
+            sh '$MVN_CMD clean test site'
         }
         junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
         publishHTML(
