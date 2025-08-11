@@ -28,8 +28,7 @@ pipeline {
       }
       steps {
         script {
-            sh '''curl -L -o /tmp/jenkins-pipeline-unit.jar https://repo1.maven.org/maven2/com/lesfurets/jenkins-pipeline-unit/1.1/jenkins-pipeline-unit-1.1.jar'''
-              // Запуск groovy-тестов Jenkins Pipeline Unit с указанием classpath и stub для NonCPS
+            sh '''curl -L -o /tmp/jenkins-pipeline-unit.jar https://repo.jenkins-ci.org/releases/com/lesfurets/jenkins-pipeline-unit/1.20/jenkins-pipeline-unit-1.20.jar'''
               sh 'groovy -cp "/tmp/jenkins-pipeline-unit.jar;test" test/NetboxFunctionsTest.groovy'
         }
       }
