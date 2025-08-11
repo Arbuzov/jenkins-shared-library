@@ -81,14 +81,25 @@ String call(Map arg) {
   if (DEBUG) {echo "page is to be created"}
 
   def postContentUrl = "${CONFLUENCE_API}/content"
-  def newReleaseContent = "{\"type\":\"page\",\"title\":\"${TITLE}\",\"ancestors\":[{\"id\":\"${ROOT}\"}],\"space\":{\"key\":\"${SPACE}\"},\"body\":{\"storage\":{\"value\":\"${CONTENT.replaceAll('"','\'')}\",\"representation\":\"storage\"}}}"
+  def newReleaseContent = [
+    type: 'page',
+    title: TITLE,
+    ancestors: [[id: ROOT]],
+    space: [key: SPACE],
+    body: [
+      storage: [
+        value: CONTENT,
+        representation: 'storage'
+      ]
+    ]
+  ]
   def releaseResponse = httpRequest(
     url: postContentUrl,
     httpMode: 'POST',
     consoleLogResponseBody: DEBUG,
     contentType: 'APPLICATION_JSON',
     authentication: CREDENTIALS_ID,
-    requestBody: newReleaseContent,
+    requestBody: writeJSON(returnText: true, json: newReleaseContent),
     quiet: !DEBUG
   )
   def responseJson = readJSON(text: releaseResponse.getContent())

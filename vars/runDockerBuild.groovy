@@ -378,7 +378,7 @@ def call(Map arg = [:]) {
                   build: currentBuild,
                   keyComponents: getKeyComponentsInfo(PACKAGE_NAME, "${BASE_VERSION}-b${BUILD_NUMBER}", KEY_COMPONENTS).join(""),
                   version: "${BASE_VERSION}-b${BUILD_NUMBER}",
-                  imageUri: "registry.nexus.asatnet.net/spacebridge/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
+                  imageUri: "registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
                   projectId: arg.JIRA_PROJECT,
                   boms: loadReports ("**/*.syft.txt"),
                   vulnerability: loadReports ("**/*.grype.txt")
