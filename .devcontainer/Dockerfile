@@ -1,7 +1,7 @@
 FROM docker.nexus.asatnet.net/maven:3.9.6-eclipse-temurin-11
 
 RUN apt-get update && \
-    apt-get install -y vim git curl && \
+    apt-get install -y vim git curl ssh && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace

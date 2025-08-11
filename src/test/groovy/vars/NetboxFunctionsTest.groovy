@@ -1,3 +1,5 @@
+package vars
+
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import org.junit.Before
 import org.junit.Test
@@ -6,7 +8,7 @@ class NetboxFunctionsTest extends BasePipelineTest {
     @Before
     void setUp() {
         super.setUp()
-        // Мокаем httpRequest и readJSON
+        // Mock httpRequest and readJSON
         helper.registerAllowedMethod('httpRequest', [Map], { args ->
             return [content: '{"results": ["item1", "item2"]}']
         })
