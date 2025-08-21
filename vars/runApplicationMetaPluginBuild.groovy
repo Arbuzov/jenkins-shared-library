@@ -381,7 +381,7 @@ def call(Map arg) {
                   images: arrayToString(new ArrayList<>(IMAGES), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "${MANIFEST.name}-${MANIFEST.version}",
                   projectId: MANIFEST.jira.project,
-                  pluginUrl: "https://nexus.asatnet.net/#browse/browse:maven-snapshots:com%2Fspacebridge%2Fapplication-metaplugin%2F${MANIFEST.name}%2F${MANIFEST.version}-SNAPSHOT",
+                  pluginUrl: "https://nexus.asatnet.net/#browse/browse:maven-snapshots:com%2Fspacebridge%2Fapplication-metaplugin%2F${MANIFEST.name}%2F${MANIFEST.version}",
                   boms: loadReports ("*.syft.txt"),
                   vulnerability: loadReports ("*.grype.txt"),
                   build: currentBuild

@@ -184,8 +184,10 @@ def call(Map arg = [:]) {
               env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
               env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
             }
+            if (ENFORCE_HADOLINT) {
+              unstash 'hadolint'
+            }
           }
-          unstash 'hadolint'
           withSonarQubeEnv('SonarQube Server') {
             sh "sonar-scanner -Dsonar.docker.file.patterns=*.dockerfile -Dsonar.lang.patterns.dockerfile=Dockerfile"
           }
