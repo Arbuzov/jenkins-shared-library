@@ -337,7 +337,7 @@ def call(Map arg) {
                 SPACE: MANIFEST.confluence.space,
                 ROOT: MANIFEST.confluence.root,
                 CONTENT: inflateTemplate(
-                  STRINGIFY: true,
+                  STRINGIFY: false,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(new ArrayList<>(IMAGES), ["<li>", "</li>"], ["<ul>", "</ul>"]),
@@ -375,7 +375,7 @@ def call(Map arg) {
                 SPACE: MANIFEST.confluence.space,
                 ROOT: MANIFEST.confluence.root,
                 CONTENT: inflateTemplate(
-                  STRINGIFY: true,
+                  STRINGIFY: false,
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(new ArrayList<>(IMAGES), ["<li>", "</li>"], ["<ul>", "</ul>"]),
