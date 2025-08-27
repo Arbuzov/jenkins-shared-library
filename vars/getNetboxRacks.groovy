@@ -1,6 +1,7 @@
 def call(Map arg = [:]) {
   def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
   def credentialsId = arg.credentialsId ?: 'netbox'
+  def limit = arg.limit ?: 500
 
   withCredentials([string(credentialsId: credentialsId, variable: 'TOKEN')]) {
     def url = "${netboxUrl}/api/dcim/racks/"

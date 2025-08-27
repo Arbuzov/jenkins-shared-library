@@ -3,6 +3,7 @@ def call(Map arg = [:]) {
   def credentialsId = arg.credentialsId ?: 'netbox'
   def role = arg.role ?: false
   def tenant = arg.tenant ?: false
+  def limit = arg.limit ?: 500
 
   withCredentials([string(credentialsId: credentialsId, variable: 'TOKEN')]) {
     def url = "${netboxUrl}/api/dcim/devices"
@@ -13,6 +14,7 @@ def call(Map arg = [:]) {
     if (tenant) {
       search.add("tenant=${tenant}")
     }
+    search.add("limit=${limit}")
     if (search.size() > 0) {
       url += "?${search.join('&')}"
     }
