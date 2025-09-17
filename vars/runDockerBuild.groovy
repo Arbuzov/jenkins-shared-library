@@ -1,14 +1,3 @@
-String loadReports (mask) {
-  def filesContent = ''
-  def fileList = findFiles(glob: mask)
-  fileList.each { file ->
-      def content = readFile(file.path)
-        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
-        filesContent += file.name + '\\n' +content + '\\n'
-  }
-  return filesContent
-}
-
 String getKeyComponentsInfo(PACKAGE_NAME, VERSION, KEY_COMPONENTS = [:]) {
     def componentLines = readFile("${PACKAGE_NAME}:${VERSION}.syft.txt").readLines()
     def result = []
@@ -381,10 +370,9 @@ def call(Map arg = [:]) {
                   keyComponents: getKeyComponentsInfo(PACKAGE_NAME, "${BASE_VERSION}-b${BUILD_NUMBER}", KEY_COMPONENTS).join(""),
                   version: "${BASE_VERSION}-b${BUILD_NUMBER}",
                   imageUri: "registry.nexus.asatnet.net/${NAMESPACE}/${PACKAGE_NAME}:${BASE_VERSION}-b${BUILD_NUMBER}",
-                  projectId: arg.JIRA_PROJECT,
-                  boms: loadReports ("**/*.syft.txt"),
-                  vulnerability: loadReports ("**/*.grype.txt")
-                )
+                  projectId: arg.JIRA_PROJECT
+                ),
+                FILES: (findFiles(glob: '**/*.syft.txt') + findFiles(glob: '**/*.grype.txt')).collect { it.path }
               ),
             TEXT: "Release ${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER} (Confluence)",
             ICON: 'info.gif'

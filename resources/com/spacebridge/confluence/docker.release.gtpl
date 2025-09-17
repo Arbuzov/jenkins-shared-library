@@ -107,6 +107,7 @@ build?.changeSets.each { changeSet ->
 <% } %>
 </p>
 <% } %>
+<% if (binding.hasVariable('boms')) { %>
 <h2>BOMs</h2>
 <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
   <ac:rich-text-body>
@@ -117,6 +118,7 @@ build?.changeSets.each { changeSet ->
     </ac:structured-macro>
   </ac:rich-text-body>
 </ac:structured-macro>
+<% } %>
 <% if (binding.hasVariable('bomChangeset') && bomChangeset != null) { %>
 <% if (bomChangeset?.removed?.size() || bomChangeset?.added?.size() || bomChangeset?.updated?.size()) { %>
 <h2>BOM changes</h2>
@@ -176,6 +178,7 @@ build?.changeSets.each { changeSet ->
     </table>
   <% } %>
 <% } %>
+<% if (binding.hasVariable('vulnerability')) { %>
 <h2>Vulnerability report</h2>
 <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="e3f4c4f9-dfa2-4e8a-9eb9-ad1717a7a3e8">
   <ac:rich-text-body>
@@ -186,6 +189,7 @@ build?.changeSets.each { changeSet ->
     </ac:structured-macro>
   </ac:rich-text-body>
 </ac:structured-macro>
+<% } %>
 <% if (binding.hasVariable('footer') && footer != null) { %>
 ${footer}
 <% } %>

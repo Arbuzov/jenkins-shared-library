@@ -61,17 +61,6 @@ def saveImages(images, dest ) {
   }
 }
 
-String loadReports (mask) {
-  def filesContent = ''
-  def fileList = findFiles(glob: mask)
-  fileList.each { file ->
-      def content = readFile(file.path)
-        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
-        filesContent += file.name + '\\n' +content + '\\n'
-  }
-  return filesContent
-}
-
 def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   MANIFEST = [:]
@@ -344,10 +333,9 @@ def call(Map arg) {
                   version: "${MANIFEST.name}-${MANIFEST.version}",
                   projectId: MANIFEST.jira.project,
                   pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-metaplugin/${MANIFEST.name}/${MANIFEST.version}/${MANIFEST.name}-${MANIFEST.version}-offline.tar.gz",
-                  boms: loadReports ("*.syft.txt"),
-                  vulnerability: loadReports ("*.grype.txt"),
                   build: currentBuild
-                )
+                ),
+                FILES: (findFiles(glob: '*.syft.txt') + findFiles(glob: '*.grype.txt')).collect { it.path }
               ),
             TEXT: "Release ${MANIFEST.name}-${MANIFEST.version} (Confluence)",
             ICON: 'info.gif'
@@ -382,10 +370,9 @@ def call(Map arg) {
                   version: "${MANIFEST.name}-${MANIFEST.version}",
                   projectId: MANIFEST.jira.project,
                   pluginUrl: "https://nexus.asatnet.net/#browse/browse:maven-snapshots:com%2Fspacebridge%2Fapplication-metaplugin%2F${MANIFEST.name}%2F${MANIFEST.version}",
-                  boms: loadReports ("*.syft.txt"),
-                  vulnerability: loadReports ("*.grype.txt"),
                   build: currentBuild
-                )
+                ),
+                FILES: (findFiles(glob: '*.syft.txt') + findFiles(glob: '*.grype.txt')).collect { it.path }
               ),
             TEXT: "Release ${MANIFEST.name}-${MANIFEST.version} (Confluence)",
             ICON: 'info.gif'

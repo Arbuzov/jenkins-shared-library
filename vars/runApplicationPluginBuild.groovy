@@ -31,17 +31,6 @@ def getManifestData() {
   }
 }
 
-String loadReports (mask) {
-  def filesContent = ''
-  def fileList = findFiles(glob: mask)
-  fileList.each { file ->
-      def content = readFile(file.path)
-        content = content.replaceAll(/(\r\n|\r|\n)/, '\\\\n')
-        filesContent += file.name + '\\n' +content + '\\n'
-  }
-  return filesContent
-}
-
 def saveImages(images, dest ) {
   sh "install -d -m 777 ./${dest}"
   images.each{ im ->
@@ -378,10 +367,9 @@ def call(Map arg) {
                   version: "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}${params.INCLUDE_IMAGES.toBoolean()?'-offline':''}",
                   projectId: arg.JIRA_PROJECT,
                   pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${ARTIFACT_ID}/${BASE_VERSION}-b${BUILD_ID}/${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}${params?.INCLUDE_IMAGES?.toBoolean()?'-offline':''}.tar.gz",
-                  boms: loadReports ("*.syft.txt"),
-                  vulnerability: loadReports ("*.grype.txt"),
                   build: currentBuild
-                )
+                ),
+                FILES: (findFiles(glob: '*.syft.txt') + findFiles(glob: '*.grype.txt')).collect { it.path }
               ),
             TEXT: "Release ${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID} (Confluence)",
             ICON: 'info.gif'

@@ -614,6 +614,60 @@ pipeline {
           echo "Created page with multiple files at: ${urlMulti}\n"
         }
 
+        script {
+          echo "Test report attachment"
+
+          writeFile file: "test.syft.txt", text: "package-a 1.0.0\npackage-b 2.0.0"
+          writeFile file: "test.grype.txt", text: "Critical vuln CVE-1234\nHigh vuln CVE-5678"
+
+
+          def syft  = findFiles(glob: '**/*.syft.txt')
+          def grype = findFiles(glob: '**/*.grype.txt')
+
+          def filesToAttach = (syft + grype).collect { it.path }
+
+          echo "Files to attach: ${filesToAttach}"
+
+          def url = createConfluencePage(
+            TITLE: "Release test1",
+                SPACE    : 'DEVOPS',
+                ROOT_NAME: 'Debug',
+                CONTENT: inflateTemplate(
+                  TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
+                  date: new Date().format('yyyy-MM-dd'),
+                  images: arrayToString(new ArrayList<>([]), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+                  version: "1",
+                  projectId: 'DEMO',
+                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/D}/.tar.gz",
+                  build: null
+                ),
+                FILES: (findFiles(glob: '**/*.syft.txt') + findFiles(glob: '**/*.grype.txt')).collect { it.path }
+              )
+          echo "Confluence page created: ${url}"
+
+
+          def url2 = createConfluencePage(
+                TITLE: "Release test22",
+                SPACE    : 'DEVOPS',
+                ROOT_NAME: 'Debug',
+                CONTENT: inflateTemplate(
+                  TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
+                  date: new Date().format('yyyy-MM-dd'),
+                  images: arrayToString(new ArrayList<>([]), ["<li>", "</li>"], ["<ul>", "</ul>"]),
+                  version: "1",
+                  projectId: 'DEMO',
+                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/D}/.tar.gz",
+                  boms: loadReports (mask: '*.syft.txt'),
+                  vulnerability: loadReports (mask: "*.grype.txt"),
+                  build: null
+                )
+          )
+          echo "Confluence page created: ${url2}"
+
+          sh 'rm -f test.syft.txt test.grype.txt'
+
+        }
+    
       }
 
       post {
