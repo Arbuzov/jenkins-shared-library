@@ -31,12 +31,11 @@ def call(Map arg = [:]) {
 
   // Wrap all SonarQube operations in withSonarQubeEnv to access SONAR_HOST_URL
   withSonarQubeEnv(sonarQubeEnvName) {
-    // Run SonarQube analysis
+    env.EXPOSED_SONAR_HOST_URL = env.SONAR_HOST_URL
     if (env.MERGE_REQUEST_IID || env.CHANGE_ID) {
-      def sonarPrKey = env.CHANGE_ID ?: env.MERGE_REQUEST_IID
-      env.putAt('SONAR_PULLREQUEST_KEY', sonarPrKey)
-      env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
-      env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
+      env.SONAR_PULLREQUEST_KEY = (env.CHANGE_ID ?: env.MERGE_REQUEST_IID)
+      env.SONAR_PULLREQUEST_BRANCH = env.CHANGE_BRANCH
+      env.SONAR_PULLREQUEST_BASE = env.GIT_BRANCH
     }
     def scannerCommand = DEBUG ? "sonar-scanner -X" : "sonar-scanner"
     
@@ -45,63 +44,59 @@ def call(Map arg = [:]) {
     } catch (Exception e) {
       error "SonarQube analysis failed: ${e.getMessage()}"
     }
+  }
+  // Wait for quality gate
+  timeout(time: timeoutValue, unit: timeoutUnit) {
+    waitForQualityGate(abortPipeline: abortPipeline)
+  }
 
-    // Wait for quality gate
-    timeout(time: timeoutValue, unit: timeoutUnit) {
-      try {
-        waitForQualityGate(abortPipeline: abortPipeline)
-      } catch (Exception e) {
-        print("Failed to retrieve SonarQube quality gate status: ${e.getMessage()}")
-      }
+  // Get SonarQube issues report for pull requests
+  if (componentKey && (env.MERGE_REQUEST_IID || env.CHANGE_ID)) {
+    def pullRequestId = env.MERGE_REQUEST_IID ?: env.CHANGE_ID
+    
+    withCredentials([
+      string(
+        credentialsId: sonarCredentialsId,
+        variable: 'SONAR_TOKEN'
+      )
+    ]) {
+      writeFile(
+        file: ".scannerwork/sonar-report.json",
+        text: httpRequest(
+          url: "${env.EXPOSED_SONAR_HOST_URL}/api/issues/search?componentKeys=${URLEncoder.encode(componentKey, 'UTF-8')}&pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}",
+          httpMode: 'GET',
+          ignoreSslErrors: true,
+          customHeaders: [[name: 'Authorization', value: SONAR_TOKEN]],
+          consoleLogResponseBody: DEBUG,
+          quiet: !DEBUG
+        ).content,
+        encoding: "UTF-8"
+      )
     }
 
-    // Get SonarQube issues report for pull requests
-    if (componentKey && (env.MERGE_REQUEST_IID || env.CHANGE_ID)) {
-      def pullRequestId = env.MERGE_REQUEST_IID ?: env.CHANGE_ID
-      
-      withCredentials([
-        string(
-          credentialsId: sonarCredentialsId,
-          variable: 'SONAR_TOKEN'
-        )
-      ]) {
-        writeFile(
-          file: ".scannerwork/sonar-report.json",
-          text: httpRequest(
-            url: "${env.SONAR_HOST_URL}/api/issues/search?componentKeys=${URLEncoder.encode(componentKey, 'UTF-8')}&pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}",
-            httpMode: 'GET',
-            ignoreSslErrors: true,
-            customHeaders: [[name: 'Authorization', value: SONAR_TOKEN]],
-            consoleLogResponseBody: DEBUG,
-            quiet: !DEBUG
-          ).content,
-          encoding: "UTF-8"
-        )
-      }
-
-      // Report violations to GitLab only if reportViolations is true
-      if (reportViolations) {
-        step([
-          $class: 'ViolationsToGitLabRecorder',
-          config: [
-            gitLabUrl: gitlabUrl,
-            projectId: projectId,
-            mergeRequestIid: pullRequestId,
-            commentOnlyChangedContent: true,
-            commentOnlyChangedContentContext: 0,
-            commentOnlyChangedFiles: true,
-            createSingleFileComments: true,
-            createCommentWithAllSingleFileComments: true,
-            minSeverity: minSeverity,
-            maxNumberOfViolations: maxViolations,
-            enableLogging: DEBUG,
-            apiTokenCredentialsId: gitlabCredentialsId,
-            apiTokenPrivate: true,
-            authMethodHeader: true,
-            ignoreCertificateErrors: true,
-            keepOldComments: false,
-            commentTemplate: """
-**Reporter**: [{{violation.reporter}}{{#violation.rule}}](${env.SONAR_HOST_URL}/project/issues?pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}&files={{violation.file}}&issueStatuses=OPEN%2CCONFIRMED&id=${URLEncoder.encode(componentKey, 'UTF-8')})
+    // Report violations to GitLab only if reportViolations is true
+    if (reportViolations) {
+      step([
+        $class: 'ViolationsToGitLabRecorder',
+        config: [
+          gitLabUrl: gitlabUrl,
+          projectId: projectId,
+          mergeRequestIid: pullRequestId,
+          commentOnlyChangedContent: true,
+          commentOnlyChangedContentContext: 0,
+          commentOnlyChangedFiles: true,
+          createSingleFileComments: true,
+          createCommentWithAllSingleFileComments: true,
+          minSeverity: minSeverity,
+          maxNumberOfViolations: maxViolations,
+          enableLogging: DEBUG,
+          apiTokenCredentialsId: gitlabCredentialsId,
+          apiTokenPrivate: true,
+          authMethodHeader: true,
+          ignoreCertificateErrors: true,
+          keepOldComments: false,
+          commentTemplate: """
+**Reporter**: [{{violation.reporter}}{{#violation.rule}}](${env.EXPOSED_SONAR_HOST_URL}/project/issues?pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}&files={{violation.file}}&issueStatuses=OPEN%2CCONFIRMED&id=${URLEncoder.encode(componentKey, 'UTF-8')})
 
 **Rule**: {{violation.rule}}{{/violation.rule}}
 **Severity**: {{violation.severity}}
@@ -110,15 +105,14 @@ def call(Map arg = [:]) {
 **Source**: {{violation.source}}{{/violation.source}}
 
 {{violation.message}}
-            """,
-            violationConfigs: [[
-              pattern: '.*sonar-report\\.json$',
-              parser: 'SONAR',
-              reporter: 'Sonar'
-            ]]
-          ]
-        ])
-      }
+          """,
+          violationConfigs: [[
+            pattern: '.*sonar-report\\.json$',
+            parser: 'SONAR',
+            reporter: 'Sonar'
+          ]]
+        ]
+      ])
     }
   }
 }
