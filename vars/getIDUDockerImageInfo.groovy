@@ -2,7 +2,7 @@
 //
 // Used inside runIDUDockerBuild() function.
 //
-// Arguments in argm:
+// Arguments in args:
 //
 // namespace: top-level namespace (required, lowercase)
 // packageName: package name (required, lowercase)
@@ -10,8 +10,8 @@
 //              Forwarded as --build-arg "BASE_VERSION=${baseVersion}"
 //              when building the Docker image from Dockerfile
 // branchForBV: branch which builds this baseVersion (optional).
-//              If argm.branchForBV is specified, and if the source
-//              or target branch name matches ${argm.branchForBV},
+//              If arg.branchForBV is specified, and if the source
+//              or target branch name matches ${arg.branchForBV},
 //              the tag prefix is set to ${iminfo.baseVersion} and
 //              not the current branch name
 //
@@ -43,7 +43,7 @@
 //      )
 //
 
-def call(Map argm) {
+def call(Map arg) {
     String topNamespace = ''
     String packageName = ''
     String buildNumberStr = ''
@@ -53,24 +53,24 @@ def call(Map argm) {
     def extraTags = []
     def envP
 
-    if (argm && argm.containsKey('_dbgComment')) {
-        iminfo.dbgComment = argm._dbgComment
+    if (arg && arg.containsKey('_dbgComment')) {
+        iminfo.dbgComment = arg._dbgComment
     }
 
     envP = env
-    if (argm && argm.containsKey('_envP')) {
-        envP = argm._envP
+    if (arg && arg.containsKey('_envP')) {
+        envP = arg._envP
     }
 
-    if (argm.namespace) {
-        topNamespace = argm.namespace
+    if (arg.namespace) {
+        topNamespace = arg.namespace
     }
     if (!(topNamespace && topNamespace.equals(topNamespace.toLowerCase()))) {
         throw new Exception("namespace argument must be lowercase")
     }
 
-    if (argm.packageName) {
-        packageName = argm.packageName
+    if (arg.packageName) {
+        packageName = arg.packageName
     }
     if (!(packageName && packageName.equals(packageName.toLowerCase()))) {
         throw new Exception("packageName argument must be lowercase")
@@ -120,18 +120,18 @@ def call(Map argm) {
     String repositoryName = packageName.toLowerCase()
 
     String tagPrefix = "${sourceBranch}"
-    // Override tag prefix with baseVersion if source or target branch matches argm.branchForBV
-    if (argm.baseVersion && argm.branchForBV) {
+    // Override tag prefix with baseVersion if source or target branch matches arg.branchForBV
+    if (arg.baseVersion && arg.branchForBV) {
         String branchRef = targetBranch;
         if (isLongTermBranch) {
             branchRef = sourceBranch
         }
-        if (branchRef.equals(argm['branchForBV'])) {
+        if (branchRef.equals(arg['branchForBV'])) {
             // Tag prefix for merge requests: MR-123-baseversion
-            tagPrefix = "${sourceBranch}-" + argm.baseVersion
+            tagPrefix = "${sourceBranch}-" + arg.baseVersion
             if (isLongTermBranch) {
                 // Tag prefix for long term branches: baseversion
-                tagPrefix = "" + argm.baseVersion
+                tagPrefix = "" + arg.baseVersion
             }
         }
     }

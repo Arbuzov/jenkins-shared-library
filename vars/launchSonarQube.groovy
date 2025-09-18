@@ -1,25 +1,32 @@
-def call(Map params = [:]) {
+import java.net.URLEncoder
+
+def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   // Default parameters
-  def sonarQubeEnvName = params.sonarQubeEnvName ?: 'SonarQube Server'
-  def gitlabUrl = params.gitlabUrl ?: 'https://gitlab.asatnet.net/'
-  def sonarCredentialsId = params.sonarCredentialsId ?: 'sonar-secret'
-  def gitlabCredentialsId = params.gitlabCredentialsId ?: 'gitlab-pat-01'
-  def projectId = params.projectId ?: env.GITLAB_PROJECT_ID
-  def timeout = params.timeout ?: 5
-  def timeoutUnit = params.timeoutUnit ?: 'MINUTES'
-  def abortPipeline = params.abortPipeline ?: false
-  def maxViolations = params.maxViolations ?: 99999
-  def minSeverity = params.minSeverity ?: 'INFO'
-  def reportViolations = params.reportViolations != null ? params.reportViolations : true
-  def DEBUG = params.DEBUG != null ? params.DEBUG : false
+  def sonarQubeEnvName = arg.sonarQubeEnvName ?: 'SonarQube Server'
+  def gitlabUrl = arg.gitlabUrl ?: 'https://gitlab.asatnet.net/'
+  def sonarCredentialsId = arg.sonarCredentialsId ?: 'sonar-secret'
+  def gitlabCredentialsId = arg.gitlabCredentialsId ?: 'gitlab-pat-01'
+  def projectId = arg.projectId ?: env.GITLAB_PROJECT_ID
+  def timeout = arg.timeout ?: 5
+  def timeoutUnit = arg.timeoutUnit ?: 'MINUTES'
+  def abortPipeline = arg.abortPipeline ?: false
+  def maxViolations = arg.maxViolations ?: 99999
+  def minSeverity = arg.minSeverity ?: 'INFO'
+  def reportViolations = arg.reportViolations != null ? arg.reportViolations : true
+  def DEBUG = arg.DEBUG != null ? arg.DEBUG : false
 
-  def sonarProperties = readFile('sonar-project.properties')
-  def projectKeyLine = sonarProperties.split('\n').find { it.startsWith('sonar.projectKey=') }
-  if (projectKeyLine) {
-    componentKey = projectKeyLine.split('=', 2)[1].trim()
-  } else {
-    error "sonar.projectKey not found in sonar-project.properties and componentKey parameter not provided"
+  def componentKey = null
+  try {
+    def sonarProperties = readFile('sonar-project.properties')
+    def projectKeyLine = sonarProperties.split('\n').find { it.startsWith('sonar.projectKey=') }
+    if (projectKeyLine) {
+      componentKey = projectKeyLine.split('=', 2)[1].trim()
+    } else {
+      error "sonar.projectKey not found in sonar-project.properties and componentKey parameter not provided"
+    }
+  } catch (Exception e) {
+    error "Failed to process sonar-project.properties: ${e.getMessage()}"
   }
 
   // Wrap all SonarQube operations in withSonarQubeEnv to access SONAR_HOST_URL
@@ -57,7 +64,7 @@ def call(Map params = [:]) {
         writeFile(
           file: ".scannerwork/sonar-report.json",
           text: httpRequest(
-            url: "${env.SONAR_HOST_URL}/api/issues/search?componentKeys=${componentKey}&pullRequest=${pullRequestId}",
+            url: "${env.SONAR_HOST_URL}/api/issues/search?componentKeys=${URLEncoder.encode(componentKey, 'UTF-8')}&pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}",
             httpMode: 'GET',
             ignoreSslErrors: true,
             customHeaders: [[name: 'Authorization', value: SONAR_TOKEN]],
@@ -90,7 +97,7 @@ def call(Map params = [:]) {
             ignoreCertificateErrors: true,
             keepOldComments: false,
             commentTemplate: """
-**Reporter**: [{{violation.reporter}}{{#violation.rule}}](${env.SONAR_HOST_URL}/project/issues?pullRequest=${pullRequestId}&files={{violation.file}}&issueStatuses=OPEN%2CCONFIRMED&id=${componentKey})
+**Reporter**: [{{violation.reporter}}{{#violation.rule}}](${env.SONAR_HOST_URL}/project/issues?pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}&files={{violation.file}}&issueStatuses=OPEN%2CCONFIRMED&id=${URLEncoder.encode(componentKey, 'UTF-8')})
 
 **Rule**: {{violation.rule}}{{/violation.rule}}
 **Severity**: {{violation.severity}}

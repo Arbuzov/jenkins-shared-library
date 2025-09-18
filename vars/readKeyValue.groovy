@@ -1,6 +1,6 @@
-def call(Map argv) {
+def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
-  String fileName = argv.get("file")
+  String fileName = arg.get("file")
   if (!fileName) {
     error("File name is required but not provided.")
   }
