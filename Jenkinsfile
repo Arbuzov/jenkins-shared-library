@@ -61,7 +61,7 @@ pipeline {
           ])
         )
 
-        
+        launchSonarQube()
           // NOTE: publish under directory debug/firmware in Nexus
           env.putAt('PIPELINE_BIN_REPO_FULL_PATH', getIDURepoPath(namespace: 'debug',
                                                                   project: 'firmware',

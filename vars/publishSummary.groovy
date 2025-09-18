@@ -7,9 +7,14 @@ def call(String summaryText, String header = '', String icon = 'folder.gif') {
   summary.appendText(summaryText, false)
 }
 
-def call(Map params) {
-  def summaryText = params.summaryText ?: ''
-  def header = params.header ?: ''
-  def icon = params.icon ?: 'folder.gif'
+/*
+ * Overloaded method to accept parameters as a map
+ * Function call with named parameters is deprecated but still 
+ * supported for backward compatibility
+ */
+def call(Map arg) {
+  def summaryText = arg.summaryText ?: ''
+  def header = arg.header ?: ''
+  def icon = arg.icon ?: 'folder.gif'
   return this.call(summaryText, header, icon)
 }

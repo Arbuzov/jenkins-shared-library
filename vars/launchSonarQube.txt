@@ -6,7 +6,6 @@ Launches SonarQube analysis with support for pull request analysis and GitLab in
 
 ```groovy
 launchSonarQube([
-    componentKey: 'your-component-key',
     gitlabUrl: 'https://gitlab.example.com/'
 ])
 ```
@@ -19,10 +18,9 @@ All parameters are optional and passed through a Map:
 |-----------|---------|-------------|
 | `sonarQubeEnvName` | `'SonarQube Server'` | SonarQube environment name in Jenkins |
 | `gitlabUrl` | `'https://gitlab.asatnet.net/'` | GitLab server URL |
-| `sonarCredentialsId` | `'sonar-secret'` | Credentials ID for SonarQube |
-| `gitlabCredentialsId` | `'gitlab-pat-01'` | Credentials ID for GitLab |
+| `sonarCredentialsId` | `'sonar-secret'` | Jenkins credentials ID for SonarQube credentials type login and password send in a custom header |
+| `gitlabCredentialsId` | `'gitlab-pat-01'` | Jenkins credentials ID for GitLab credentials type secret text |
 | `projectId` | `env.GITLAB_PROJECT_ID` | GitLab project ID |
-| `componentKey` | `null` | SonarQube component key (auto-read from sonar-project.properties if not provided) |
 | `timeout` | `5` | Quality Gate wait timeout |
 | `timeoutUnit` | `'MINUTES'` | Timeout unit of measurement |
 | `abortPipeline` | `false` | Whether to abort pipeline on failed Quality Gate |
@@ -55,18 +53,9 @@ launchSonarQube([
 ])
 ```
 
-### With explicit component configuration
-```groovy
-launchSonarQube([
-    componentKey: 'my-project-key',
-    timeout: 10
-])
-```
-
 ### Disable GitLab violation reporting
 ```groovy
 launchSonarQube([
-    componentKey: 'my-project-key',
     reportViolations: false
 ])
 ```
@@ -74,7 +63,6 @@ launchSonarQube([
 ### Enable debug mode
 ```groovy
 launchSonarQube([
-    componentKey: 'my-project-key',
     DEBUG: true
 ])
 ```
@@ -82,8 +70,7 @@ launchSonarQube([
 ### Full configuration
 ```groovy
 launchSonarQube([
-    sonarQubeEnvName: 'My SonarQube',
-    componentKey: 'my-project-key', 
+    sonarQubeEnvName: 'My SonarQube', 
     gitlabUrl: 'https://gitlab.company.com/',
     sonarCredentialsId: 'my-sonar-token',
     gitlabCredentialsId: 'my-gitlab-token',

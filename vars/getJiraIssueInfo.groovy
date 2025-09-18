@@ -12,10 +12,14 @@ call(issueId, credentialsId = 'jira-username-password') {
   return readJSON(text: issueResponce.getContent())
 }
 
-def call(Map params) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
-  def issueId = params.issueId
-  def credentialsId = params.credentialsId ?: 'jira-username-password'
+/*
+ * Overloaded method to accept parameters as a map
+ * Function call with named parameters is deprecated but still 
+ * supported for backward compatibility
+ */
+def call(Map arg) {
+  def issueId = arg.issueId
+  def credentialsId = arg.credentialsId ?: 'jira-username-password'
   if (!issueId) {
     error("Parameter 'issueId' is required but not provided.")
   }
