@@ -21,7 +21,7 @@ All parameters are optional and passed through a Map:
 | `sonarCredentialsId` | `'sonar-secret'` | Jenkins credentials ID for SonarQube credentials type login and password send in a custom header |
 | `gitlabCredentialsId` | `'gitlab-pat-01'` | Jenkins credentials ID for GitLab credentials type secret text |
 | `projectId` | `env.GITLAB_PROJECT_ID` | GitLab project ID |
-| `timeout` | `5` | Quality Gate wait timeout |
+| `timeoutValue` | `5` | Quality Gate wait timeout |
 | `timeoutUnit` | `'MINUTES'` | Timeout unit of measurement |
 | `abortPipeline` | `false` | Whether to abort pipeline on failed Quality Gate |
 | `maxViolations` | `99999` | Maximum number of violations for reporting |
@@ -49,7 +49,14 @@ launchSonarQube()
 ### Auto-detect component key from sonar-project.properties
 ```groovy
 launchSonarQube([
-    timeout: 10
+    timeoutValue: 10
+])
+```
+
+### With explicit component configuration
+```groovy
+launchSonarQube([
+    timeoutValue: 10
 ])
 ```
 
@@ -74,7 +81,7 @@ launchSonarQube([
     gitlabUrl: 'https://gitlab.company.com/',
     sonarCredentialsId: 'my-sonar-token',
     gitlabCredentialsId: 'my-gitlab-token',
-    timeout: 10,
+    timeoutValue: 10,
     timeoutUnit: 'MINUTES',
     abortPipeline: true,
     minSeverity: 'MAJOR',

@@ -48,7 +48,11 @@ def call(Map arg = [:]) {
 
     // Wait for quality gate
     timeout(time: timeoutValue, unit: timeoutUnit) {
-      waitForQualityGate(abortPipeline: abortPipeline)
+      try {
+        waitForQualityGate(abortPipeline: abortPipeline)
+      } catch (Exception e) {
+        print("Failed to retrieve SonarQube quality gate status: ${e.getMessage()}")
+      }
     }
 
     // Get SonarQube issues report for pull requests

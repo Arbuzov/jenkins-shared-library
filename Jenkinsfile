@@ -61,7 +61,6 @@ pipeline {
           ])
         )
 
-        launchSonarQube()
           // NOTE: publish under directory debug/firmware in Nexus
           env.putAt('PIPELINE_BIN_REPO_FULL_PATH', getIDURepoPath(namespace: 'debug',
                                                                   project: 'firmware',
@@ -733,16 +732,7 @@ pipeline {
         }
       }
       steps {
-        script {
-          if (env.CHANGE_ID) {
-            env.putAt('SONAR_PULLREQUEST_KEY', env.CHANGE_ID)
-            env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
-            env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
-          }
-        }
-        withSonarQubeEnv('SonarQube Server') {
-          sh "sonar-scanner"
-        }
+        launchSonarQube(DEBUG: true)
       }
     }
   }
