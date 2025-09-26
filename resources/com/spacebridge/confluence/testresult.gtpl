@@ -65,7 +65,10 @@
     </table>
   </ac:rich-text-body>
 </ac:structured-macro>
-<% if (binding.hasVariable('params') && build != params) { %>
+<% if (binding.hasVariable('environment') && environment != null) { %>
+${environment}
+<% } %>
+<% if (binding.hasVariable('params') && params != null) { %>
 <h2>Run params</h2>
 <ac:structured-macro ac:name="details" ac:schema-version="1" ac:macro-id="1e693907-33d2-454c-add4-199d7143833d">
   <ac:parameter ac:name="id">build-params</ac:parameter>
