@@ -29,10 +29,20 @@ String - URL of the last successfully created page, null if no pages were create
 
 ## Error Handling
 
-The function will fail immediately with an error in the following cases:
+The function will fail immediately with an `error()` call in the following cases:
 - `CHILDREN` parameter is a String instead of List
-- `CHILDREN` parameter is not a List type
-- Any child page creation fails
+- `CHILDREN` parameter is not a List type  
+- Any child page creation fails (the error is caught, logged, and re-raised using `error()`)
+
+**Note**: When a child page creation fails, the function logs the error message and stack trace (if DEBUG is enabled), then calls `error()` to stop pipeline execution. Previously created pages in the same call will remain created.
+
+## Corner Cases
+
+- **Empty CHILDREN list**: Returns `null` immediately without calling Confluence. Useful when the caller builds the list dynamically and wants a safe no-op.
+- **Missing `content` in a child definition**: Automatically uses the fallback template loaded from `com/spacebridge/confluence/children.gtpl`.
+- **Mixed success and failure**: When a later child fails, earlier pages remain published because Confluence side-effects aren't rolled back.
+- **DEBUG mode**: Enables verbose logging for each page creation attempt and prints the exception stack trace before re-raising the error.
+- **Custom ROOT vs ROOT_NAME**: You may supply either `ROOT` (ID) or `ROOT_NAME` (title). Resolution errors from `createConfluencePage` propagate and will stop execution via `error()`.
 
 ## Example
 
