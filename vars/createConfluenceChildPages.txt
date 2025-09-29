@@ -1,0 +1,42 @@
+# createConfluenceChildPages
+
+Creates multiple nested child pages in Confluence.
+
+This function creates multiple child pages under a specified parent page in Confluence.
+It uses the createConfluencePage function internally for each child page creation.
+If no content is provided for a child page, it uses a fallback template from resources.
+
+## Parameters
+
+- `arg` (Map) - Configuration map with the following keys:
+  - `CONFLUENCE_API` (String) - Confluence API base URL (default: 'https://confluence.spacebridge.com/rest/api')
+  - `SPACE` (String) - Confluence space key (default: 'SPACE')
+  - `ROOT` (String) - Parent page ID
+  - `ROOT_NAME` (String) - Parent page title (alternative to ROOT)
+  - `CREDENTIALS_ID` (String) - Jenkins credentials ID (default: 'jira-username-password')
+  - `DEBUG` (Boolean) - Enable debug logging (default: false)
+  - `CHILDREN` (List) - Array of child page definitions, each containing:
+    - `title` (String) - Page title
+    - `content` (String) - Page content (optional, uses fallback template if not provided)
+    - `label` (String) - Page label (optional)
+
+## Returns
+
+String - URL of the last successfully created page, null if no pages were created
+
+## Example
+
+```groovy
+def children = [
+  [title: 'Test Results', content: '<p>Test content</p>', label: 'test-report'],
+  [title: 'Documentation', label: 'docs'],
+  [title: 'Notes']
+]
+def lastPageUrl = createConfluenceChildPages([
+  SPACE: 'MYSPACE',
+  ROOT_NAME: 'Parent Page',
+  CHILDREN: children,
+  DEBUG: true
+])
+// Returns: URL of the 'Notes' page (last in the list)
+```

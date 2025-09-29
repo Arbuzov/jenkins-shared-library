@@ -1,0 +1,22 @@
+# getConfluencePageId
+
+Extracts pageId parameter from a Confluence URL.
+
+This function parses a Confluence URL and returns the pageId query parameter value.
+It handles URL parsing errors gracefully and returns null for invalid URLs or URLs without pageId parameter.
+
+## Parameters
+
+- `arg` (Map) - Configuration map with the following keys:
+  - `url` (String) - Confluence URL containing pageId parameter
+
+## Returns
+
+String - The pageId value if found, null otherwise
+
+## Example
+
+```groovy
+def pageId = getConfluencePageId([url: 'https://confluence.example.com/pages/viewpage.action?pageId=12345&spaceKey=SPACE'])
+// Returns: '12345'
+```
