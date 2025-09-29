@@ -6,18 +6,20 @@
 
   * [email-templates](email-templates) - custom email templates keep here
   * [vars](vars) - shared functions
-    * [arrayToHrefList](vars/arrayToHrefList.groovy) - format a list of URLs into an HTML list of anchors
-    * [arrayToString](vars/arrayToString.groovy) - join a list of strings into a single string with optional row/list wrappers
+    * [arrayToHrefList](vars/arrayToHrefList.groovy) - format a list of URLs into an HTML list of anchors ([docs](vars/arrayToHrefList.txt))
+    * [arrayToString](vars/arrayToString.groovy) - join a list of strings into a single string with optional row/list wrappers ([docs](vars/arrayToString.txt))
     * [buildInfoPublisher](vars/buildInfoPublisher.groovy) - publish additional data into the build (brief and full build-info files) and publish them via HTML report
     * [addBageToBuild](vars/addBageToBuild.groovy)
     * [addJiraIssueLink](vars/addJiraIssueLink.groovy)
     * [addLinkToBuild](vars/addLinkToBuild.groovy)
-    * [assignJiraFixVersion](vars/assignJiraFixVersion.groovy)
+    * [assignJiraFixVersion](vars/assignJiraFixVersion.groovy) ([docs](vars/assignJiraFixVersion.txt))
     * [attachFilesToConfluencePage](vars/attachFilesToConfluencePage.groovy) - attach one or more files to a Confluence page (resolves page ID by title when needed)
     * [changeDefinition](vars/changeDefinition.groovy)
     * [copyFromArtifactory](vars/copyFromArtifactory.groovy)
     * [createConfluencePage](vars/createConfluencePage.groovy)
-    * [createNewJiraVersion](vars/createNewJiraVersion.groovy)
+    * [createConfluenceChildPages](vars/createConfluenceChildPages.groovy) - create multiple nested child pages in Confluence ([docs](vars/createConfluenceChildPages.txt))
+    * [createNewJiraVersion](vars/createNewJiraVersion.groovy) ([docs](vars/createNewJiraVersion.txt))
+    * [getConfluencePageId](vars/getConfluencePageId.groovy) - extract pageId parameter from Confluence URL ([docs](vars/getConfluencePageId.txt))
     * [doCleanGitWorkTree](vars/doCleanGitWorkTree.groovy)
     * [doCleanWorkspaceAfterStage](vars/doCleanWorkspaceAfterStage.groovy)
     * [doCleanWorkspaceBeforeCheckout](vars/doCleanWorkspaceBeforeCheckout.groovy)
@@ -59,6 +61,7 @@
     * [isOrigin](vars/isOrigin.groovy)
     * [iterateBuilds](vars/iterateBuilds.groovy)
     * [labelConfluencePage](vars/labelConfluencePage.groovy)
+    * [launchSonarQube](vars/launchSonarQube.groovy) - launch SonarQube analysis ([docs](vars/launchSonarQube.txt))
     * [loadSharedLibraryFile](vars/loadSharedLibraryFile.groovy) - write a library resource to disk and set permissions (helper to deploy shared scripts)
     * [makeYMD](vars/makeYMD.groovy)
     * [mergeRequestsChangeLog](vars/mergeRequestsChangeLog.groovy)
@@ -72,7 +75,7 @@
     * [publishSummary](vars/publishSummary.groovy) - create a Jenkins build summary entry (uses manager.createSummary)
     * [readJUnit](vars/readJUnit.groovy) - parse JUnit XML into a structured map (suites, cases, failures) and return overall status
     * [readKeyValue](vars/readKeyValue.groovy)
-    * [reportUsage](vars/reportUsage.groovy)
+    * [reportUsage](vars/reportUsage.groovy) ([docs](vars/reportUsage.txt))
     * [requireCleanGitWorkTree](vars/requireCleanGitWorkTree.groovy)
     * [requireNoGeneratedGlobalFiles](vars/requireNoGeneratedGlobalFiles.groovy)
     * [runAngularContainerBuild](vars/runAngularContainerBuild.groovy)
