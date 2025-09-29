@@ -3,7 +3,7 @@
 Extracts pageId parameter from a Confluence URL.
 
 This function parses a Confluence URL and returns the pageId query parameter value.
-It handles URL parsing errors gracefully and returns null for invalid URLs or URLs without pageId parameter.
+It handles URL parsing errors gracefully, decodes URL-encoded query parameters, and returns null for invalid URLs or URLs without a pageId parameter.
 
 ## Parameters
 
@@ -12,7 +12,7 @@ It handles URL parsing errors gracefully and returns null for invalid URLs or UR
 
 ## Returns
 
-String - The pageId value if found, null otherwise
+String - The pageId value if found (decoded), null otherwise
 
 ## Example
 

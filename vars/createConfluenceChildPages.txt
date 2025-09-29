@@ -5,6 +5,7 @@ Creates multiple nested child pages in Confluence.
 This function creates multiple child pages under a specified parent page in Confluence.
 It uses the createConfluencePage function internally for each child page creation.
 If no content is provided for a child page, it uses a fallback template from resources.
+**Note: The function will fail immediately if any child page creation fails.**
 
 ## Parameters
 
@@ -15,14 +16,23 @@ If no content is provided for a child page, it uses a fallback template from res
   - `ROOT_NAME` (String) - Parent page title (alternative to ROOT)
   - `CREDENTIALS_ID` (String) - Jenkins credentials ID (default: 'jira-username-password')
   - `DEBUG` (Boolean) - Enable debug logging (default: false)
-  - `CHILDREN` (List) - Array of child page definitions, each containing:
+  - `CHILDREN` (List) - **Required**: Array of child page definitions, each containing:
     - `title` (String) - Page title
     - `content` (String) - Page content (optional, uses fallback template if not provided)
     - `label` (String) - Page label (optional)
+    
+    **Note**: If a String is passed instead of List, the function will fail with an error.
 
 ## Returns
 
 String - URL of the last successfully created page, null if no pages were created
+
+## Error Handling
+
+The function will fail immediately with an error in the following cases:
+- `CHILDREN` parameter is a String instead of List
+- `CHILDREN` parameter is not a List type
+- Any child page creation fails
 
 ## Example
 

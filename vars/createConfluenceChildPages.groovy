@@ -7,14 +7,21 @@ def call(Map arg = [:]) {
   String ROOT_NAME = arg.ROOT_NAME ?: ''
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   Boolean DEBUG = arg.DEBUG ?: false
-  def CHILDREN = arg.CHILDREN ?: []
-  
-  if (!CHILDREN || CHILDREN.isEmpty()) {
-    if (DEBUG) echo "No child pages to create"
-    return []
-  }
-  
-  def lastPageUrl = null
+    def CHILDREN = arg.CHILDREN ?: []
+    
+    // Validate CHILDREN parameter type
+    if (CHILDREN instanceof String) {
+        error("CHILDREN parameter must be a List, but received a String: '${CHILDREN}'. Please provide an array of child page definitions.")
+    }
+    
+    if (!(CHILDREN instanceof List)) {
+        error("CHILDREN parameter must be a List, but received: ${CHILDREN?.getClass()?.getSimpleName()}. Please provide an array of child page definitions.")
+    }
+    
+    if (!CHILDREN || CHILDREN.isEmpty()) {
+        if (DEBUG) echo "No child pages to create"
+        return null
+    }  def lastPageUrl = null
   def fallbackContent = libraryResource('com/spacebridge/confluence/children.gtpl')
   def createdCount = 0
   
@@ -25,30 +32,22 @@ def call(Map arg = [:]) {
     
     if (DEBUG) echo "Creating child page: ${pageTitle}"
     
-    try {
-      def pageUrl = createConfluencePage([
-        CONFLUENCE_API: CONFLUENCE_API,
-        TITLE: pageTitle,
-        SPACE: SPACE,
-        ROOT: ROOT,
-        ROOT_NAME: ROOT_NAME,
-        CONTENT: pageContent,
-        CREDENTIALS_ID: CREDENTIALS_ID,
-        DEBUG: DEBUG,
-        LABEL: pageLabel
-      ])
-      
-      lastPageUrl = pageUrl
-      createdCount++
-      
-      if (DEBUG) echo "Successfully created page: ${pageTitle} -> ${pageUrl}"
-      
-    } catch (Exception e) {
-      echo "Failed to create child page '${pageTitle}': ${e.message}"
-      if (DEBUG) {
-        echo "Stack trace: ${e}"
-      }
-    }
+    def pageUrl = createConfluencePage([
+      CONFLUENCE_API: CONFLUENCE_API,
+      TITLE: pageTitle,
+      SPACE: SPACE,
+      ROOT: ROOT,
+      ROOT_NAME: ROOT_NAME,
+      CONTENT: pageContent,
+      CREDENTIALS_ID: CREDENTIALS_ID,
+      DEBUG: DEBUG,
+      LABEL: pageLabel
+    ])
+    
+    lastPageUrl = pageUrl
+    createdCount++
+    
+    if (DEBUG) echo "Successfully created page: ${pageTitle} -> ${pageUrl}"
   }
   
   if (DEBUG) echo "Created ${createdCount} child pages out of ${CHILDREN.size()} requested"
