@@ -17,7 +17,7 @@
     * [changeDefinition](vars/changeDefinition.groovy)
     * [copyFromArtifactory](vars/copyFromArtifactory.groovy)
     * [createConfluencePage](vars/createConfluencePage.groovy)
-    * [createConfluenceChildPages](vars/createConfluenceChildPages.groovy) - create multiple nested child pages in Confluence ([docs](vars/createConfluenceChildPages.txt))
+    * [createConfluencePageChain](vars/createConfluencePageChain.groovy) - create a chain of nested or flat Confluence pages ([docs](vars/createConfluencePageChain.txt))
     * [createNewJiraVersion](vars/createNewJiraVersion.groovy) ([docs](vars/createNewJiraVersion.txt))
     * [getConfluencePageId](vars/getConfluencePageId.groovy) - extract pageId parameter from Confluence URL ([docs](vars/getConfluencePageId.txt))
     * [doCleanGitWorkTree](vars/doCleanGitWorkTree.groovy)

@@ -7,6 +7,7 @@ def call(Map arg = [:]) {
   String ROOT_NAME = arg.ROOT_NAME ?: ''
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   Boolean DEBUG = arg.DEBUG ?: false
+  Boolean FLATTEN = arg.FLATTEN ?: false
   def CHILDREN = arg.CHILDREN ?: []
 
   // Validate CHILDREN parameter type
@@ -25,28 +26,40 @@ def call(Map arg = [:]) {
   def lastPageUrl = null
   def fallbackContent = libraryResource('com/spacebridge/confluence/children.gtpl')
   def createdCount = 0
-  
+  def rootPageId = ROOT
+  def rootPageName = ROOT_NAME
+
   for (child in CHILDREN) {
     def pageTitle = child.title ?: 'New Child Page'
     def pageContent = child.content ?: fallbackContent
     def pageLabel = child.label ?: ''
-    
+
     if (DEBUG) echo "Creating child page: ${pageTitle}"
-    
+
     try {
       def pageUrl = createConfluencePage([
         CONFLUENCE_API: CONFLUENCE_API,
         TITLE: pageTitle,
         SPACE: SPACE,
-        ROOT: ROOT,
-        ROOT_NAME: ROOT_NAME,
+        ROOT: rootPageId,
+        ROOT_NAME: rootPageName,
         CONTENT: pageContent,
         CREDENTIALS_ID: CREDENTIALS_ID,
         DEBUG: DEBUG,
         LABEL: pageLabel
       ])
-      
+
       lastPageUrl = pageUrl
+      if (!pageUrl) {
+        error "Failed to create confluence page '${pageTitle}': No URL returned from createConfluencePage"
+      }
+      if (!FLATTEN) {
+        rootPageId = getConfluencePageId(url: pageUrl)
+        if (!rootPageId) {
+          error "Failed to extract page ID from URL '${pageUrl}'"
+        }
+        rootPageName = '' // Clear root name the rootPageId is enough to create child pages
+      }
       createdCount++
       
       if (DEBUG) echo "Successfully created page: ${pageTitle} -> ${pageUrl}"

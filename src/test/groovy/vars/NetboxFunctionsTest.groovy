@@ -19,6 +19,8 @@ class NetboxFunctionsTest extends BasePipelineTest {
             binding.setVariable('TOKEN', 'fake-token')
             body()
         })
+        helper.registerAllowedMethod('getConfluencePageId', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
     }
 
     @Test

@@ -1,9 +1,8 @@
-# createConfluenceChildPages
+# createConfluencePageChain
 
-Creates multiple nested child pages in Confluence.
+Creates a chain of nested Confluence pages with hierarchical structure.
 
-This function creates multiple child pages under a specified parent page in Confluence.
-It uses the createConfluencePage function internally for each child page creation.
+This function creates multiple pages either in a nested chain (default) or as a flat list. In chain mode, each subsequent page becomes a child of the previously created page. In flatten mode, all pages are created as direct children of the original parent. It uses the createConfluencePage function internally and automatically manages parent relationships.
 If no content is provided for a child page, it uses a fallback template from resources.
 **Note: The function will fail immediately if any child page creation fails.**
 
@@ -16,6 +15,7 @@ If no content is provided for a child page, it uses a fallback template from res
   - `ROOT_NAME` (String) - Parent page title (alternative to ROOT)
   - `CREDENTIALS_ID` (String) - Jenkins credentials ID (default: 'jira-username-password')
   - `DEBUG` (Boolean) - Enable debug logging (default: false)
+  - `FLATTEN` (Boolean) - Create pages as flat list under original parent instead of nested chain (default: false)
   - `CHILDREN` (List) - **Required**: Array of child page definitions, each containing:
     - `title` (String) - Page title
     - `content` (String) - Page content (optional, uses fallback template if not provided)
@@ -47,16 +47,37 @@ The function will fail immediately with an `error()` call in the following cases
 ## Example
 
 ```groovy
+// Chain mode (default) - nested structure
 def children = [
   [title: 'Test Results', content: '<p>Test content</p>', label: 'test-report'],
   [title: 'Documentation', label: 'docs'],
   [title: 'Notes']
 ]
-def lastPageUrl = createConfluenceChildPages([
+def lastPageUrl = createConfluencePageChain([
   SPACE: 'MYSPACE',
   ROOT_NAME: 'Parent Page',
   CHILDREN: children,
   DEBUG: true
 ])
-// Returns: URL of the 'Notes' page (last in the list)
+// Creates nested structure:
+// Parent Page
+//   └── Test Results
+//       └── Documentation
+//           └── Notes
+// Returns: URL of the 'Notes' page (deepest nested page)
+
+// Flatten mode - flat structure
+def lastPageUrl2 = createConfluencePageChain([
+  SPACE: 'MYSPACE',
+  ROOT_NAME: 'Parent Page',
+  CHILDREN: children,
+  FLATTEN: true,
+  DEBUG: true
+])
+// Creates flat structure:
+// Parent Page
+//   ├── Test Results
+//   ├── Documentation
+//   └── Notes
+// Returns: URL of the 'Notes' page (last created)
 ```
