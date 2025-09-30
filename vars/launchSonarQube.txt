@@ -53,13 +53,6 @@ launchSonarQube([
 ])
 ```
 
-### With explicit component configuration
-```groovy
-launchSonarQube([
-    timeoutValue: 10
-])
-```
-
 ### Disable GitLab violation reporting
 ```groovy
 launchSonarQube([
