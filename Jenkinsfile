@@ -68,7 +68,19 @@ pipeline {
         print(getNetboxTenants())
         echo "==="
         print(lib.com.spacebridge.NetBox.getTenants())
-        
+        print(
+          createConfluencePageChain(
+            SPACE: 'DEVOPS',
+            ROOT_NAME: 'Debug',
+            CHILDREN: [
+              [title: "Child Page 1 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 1</h2>", label: "automation"],
+              [title: "Child Page 2 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 2</h2>", label: "automation"],
+              [title: "Child Page 3 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 3</h2>", label: "automation"]
+            ],
+            DEBUG: true,
+            FLATTEN: false
+          )
+        )
         println(getJenkinsBuildChanges(
           PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
         ))
