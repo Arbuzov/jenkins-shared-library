@@ -31,8 +31,8 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
         url: deleteURL.toString(),
         httpMode: 'DELETE',
         consoleLogResponseBody: false,
-        contentType: 'APPLICATION_JSON',
         validResponseCodes: "100:399,404",
+        contentType: 'APPLICATION_JSON',
         quiet: true
       )
       String postUrl = tagsUrl.toString()+
@@ -43,9 +43,9 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
       httpRequest(
         url: postUrl,
         httpMode: 'POST',
-        consoleLogResponseBody: true,
+        consoleLogResponseBody: false,
         contentType: 'APPLICATION_JSON',
-        quiet: false
+        quiet: true
       )
     }
   }
