@@ -147,21 +147,11 @@ def call(Map arg = [:]) {
       }
       stage ('Run sonarqube check') {
         agent {
-            docker { image 'sonarsource/sonar-scanner-cli' }
+            docker { image 'registry.nexus.asatnet.net/base/sonar-scanner-cli' }
         }
         steps {
           unstash(name: 'report')
-          script {
-            env.putAt('SONAR_PROJECT_VERSION', readJSON(file: 'package.json').version)
-            if (env.CHANGE_ID) {
-              env.putAt('SONAR_PULLREQUEST_KEY', env.CHANGE_ID)
-              env.putAt('SONAR_PULLREQUEST_BRANCH', env.CHANGE_BRANCH)
-              env.putAt('SONAR_PULLREQUEST_BASE', env.GIT_BRANCH)
-            }
-          }
-          withSonarQubeEnv('SonarQube Server') {
-            sh "sonar-scanner"
-          }
+          launchSonarQube()
         }
       }
       stage ('Create production docker image') {

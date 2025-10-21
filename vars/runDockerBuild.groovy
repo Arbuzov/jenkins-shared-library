@@ -160,7 +160,7 @@ def call(Map arg = [:]) {
       }
       stage ('Run sonarqube check') {
         agent {
-            docker { image 'sonarsource/sonar-scanner-cli' }
+            docker { image 'registry.nexus.asatnet.net/base/sonar-scanner-cli' }
         }
         environment {
           SONAR_DOCKER_FILE_PATTERNS = "*.dockerfile"

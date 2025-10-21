@@ -80,7 +80,7 @@ def call(Map argm) {
             stage('Run SonarScanner') {
                 agent {
                     docker {
-                        image 'sonarsource/sonar-scanner-cli'
+                        image 'registry.nexus.asatnet.net/base/sonar-scanner-cli'
                         // Use the same node and workspace and do not create workspace@1 directory
                         reuseNode true
                     }
