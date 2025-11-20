@@ -165,7 +165,7 @@ def call(Map arg = [:]) {
           label 'farmer-docker-ubuntu'
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
@@ -229,7 +229,7 @@ def call(Map arg = [:]) {
           label 'farmer-docker-ubuntu'
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME.replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME.replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
@@ -285,7 +285,7 @@ def call(Map arg = [:]) {
           }
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
@@ -308,7 +308,7 @@ def call(Map arg = [:]) {
           }
         }
         environment {
-          VERSION = "${env.SONAR_PROJECT_VERSION}-b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
