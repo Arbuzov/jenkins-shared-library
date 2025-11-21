@@ -140,9 +140,6 @@ def call(Map arg = [:]) {
               allowEmptyResults: true
             )
           }
-          cleanup {
-            cleanWs()
-          }
         }
       }
       stage ('Run sonarqube check') {
