@@ -734,6 +734,15 @@ pipeline {
             env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
           }
         }
+
+        script {
+          def mr = gitlabFindMR()
+          if (mr != null) {
+            echo "gitlabFindMR(): MR found, IID: ${mr.iid}, title: ${mr.title}"
+          } else {
+            echo "gitlabFindMR(): MR not found"
+          }
+        }
         // Find a related branch for hardcoded inputs - END
       }
     }
