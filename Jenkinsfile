@@ -745,9 +745,9 @@ pipeline {
         }
 
         script {
-          def jira = guessJiraIssueInfo()
-          if (jira.size() > 0) {
-            echo "guessJiraIssueInfo(): Jira issue found, key(s): ${jira.collect { it.key }.join(', ')}, summary(s): ${jira.collect { it.fields.summary }.join('; ')}"
+          def jiraIssue = guessJiraIssueInfo()
+          if (jiraIssue) {
+            echo "guessJiraIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
           } else {
             echo "guessJiraIssueInfo(): Jira issue not found"
           }

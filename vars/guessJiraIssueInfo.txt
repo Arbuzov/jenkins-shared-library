@@ -1,8 +1,19 @@
-# Guess and return Jira issues for the current build
+# guessJiraIssueInfo
 
-Try to guess (from MR title) and return the Jira issues for the current build.
+Guess and return Jira issue for the current build.
 
-The function does it by finding the MR number, extracting all Jira issue keys from the MR title and then using
-the Jira API to get the issue details for each key.
+Try to guess (from MR title) and return the Jira issue for the current build.
 
-@return List of Jira issue objects (empty list if no issues found).
+The function does it by finding the MR number, extracting Jira issue key from the MR title and then using
+the Jira API to get the issue details.
+
+
+## Usage
+
+```groovy
+guessJiraIssueInfo()
+```
+
+## Returns
+
+@return Jira issue object (null if no issue found).
