@@ -743,6 +743,15 @@ pipeline {
             echo "gitlabFindMR(): MR not found"
           }
         }
+
+        script {
+          def jira = guessJiraIssueInfo()
+          if (jira.size() > 0) {
+            echo "guessJiraIssueInfo(): Jira issue found, key(s): ${jira.collect { it.key }.join(', ')}, summary(s): ${jira.collect { it.fields.summary }.join('; ')}"
+          } else {
+            echo "guessJiraIssueInfo(): Jira issue not found"
+          }
+        }
         // Find a related branch for hardcoded inputs - END
       }
     }

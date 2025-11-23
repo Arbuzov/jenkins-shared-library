@@ -1,0 +1,8 @@
+# Guess and return Jira issues for the current build
+
+Try to guess (from MR title) and return the Jira issues for the current build.
+
+The function does it by finding the MR number, extracting all Jira issue keys from the MR title and then using
+the Jira API to get the issue details for each key.
+
+@return List of Jira issue objects (empty list if no issues found).

@@ -13,7 +13,7 @@ def gitFindMRbyMergeCommitSha(String gitlabBaseUrl, String projectId, String pri
   if (!env.GITLAB_AFTER) {
     return null
   }
-
+  
   def url = "${gitlabBaseUrl}/projects/${projectId}/repository/commits/${env.GITLAB_AFTER}/merge_requests?state=merged"
   try{
     def response = null;
@@ -21,6 +21,8 @@ def gitFindMRbyMergeCommitSha(String gitlabBaseUrl, String projectId, String pri
       url: url,
       customHeaders: [[name: 'PRIVATE-TOKEN', value: privateToken]],
       acceptType: 'APPLICATION_JSON',
+      quiet: true,
+      consoleLogResponseBody: false,
     )
     def mrList = readJSON text: response?.getContent() ?: '[]'
     if (mrList && mrList.size() > 0) {
@@ -48,6 +50,8 @@ def gitFindMRbyChangeID(String gitlabBaseUrl, String projectId, String privateTo
       url: url,
       customHeaders: [[name: 'PRIVATE-TOKEN', value: privateToken]],
       acceptType: 'APPLICATION_JSON',
+      quiet: true,
+      consoleLogResponseBody: false,
     )
     def mr = readJSON text: response?.getContent()
     if (mr) {
@@ -72,6 +76,8 @@ def gitlabBaseUrl() {
 }
 
 def call (Map args = [:]) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+
   String gitlabBaseUrl = args.gitlabBaseUrl ?: gitlabBaseUrl()
   if (gitlabBaseUrl == null) {
     return null
@@ -82,10 +88,14 @@ def call (Map args = [:]) {
   if (projectId == null) {
     return null
   }
+  // Sanitize projectId to be a number
+  if (!projectId.matches(/^\d+$/)) {
+    return null
+  }
 
-  def gitlabCredentials = args.gitlabCredentials ?: 'gitlab-text-secret'
+  def gitlabCredentialsId = args.gitlabCredentialsId ?: 'gitlab-text-secret'
 
-  withCredentials([string(credentialsId: gitlabCredentials, variable: 'privateToken')]) {
+  withCredentials([string(credentialsId: gitlabCredentialsId, variable: 'privateToken')]) {
     if (env.CHANGE_ID) {
       return gitFindMRbyChangeID(gitlabBaseUrl, projectId, privateToken)
     } else {
