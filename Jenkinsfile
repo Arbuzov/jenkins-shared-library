@@ -734,6 +734,7 @@ pipeline {
             env.putAt('GITLAB_OA_SOURCE_BRANCH', env.COPY_OF_SOURCE_BRANCH)
           }
         }
+        // Find a related branch for hardcoded inputs - END
 
         script {
           def mr = gitlabFindMR()
@@ -752,7 +753,6 @@ pipeline {
             echo "guessJiraIssueInfo(): Jira issue not found"
           }
         }
-        // Find a related branch for hardcoded inputs - END
       }
     }
     stage ('Run SonarQube check') {

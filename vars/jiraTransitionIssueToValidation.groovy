@@ -95,7 +95,7 @@ String call(Map arg) {
   // Send a POST request to send the issue to validation
   def issueUrl = "${JiraApiBaseUrl}/issue/${issue.key}/transitions"
   try {
-    def issueResponse = httpRequest(
+    httpRequest(
       url: issueUrl,
       httpMode: 'POST',
       requestBody: groovy.json.JsonOutput.toJson(request),
@@ -105,8 +105,6 @@ String call(Map arg) {
       quiet: true,
       consoleLogResponseBody: false,
     )
-
-    def responseContent = issueResponse.getContent()
     return newAssigneeDisplayName
 
   } catch (Exception e) {

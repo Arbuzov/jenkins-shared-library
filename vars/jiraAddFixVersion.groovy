@@ -8,6 +8,8 @@
  * 
  */
 def call(Map arg) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+
   def fixVersion = arg.fixVersion
   if(!fixVersion) {
     throw new Exception("jiraAddFixVersion: argument 'fixVersion' is required but not provided.")
@@ -16,7 +18,11 @@ def call(Map arg) {
 
   def issue = null
   try {
-    issue = arg.issueKey ? getJiraIssueInfo(issueId: arg.issueKey, credentialsId: arg.credentialsId ?: null) : guessJiraIssueInfo(arg.credentialsId ?: null);
+    issue = arg.issueKey
+      ? getJiraIssueInfo(
+          issueId: arg.issueKey,
+          credentialsId: arg.credentialsId ?: null)
+      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null);
   } catch (Exception e) {
     throw new Exception("jiraAddFixVersion(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }
@@ -43,7 +49,7 @@ def call(Map arg) {
     ]
   ]
   try {
-    def issueResponse = httpRequest(
+    httpRequest(
       url: "https://jira.spacebridge.com/rest/api/2/issue/${issue.key}",
       httpMode: 'PUT',
       requestBody: groovy.json.JsonOutput.toJson(request),
@@ -52,7 +58,7 @@ def call(Map arg) {
       acceptType: 'APPLICATION_JSON',
       authentication: arg.credentialsId ?: 'jira-username-password',
     )
-    return true;
+    return true
 
   } catch (Exception e) {
     throw new Exception("jiraAddFixVersion(): Jira API call failed: ${e?.message ?: 'unknown error'}")
