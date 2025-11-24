@@ -1,7 +1,3 @@
-def addFixVersionToIssue(String issueKey, String jiraVersion) {
-
-}
-
 /**
  * Add fix version to Jira issue
  * Example:
@@ -17,9 +13,15 @@ def call(Map arg) {
     throw new Exception("jiraAddFixVersion: argument 'fixVersion' is required but not provided.")
   }
 
-  def issue = arg.issueKey ? getJiraIssueInfo(arg.issueKey) : guessJiraIssueInfo();
+
+  def issue = null
+  try {
+    issue = arg.issueKey ? getJiraIssueInfo(issueId: arg.issueKey, credentialsId: arg.credentialsId ?: null) : guessJiraIssueInfo(arg.credentialsId ?: null);
+  } catch (Exception e) {
+    throw new Exception("jiraAddFixVersion(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
+  }
   if(!issue) {
-    throw new Exception("jiraAddFixVersion(): No issue found")
+    throw new Exception("jiraAddFixVersion(): Issue not found")
   }
 
   // Check if fix version already exists in the issue

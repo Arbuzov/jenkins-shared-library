@@ -27,17 +27,19 @@ def jiraKeyFromTitle(String title) {
  *
  * @return Jira issue object (null if no issue found).
  */
-def call() {
+def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   
   def mr = gitlabFindMR()
   if (mr) {
     def key = jiraKeyFromTitle(mr.title)
 
-    try {
-      return getJiraIssueInfo(issueId: key)
-    } catch (Exception e) {
-      echo "Failed to get Jira issue info for Key=${key}: ${e?.message ?: 'unknown error'}"
+    if(key) {
+      try {
+        return getJiraIssueInfo(issueId: key, credentialsId: arg.credentialsId ?: 'jira-username-password')
+      } catch (Exception e) {
+        echo "Failed to get Jira issue info for Key=${key}: ${e?.message ?: 'unknown error'}"
+      }
     }
   }
   return null
