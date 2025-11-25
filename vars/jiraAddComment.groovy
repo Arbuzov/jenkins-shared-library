@@ -1,13 +1,20 @@
-def call(Map arg) {
+def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   
   def comment = arg.comment
   if(!comment) {
     throw new Exception("jiraAddComment(): argument 'comment' is required but not provided.")
   }
-  def issueKey = arg.issueKey
+  def issueKey = null
+  try {
+    issueKey = arg.issueKey
+      ? arg.issueKey
+      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null).key;
+  } catch (Exception e) {
+    throw new Exception("jiraAddComment(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
+  }
   if(!issueKey) {
-    throw new Exception("jiraAddComment(): argument 'issueKey' is required but not provided.")
+    throw new Exception("jiraAddComment(): Must provide issueKey or call within a MR context")
   }
 
   def body = [

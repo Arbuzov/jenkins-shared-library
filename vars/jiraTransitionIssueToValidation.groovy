@@ -25,7 +25,9 @@ def findInValidationTransition(String issueKey, credentialsId = 'jira-username-p
  * @param credentialsId Jira credentials ID
  * @return New assignee display name
  */
-String call(Map arg) {
+String call(Map arg = [:]) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+
   def issue = null
   try {
     issue = arg.issueKey
@@ -38,7 +40,7 @@ String call(Map arg) {
     throw new Exception("jiraTransitionIssueToValidation(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }
   if(!issue) {
-    throw new Exception("jiraTransitionIssueToValidation(): Issue not found")
+    throw new Exception("jiraTransitionIssueToValidation(): Must provide issueKey or call within a MR context")
   }
 
   def inValidationTransition = findInValidationTransition(issue.key, arg.credentialsId ?: 'jira-username-password')

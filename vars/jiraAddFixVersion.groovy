@@ -7,7 +7,7 @@
  * @param fixVersion Existing version in the project, such as 1.1.1-b456
  * 
  */
-def call(Map arg) {
+def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
 
   def fixVersion = arg.fixVersion
@@ -27,7 +27,7 @@ def call(Map arg) {
     throw new Exception("jiraAddFixVersion(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }
   if(!issue) {
-    throw new Exception("jiraAddFixVersion(): Issue not found")
+    throw new Exception("jiraAddFixVersion(): Must provide issueKey or call within a MR context")
   }
 
   // Check if fix version already exists in the issue
