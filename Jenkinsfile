@@ -529,6 +529,14 @@ pipeline {
           )
           echo "Created Confluence page by name at: ${urlByName}"
 
+          // Test updating of the page
+          def pageId = getConfluencePageId(url: urlByName)
+          updateConfluencePage(
+            PAGE_ID : pageId,
+            CONTENT : '<h2>Named root test, updated</h2>',
+            DEBUG   : true
+          )
+
           // Missing root (should fail)
           try {
             createConfluencePage(
@@ -679,6 +687,23 @@ pipeline {
 
         }
     
+        script {
+          echo "Testing getConfluencePageContent()..."
+          def pageId = '404193285'
+          def page = getConfluencePageContent(PAGE_ID: pageId)
+          // trim to 128 symbols
+          def content = page.content.substring(0, 128) + '...'
+          def title = page.title
+          echo "Page ID ${pageId}, title: ${title}, content: ${content}"
+        }
+
+        script {
+          echo "Testing getConfluencePageChildren()..."
+          def pageId = '404193285'
+          def children = getConfluencePageChildren(PAGE_ID: pageId)
+          def childrenStr = children.collect { it.toString() }.join(', ')
+          echo "Page ID ${pageId}, children: ${childrenStr}"
+        }
       }
 
       post {
