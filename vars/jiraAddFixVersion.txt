@@ -1,0 +1,21 @@
+# jiraAddFixVersion
+
+Add fix version to Jira issue.
+
+## Usage
+
+```groovy
+jiraAddFixVersion(fixVersion: '1.1.1-b456')
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `fixVersion` | required | Existing version in the project, such as 1.1.1-b456 |
+| `issueKey` | optional | Jira issue key (if missing - try to guess the issue from the current MR) |
+| `credentialsId` | optional | Jira credentials ID (if missing - use default |
+
+## Returns
+
+@return true if fix version was added successfully, false otherwise

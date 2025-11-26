@@ -760,6 +760,24 @@ pipeline {
           }
         }
         // Find a related branch for hardcoded inputs - END
+
+        script {
+          def mr = gitlabFindMR()
+          if (mr != null) {
+            echo "gitlabFindMR(): MR found, IID: ${mr.iid}, title: ${mr.title}"
+          } else {
+            echo "gitlabFindMR(): MR not found"
+          }
+        }
+
+        script {
+          def jiraIssue = guessJiraIssueInfo()
+          if (jiraIssue) {
+            echo "guessJiraIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
+          } else {
+            echo "guessJiraIssueInfo(): Jira issue not found"
+          }
+        }
       }
     }
     stage ('Run SonarQube check') {

@@ -1,0 +1,22 @@
+# gitlabFindMR
+
+Finds a merge request by merge commit SHA or change ID/MR IID.
+
+## Usage
+
+```groovy
+def mr=gitlabFindMR()
+if (mr != null) {
+  echo "MR found, IID: ${mr.iid}, title: ${mr.title}"
+} else {
+  echo "MR not found"
+}
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map. If missing, guessed from environment variables.
+
+## Returns
+
+Map - The merge request object if found, otherwise null
