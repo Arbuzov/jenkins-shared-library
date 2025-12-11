@@ -119,8 +119,11 @@ pipeline {
 
         print (getBuildCause().findAll{it.equals("io.jenkins.plugins.gitlabbranchsource.GitLabWebHookCause")})
 
+        // This call to "requireCleanGitWorkTree()" is at this point since 2022-03-11.
         requireCleanGitWorkTree()
-        // doCleanGitWorkTree()
+        // Run "doCleanGitWorkTree()" after "requireCleanGitWorkTree()" to make sure
+        // that "doCleanGitWorkTree()" runs correctly.
+        doCleanGitWorkTree()
         requireNoGeneratedGlobalFiles()
 
         echo "Commit ID that triggered the build: '" + getGitBuildTriggerCommitID() + "'"
