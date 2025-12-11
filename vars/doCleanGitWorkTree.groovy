@@ -1,12 +1,4 @@
 // doCleanGitWorkTree(): Clean Git repository work tree (including submodules)
-//
-// Usage: Call this function at places that are not immediately following a
-// Git checkout, for example after a successful build of a stage. This way,
-// this function will remove leftover files or directories and reset the
-// modified files.
-//
-// Note: If you are immediately following a Git checkout, call the function
-// requireCleanGitWorkTree() instead.
 
 def call() {
     reportUsage(getClass().protectionDomain.codeSource.location.path)

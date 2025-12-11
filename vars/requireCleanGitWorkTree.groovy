@@ -1,12 +1,4 @@
 // requireCleanGitWorkTree(): Require that Git repository work tree is clean (including submodules)
-//
-// Usage: Call this function at a place that is immediately after a Git
-// checkout. This way, this function will require that there are no
-// leftover files or directories. If there are leftover files or
-// directories or modified files, this function will abort with an error.
-//
-// Note: If you are not immediately following a Git checkout, call the
-// function doCleanGitWorkTree() instead.
 
 def call() {
     reportUsage(getClass().protectionDomain.codeSource.location.path)
