@@ -1,4 +1,4 @@
-// requireCleanGitWorkTree(): Require that Git repository work tree is clean
+// requireCleanGitWorkTree(): Require that Git repository work tree is clean (including submodules)
 //
 // Usage: Call this function at a place that is immediately after a Git
 // checkout. This way, this function will require that there are no
@@ -9,47 +9,88 @@
 // function doCleanGitWorkTree() instead.
 
 def call() {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
-	sh '''#!/bin/sh
-# Require that Git repository work tree is clean
+    reportUsage(getClass().protectionDomain.codeSource.location.path)
 
-# shellcheck shell=sh
+    sh label: 'Ensuring that Git repository work tree is clean',
+        script: '''#!/bin/sh
+        # Require that Git repository work tree is clean (including submodules)
 
-# set -x
-set -e
+        set -f
 
-require_git_clean_work_tree()
-{
-	if ! git version >/dev/null ; then
-		# NOTE: git binary must be present in container or on the host
-		echo "ERROR: git program is not working (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
-		exit 1
-	fi
-	if { git rev-parse --is-inside-work-tree >/dev/null 2>&1 ; } ; then
-		echo "debug: Checking that work tree is clean after SCM checkout (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
-		## HACK: Update filesystem cache with git status --porcelain, so that git reset --hard touches only changed files
-		count_modified="$( git status --porcelain 2>/dev/null | wc -l )"
-		count_unclean="$( git clean -n -f -d -x | wc -l )"
+        require_git_clean_work_tree()
+        {
+            _host_name="$(hostname || echo "UNKNOWN_HOSTNAME")"
+            _stage_name="${STAGE_NAME:-UNKNOWN_STAGE}"
+            _hint_str="top work tree ${PWD}, stage: ${_stage_name}, hostname ${_host_name}"
 
-		if [ "${count_unclean}" = "0" ] && [ "${count_modified}" = "0" ] ; then
-			true
-			echo "debug: Work tree is clean (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
-			return 0
-		else
-			git status --porcelain
-			git clean -n -f -d -x
-			echo "ERROR: Work tree is NOT clean after SCM checkout (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
-			return 1
-		fi
-	else
-		echo "WARNING: Working directory is NOT inside the Git work tree (work tree ${PWD} on $( hostname ), stage: ${STAGE_NAME})"    >&2
-		return 0
-	fi
-	return 0
-}
+            if ! git version >/dev/null; then
+                # NOTE: git binary must be present in container or on the host
+                echo "ERROR: git program is not working (${_hint_str})" >&2
+                return 1
+            fi
+            if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                echo "ERROR: Working directory is NOT inside the Git work tree (${_hint_str})" >&2
+                return 1
+            fi
+            echo "    debug: Ensuring that Git repository work tree is clean... (${_hint_str})" >&2
 
-require_git_clean_work_tree
+            count_unclean_files
+            if [ "${count_modified}" -eq 0 ] && [ "${count_unclean}" -eq 0 ]; then
+                echo "    debug: Git repository work tree is clean (${_hint_str})" >&2
+                return 0
+            fi
 
-'''
-// end of shell function
+            echo "    debug: ${count_modified} modified files in the work tree" >&2
+            echo "" >&2
+            git status --porcelain >&2
+            git submodule foreach --recursive "git status --porcelain" >&2
+            echo "" >&2
+
+            echo "    debug: ${count_unclean} generated files in the work tree" >&2
+            echo "" >&2
+            git clean -n -f -d -x >&2
+            git submodule foreach --recursive "git clean -n -f -d -x" >&2
+            echo "" >&2
+
+            echo "ERROR: Git repository work tree is NOT clean (${_hint_str})" >&2
+
+            return 1
+        }
+
+        count_unclean_files()
+        {
+            count_modified=0
+            count_unclean=0
+            count_submodules=0
+            count_modified_sub=0
+            count_unclean_sub=0
+
+            # NOTE: the commands "git status --porcelain",
+            # update Git filesystem cache. This makes later "git reset --hard"
+            # commands only restore the files that were actually modified.
+
+            count_modified="$(git status --porcelain 2>/dev/null | wc -l)"
+            count_submodules="$(git submodule status --recursive 2>/dev/null | wc -l)"
+            count_unclean="$(git clean -n -f -d -x 2>/dev/null | wc -l)"
+
+            if [ "${count_submodules}" -eq 0 ]; then
+                return 0
+            fi
+
+            count_modified_sub="$(git submodule --quiet foreach --recursive \\
+                "git status --porcelain" \\
+                2>/dev/null | wc -l)"
+
+            count_unclean_sub="$(git submodule --quiet foreach --recursive \\
+                "git clean -n -f -d -x" \\
+                2>/dev/null | wc -l)"
+
+            count_modified=$((count_modified + count_modified_sub))
+            count_unclean=$((count_unclean + count_unclean_sub))
+
+            return 0
+        }
+
+        require_git_clean_work_tree
+        '''
 }
