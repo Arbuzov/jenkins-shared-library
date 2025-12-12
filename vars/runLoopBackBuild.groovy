@@ -11,7 +11,9 @@ def getApplicationData() {
 def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   pipeline {
-    agent any
+    agent {
+      label 'farmer-docker-ubuntu'
+    }
     options {
       buildDiscarder(logRotator(daysToKeepStr: '20', artifactDaysToKeepStr: '7'))
       disableConcurrentBuilds()
