@@ -1,0 +1,29 @@
+def call(Map arg = [:]) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  String repository = arg.repository
+  String package = arg.package
+ 
+  def versions = []
+
+  try {
+    def entries = httpRequest(
+      url: "http://deb.repo.asatnet.net/debian/dists/${repository}/main/binary-amd64/Packages",
+      httpMode: 'GET',
+      consoleLogResponseBody: false,
+      quiet: true
+    ).getContent().split("\n\n")
+
+    entries.each { entry ->
+      if (entry.contains("Package: ${package}")) {
+        def versionLine = entry.readLines().find { it.startsWith("Version: ") }
+        if (versionLine) {
+          def version = versionLine.split(":", 2)[1].trim()
+          versions << version
+        }
+      }
+    }
+  } catch (Exception e) {
+    echo "Warning: Could not fetch versions for ${package}: ${e.message}"
+  }
+  return versions.unique().sort()
+}

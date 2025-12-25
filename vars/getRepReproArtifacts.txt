@@ -1,0 +1,25 @@
+# getRepReproArtifacts
+
+Returns a list of available Debian package versions from a `reprepro`-style APT repository.
+
+The step downloads the `Packages` index for the specified repository distribution and extracts all `Version:` values for the requested package. On errors (network, parsing, missing repository, etc.) it prints a warning and returns an empty list.
+
+## Parameters
+
+- `arg` (Map) - Configuration map with the following keys:
+  - `repository` (String) - APT distribution name under `dists/` (for example: `stable`, `testing`, `bookworm`, etc.)
+  - `package` (String) - Debian package name to search for in the `Packages` index
+
+## Returns
+
+List&lt;String&gt; - Unique package versions, sorted ascending. Returns `[]` if nothing is found or the index could not be fetched.
+
+## Example
+
+```groovy
+def versions = getRepReproArtifacts(
+  repository: 'stable',
+  package: 'my-package'
+)
+echo "Available versions: ${versions.join(', ')}" `
+```
