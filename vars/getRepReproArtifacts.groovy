@@ -2,12 +2,13 @@ def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   String repository = arg.repository
   String package = arg.package
+  String nexusURL = arg.nexusURL ?: 'http://nexus.example.com/repository/debian/'
  
   def versions = []
 
   try {
     def entries = httpRequest(
-      url: "http://deb.repo.asatnet.net/debian/dists/${repository}/main/binary-amd64/Packages",
+      url: "${nexusURL}/dists/${repository}/main/binary-amd64/Packages",
       httpMode: 'GET',
       consoleLogResponseBody: false,
       quiet: true

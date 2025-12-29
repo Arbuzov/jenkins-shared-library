@@ -1,0 +1,42 @@
+# runIDUDockerBuild
+
+Declarative pipeline for building and publishing a Docker image for an IDU project.
+
+The pipeline:
+
+- Computes image naming/tagging via `getIDUDockerImageInfo()`
+- Runs SonarScanner
+- Builds and pushes the image (and optional extra tags)
+- Optionally comments on merge requests with image usage instructions
+- Optionally runs `syft` and/or `grype` and archives reports
+
+## Usage
+
+```groovy
+runIDUDockerBuild(
+  namespace: 'my-ns',
+  packageName: 'my-project',
+  baseVersion: '1.2.3',
+  branchForBV: 'master',
+  runSyft: true,
+  runGrype: true
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `namespace` | required | Top-level namespace (must be lowercase) |
+| `packageName` | required | Package name (must be lowercase) |
+| `baseVersion` | optional | Forwarded as `--build-arg "BASE_VERSION=..."` when building |
+| `branchForBV` | optional | Branch reference for base-version tag prefix override |
+| `runSyft` | `true` | Run `syft` during “Inspect image” stage |
+| `runGrype` | `true` | Run `grype` during “Inspect image” stage |
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+

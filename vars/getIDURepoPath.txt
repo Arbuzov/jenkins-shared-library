@@ -1,0 +1,27 @@
+# getIDURepoPath
+
+Builds a full Nexus “store” repository path for publishing build artifacts of an IDU project.
+
+This is a convenience wrapper around `getIDURepoTopPath()` and `getIDURepoVersionPath()`.
+
+## Usage
+
+```groovy
+def repoPath = getIDURepoPath(project: 'example_project')
+echo "Publish to: ${repoPath}/"
+```
+
+## Parameters
+
+All parameters are passed through a Map and forwarded to `getIDURepoTopPath()` / `getIDURepoVersionPath()`:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `namespace` | `'idu'` | Namespace segment under the repository |
+| `project` | `'UNKNOWN_PROJECT'` | Project name segment under the repository |
+| `use_commit_id` | `true` | Whether to include commit ID in the version path |
+
+## Returns
+
+String - Full repository path URL.
+

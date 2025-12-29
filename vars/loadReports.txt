@@ -1,0 +1,25 @@
+# loadReports
+
+Reads files matching a glob mask and concatenates their contents into a single string.
+
+For each file, the output contains the file name, then a newline, then the file content with line breaks escaped as `\\n`.
+
+## Usage
+
+```groovy
+def txt = loadReports(mask: '**/*.grype.txt')
+echo txt
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `mask` | required | Glob pattern for `findFiles(glob: ...)` |
+
+## Returns
+
+String - Concatenated report contents.
+

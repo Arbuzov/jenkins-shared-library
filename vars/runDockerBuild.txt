@@ -1,0 +1,48 @@
+# runDockerBuild
+
+Declarative pipeline for building, scanning and publishing a Docker image to the internal registry.
+
+The pipeline supports:
+
+- hadolint and SonarQube checks
+- building and pushing snapshot images for change requests / non-master branches
+- building and pushing production images for `master` (and optionally for multi-branch mode)
+- `syft`/`grype` image inspection with archived reports
+- optional Jira version creation and Confluence release page generation
+- optional cleanup of Jira/Confluence metadata when triggered by image deletion webhook (`GenericTrigger`)
+
+## Usage
+
+```groovy
+runDockerBuild(
+  PACKAGE_NAME: 'my-service',
+  BASE_VERSION: '1.2.3',
+  NAMESPACE: 'spacebridge',
+  MULTI_BRANCH: false,
+  ENFORCE_HADOLINT: false,
+  JIRA_PROJECT: 'PROJ',
+  CONFLUENCE_SPACE: 'DOC',
+  ROOT_PAGE: '123456'
+)
+```
+
+## Parameters
+
+Parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `PACKAGE_NAME` | required | Docker image name (without namespace) |
+| `NAMESPACE` | `'spacebridge'` | Docker namespace for the image |
+| `BASE_VERSION` | `'1.0.0'` | Base version used for tag calculation |
+| `MULTI_BRANCH` | `false` | Treat non-master branches as “production” publishing branches |
+| `ENFORCE_HADOLINT` | `false` | If `true`, includes hadolint report in Sonar step |
+| `KEY_COMPONENTS` | `[:]` | Map of key components used to enrich Confluence release notes |
+| `JIRA_PROJECT` | optional | Jira project key used for version cleanup/creation stages |
+| `CONFLUENCE_SPACE` | optional | Confluence space key for release notes page |
+| `ROOT_PAGE` | optional | Confluence parent page ID for release notes page |
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+

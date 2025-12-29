@@ -1,0 +1,20 @@
+# notifyTeams
+
+Placeholder step for Microsoft Teams notifications.
+
+The current implementation only records usage (`reportUsage(...)`) and does not send any messages.
+
+## Usage
+
+```groovy
+notifyTeams([:])
+```
+
+## Parameters
+
+`arg` (Map) - currently unused.
+
+## Returns
+
+No return value.
+

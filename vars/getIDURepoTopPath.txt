@@ -1,0 +1,26 @@
+# getIDURepoTopPath
+
+Returns the top (non build-specific) Nexus repository path URL for an IDU project.
+
+For merge requests (`CHANGE_ID` is set), it uses `store-DEV`; otherwise it uses `store`.
+
+## Usage
+
+```groovy
+def top = getIDURepoTopPath(namespace: 'idu', project: 'example_project')
+echo top
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `namespace` | `'idu'` | Namespace segment under the repository |
+| `project` | `'UNKNOWN_PROJECT'` | Project name segment under the repository |
+
+## Returns
+
+String - Base repository URL (for example, `http://nexus.asatnet.net/repository/store/idu/example_project`).
+

@@ -1,0 +1,33 @@
+# runApplicationMetaPluginBuild
+
+Declarative pipeline for building and publishing an *application metaplugin* bundle.
+
+The pipeline:
+
+- Reads `Manifest` (YAML) to determine included plugins and configuration
+- Downloads referenced application-plugin archives from Nexus
+- Builds an offline bundle (images are collected and saved)
+- Runs `syft`/`grype` image inspection and archives reports
+- Publishes snapshot/release artifacts to Nexus
+- Creates a Confluence release page with attached reports (based on `Manifest` values)
+
+## Usage
+
+```groovy
+runApplicationMetaPluginBuild(
+  JIRA_PROJECT: 'PROJ'
+)
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `JIRA_PROJECT` | optional | Enables the “Clean the old version info” stage when triggered by `GenericCause` (stage currently only logs) |
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+

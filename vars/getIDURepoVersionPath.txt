@@ -1,0 +1,27 @@
+# getIDURepoVersionPath
+
+Returns the build-specific subdirectory path for publishing artifacts to the IDU Nexus “store” repository.
+
+The generated path depends on branch/MR context, current date, build number, and optionally the triggering commit ID.
+
+## Usage
+
+```groovy
+def subDir = getIDURepoVersionPath(project: 'example_project', use_commit_id: true)
+echo subDir
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `namespace` | `'idu'` | Namespace value (accepted for compatibility; not used in subdir computation) |
+| `project` | `'UNKNOWN_PROJECT'` | Project value (accepted for compatibility; not used in subdir computation) |
+| `use_commit_id` | `true` | Include `getGitBuildTriggerCommitID().take(12)` in the path |
+
+## Returns
+
+String - Subdirectory path (for example: `yyyy/MM/MR-123/DATE-b45-abcdef123456` or `branch/yyyy/MM/b45`).
+

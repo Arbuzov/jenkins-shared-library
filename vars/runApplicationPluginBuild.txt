@@ -1,0 +1,32 @@
+# runApplicationPluginBuild
+
+Declarative pipeline for building and publishing an *application plugin* archive.
+
+The pipeline uses `manifest.json` for artifact coordinates and can optionally include Docker images referenced by `docker-compose.yml` into the published archive (offline mode). It also runs `syft`/`grype` inspection for images and can create Jira/Confluence release artifacts when configured.
+
+## Usage
+
+```groovy
+runApplicationPluginBuild(
+  INCLUDE_IMAGES_DEFAULT: false,
+  JIRA_PROJECT: 'PROJ',
+  CONFLUENCE_SPACE: 'DOC',
+  ROOT_PAGE: '123456'
+)
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `INCLUDE_IMAGES_DEFAULT` | `false` | Default value for the `INCLUDE_IMAGES` build parameter |
+| `JIRA_PROJECT` | optional | Enables cleanup/Jira-version related stages (where guarded by `when`) |
+| `CONFLUENCE_SPACE` | optional | Confluence space key for release notes page |
+| `ROOT_PAGE` | optional | Confluence parent page ID for release notes page |
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+

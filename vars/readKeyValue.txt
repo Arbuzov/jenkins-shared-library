@@ -1,0 +1,25 @@
+# readKeyValue
+
+Reads a simple `key=value` text file and returns a map of parsed entries.
+
+Lines without `=` are ignored. Whitespace around keys and values is trimmed.
+
+## Usage
+
+```groovy
+def kv = readKeyValue(file: '.env')
+echo kv['VERSION']
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `file` | required | Path to the input file |
+
+## Returns
+
+Map&lt;String, String&gt; - Parsed key/value pairs.
+

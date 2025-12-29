@@ -1,0 +1,30 @@
+# runPIPtoDebBuild
+
+Declarative pipeline for building Debian packages from a Python (pip) project for multiple Debian distributions.
+
+The pipeline uses a matrix build and a distribution mapping (`stretch`, `buster`, `bullseye`, `bookworm`) with corresponding base Docker images.
+
+## Usage
+
+```groovy
+runPIPtoDebBuild(
+  PACKAGE_NAME: 'my-python-package',
+  DISTS: ['bullseye', 'bookworm'],
+  VERSION: '1.2.3'
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `PACKAGE_NAME` | required | Name of the Python/Debian package to build |
+| `DISTS` | `['stretch','buster','bullseye','bookworm']` | Debian distributions to build for |
+| `VERSION` | `''` | Optional version override |
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+

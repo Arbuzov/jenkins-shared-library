@@ -1,0 +1,44 @@
+# getIDUDockerImageInfo
+
+Computes Docker registry/image information for the current Jenkins build.
+
+Used by `runIDUDockerBuild()` to determine registry URL/credentials, image name, tag, extra tags, and previous tags to pull for cache warming.
+
+## Usage
+
+```groovy
+def iminfo = getIDUDockerImageInfo(
+  namespace: 'my-ns',
+  packageName: 'my-project',
+  baseVersion: '1.2.3',
+  branchForBV: 'master'
+)
+echo "${iminfo.registryHost}/${iminfo.imageID}:${iminfo.tag}"
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `namespace` | required | Top-level namespace (must be lowercase) |
+| `packageName` | required | Package name (must be lowercase) |
+| `baseVersion` | optional | Base image version used for tag prefix override and forwarded as `BASE_VERSION` build arg by callers |
+| `branchForBV` | optional | Branch name that “owns” `baseVersion`; if current target/source matches, tag prefix uses `baseVersion` |
+| `_envP` | `env` | альтернативный объект окружения (для тестов/обходных сценариев) |
+| `_dbgComment` | optional | Debug field copied to the resulting map |
+
+## Returns
+
+Map - Image info with keys:
+
+- `registryHost` - registry host (and port if applicable)
+- `registryUrl` - registry URL used with `docker.withRegistry`
+- `credentialsId` - Jenkins credentials ID for registry access
+- `packageName` - the package name passed in
+- `imageID` - image path (without registry host), e.g. `my-ns/2025/12/mr-123/my-project` or `my-ns/my-project`
+- `tag` - build tag, e.g. `MR-123-b45`
+- `extraTags` - List of additional tags to push (for example, `latest` on primary long-term branch)
+- `prevTags` - List of previous tags to pull for cache warming
+

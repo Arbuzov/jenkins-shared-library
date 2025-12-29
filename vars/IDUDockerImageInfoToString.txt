@@ -1,0 +1,21 @@
+# IDUDockerImageInfoToString
+
+Converts the image info map (returned by `getIDUDockerImageInfo()`) into a human-readable multi-line string.
+
+Primarily used for debugging/logging.
+
+## Usage
+
+```groovy
+def iminfo = getIDUDockerImageInfo(namespace: 'my-ns', packageName: 'my-project')
+echo IDUDockerImageInfoToString(iminfo)
+```
+
+## Parameters
+
+- `iminfo` (Map) - Image info map (may be `null`)
+
+## Returns
+
+String - Formatted description of the image info map, or `NONE` if `iminfo` is null/empty.
+

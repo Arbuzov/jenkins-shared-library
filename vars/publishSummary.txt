@@ -1,0 +1,34 @@
+# publishSummary
+
+Publishes custom HTML/text to the Jenkins build summary using the build summary manager.
+
+Supports both positional usage and Map-based parameters.
+
+## Usage
+
+```groovy
+publishSummary('<p>Hello</p>', 'Info', 'info.gif')
+// or:
+publishSummary(summaryText: '<p>Hello</p>', header: 'Info', icon: 'info.gif')
+```
+
+## Parameters
+
+### Positional form
+
+- `summaryText` (String) - Text/HTML to append
+- `header` (String) - Optional header
+- `icon` (String) - Summary icon name
+
+### Map form
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `summaryText` | `''` | Text/HTML to append |
+| `header` | `''` | Optional header |
+| `icon` | `'folder.gif'` | Summary icon name |
+
+## Returns
+
+No return value.
+

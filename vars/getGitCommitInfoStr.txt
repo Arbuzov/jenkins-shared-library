@@ -1,0 +1,25 @@
+# getGitCommitInfoStr
+
+Returns formatted information about a Git commit as a multi-line string.
+
+The output includes commit hash, commit date, subject, and (if present) the commit message body. If `BUILD_NUMBER` is present in the environment, it is included as well.
+
+## Usage
+
+```groovy
+def info = getGitCommitInfoStr()
+publishSummary("<pre>${info}</pre>", "Last commit information")
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `commitId` | `'HEAD'` | Git revision to show (SHA, ref, tag, etc.) |
+
+## Returns
+
+String - Commit information text.
+
