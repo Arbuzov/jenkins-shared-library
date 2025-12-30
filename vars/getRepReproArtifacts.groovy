@@ -1,9 +1,9 @@
 def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   String repository = arg.repository
-  String package = arg.package
+  String packageName = arg.packageName
   String nexusURL = arg.nexusURL ?: 'http://nexus.example.com/repository/debian/'
- 
+  
   def versions = []
 
   try {
@@ -15,7 +15,7 @@ def call(Map arg = [:]) {
     ).getContent().split("\n\n")
 
     entries.each { entry ->
-      if (entry.contains("Package: ${package}")) {
+      if (entry.contains("Package: ${packageName}")) {
         def versionLine = entry.readLines().find { it.startsWith("Version: ") }
         if (versionLine) {
           def version = versionLine.split(":", 2)[1].trim()
@@ -24,7 +24,7 @@ def call(Map arg = [:]) {
       }
     }
   } catch (Exception e) {
-    echo "Warning: Could not fetch versions for ${package}: ${e.message}"
+    echo "Warning: Could not fetch versions for ${packageName}: ${e.message}"
   }
   return versions.unique().sort()
 }

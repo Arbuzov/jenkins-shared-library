@@ -8,7 +8,8 @@ The step downloads the `Packages` index for the specified repository distributio
 
 - `arg` (Map) - Configuration map with the following keys:
   - `repository` (String) - APT distribution name under `dists/` (for example: `stable`, `testing`, `bookworm`, etc.)
-  - `package` (String) - Debian package name to search for in the `Packages` index
+  - `packageName` (String) - Debian package name to search for in the `Packages` index
+  - `nexusURL` (String) - Base repository URL (defaults to `http://nexus.example.com/repository/debian/`)
 
 ## Returns
 
@@ -19,7 +20,7 @@ List&lt;String&gt; - Unique package versions, sorted ascending. Returns `[]` if 
 ```groovy
 def versions = getRepReproArtifacts(
   repository: 'stable',
-  package: 'my-package'
+  packageName: 'my-package'
 )
-echo "Available versions: ${versions.join(', ')}" `
+echo "Available versions: ${versions.join(', ')}"
 ```
