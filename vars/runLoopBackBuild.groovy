@@ -149,8 +149,13 @@ def call(Map arg = [:]) {
             docker { image 'registry.nexus.asatnet.net/base/sonar-scanner-cli' }
         }
         steps {
-          unstash(name: 'report')
-          launchSonarQube()
+          withEnv([
+            "NPM_CONFIG_CACHE=/tmp/.sonar-npm-cache",
+            "npm_config_cache=/tmp/.sonar-npm-cache"
+          ]) {
+            unstash(name: 'report')
+            launchSonarQube()
+          }
         }
       }
       stage ('Create production docker image') {
