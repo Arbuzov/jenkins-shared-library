@@ -151,6 +151,7 @@ def call(Map arg = [:]) {
         steps {
             unstash(name: 'report')
             sh "install -d -m 777 ${WORKSPACE}/.npm/_cacache"
+            sh "install -d -m 777 ${WORKSPACE}/.npm/_logs"
             launchSonarQube()
         }
       }
