@@ -66,6 +66,42 @@
     </table>
   </ac:rich-text-body>
 </ac:structured-macro>
+<% if (binding.hasVariable('dependency') && dependency != null) { %>
+<h2>Dependency</h2>
+<ac:structured-macro ac:name="details" ac:schema-version="1" ac:macro-id="dep-details-macro">
+  <ac:parameter ac:name="id">sb-dependency-info</ac:parameter>
+  <ac:rich-text-body>
+    <table class="relative-table wrapped" style="letter-spacing: 0.0px;width: 80%;">
+      <colgroup>
+        <col style="width: 30%;" />
+        <col style="width: 70%;" />
+      </colgroup>
+      <tbody>
+        <% dependency.each { key, value -> %>
+        <tr>
+          <th>${key}</th>
+          <td>
+            <div class="content-wrapper">
+              <p>${value}</p>
+            </div>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </ac:rich-text-body>
+</ac:structured-macro>
+<% } %>
+<h2>Dependency</h2>
+<ac:structured-macro ac:name="dependency" ac:schema-version="1" ac:macro-id="26c82d28-bffd-478b-bdfe-9664ee12e71e">
+  <ac:parameter ac:name="id">sb-compartibility-matrix</ac:parameter>
+  <ac:rich-text-body>
+    <table class="relative-table wrapped" style="letter-spacing: 0.0px;width: 80%;">
+
+    </table>
+  </ac:rich-text-body>
+</ac:structured-macro>
+<% } %>
 <% if (binding.hasVariable('build') && build != null) { %>
 <h2>Changes</h2>
 <p>
