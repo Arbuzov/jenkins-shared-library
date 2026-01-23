@@ -92,16 +92,6 @@
   </ac:rich-text-body>
 </ac:structured-macro>
 <% } %>
-<h2>Dependency</h2>
-<ac:structured-macro ac:name="dependency" ac:schema-version="1" ac:macro-id="26c82d28-bffd-478b-bdfe-9664ee12e71e">
-  <ac:parameter ac:name="id">sb-compartibility-matrix</ac:parameter>
-  <ac:rich-text-body>
-    <table class="relative-table wrapped" style="letter-spacing: 0.0px;width: 80%;">
-
-    </table>
-  </ac:rich-text-body>
-</ac:structured-macro>
-<% } %>
 <% if (binding.hasVariable('build') && build != null) { %>
 <h2>Changes</h2>
 <p>
