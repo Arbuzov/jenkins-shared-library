@@ -40,6 +40,7 @@
     * [getIDURepoPath](vars/getIDURepoPath.groovy)
     * [getIDURepoTopPath](vars/getIDURepoTopPath.groovy)
     * [getIDURepoVersionPath](vars/getIDURepoVersionPath.groovy)
+    * [getIDUversions](vars/getIDUversions.groovy) - fetch SIDU `.sit` artifacts from Nexus as `version -> path` map ([docs](vars/getIDUversions.txt))
     * [getJenkinsBuildChanges](vars/getJenkinsBuildChanges.groovy) - generate an HTML changelog from a Jenkins build's changeSets (used for release notes)
     * [getJenkinsCommentSignatureStr](vars/getJenkinsCommentSignatureStr.groovy)
     * [getJiraIssueInfo](vars/getJiraIssueInfo.groovy)
