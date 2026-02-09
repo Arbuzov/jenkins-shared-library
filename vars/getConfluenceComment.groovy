@@ -3,14 +3,15 @@
  *
  * Example:
  * def body = getConfluenceComment(COMMENT_ID: '1234567890')
- * def raw = getConfluenceComment(COMMENT_ID: '1234567890', raw: true)
+ * def raw = getConfluenceComment(COMMENT_ID: '1234567890', RAW: true)
  *
  * @param CONFLUENCE_API The API URL of the Confluence instance
  * @param CREDENTIALS_ID The credentials ID to use for the API
  * @param COMMENT_ID The ID of the comment to get
- * @param raw Whether to return raw JSON instead of comment body
+ * @param RAW Whether to return raw JSON instead of comment body
+ * @param ALLOW_NOT_FOUND If true, do not fail when comment is not found (404)
  * @param DEBUG Whether to enable debug logging
- * @return Comment body (String) by default, or raw JSON (Map) when raw=true
+ * @return Comment body by default (String or null), raw JSON (Map) when RAW=true, or null when not found and ALLOW_NOT_FOUND=true
  */
 def call(Map arg = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
@@ -19,7 +20,8 @@ def call(Map arg = [:]) {
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   String COMMENT_ID = arg.COMMENT_ID ?: null
   Boolean DEBUG = arg.DEBUG ?: false
-  Boolean RAW = (arg.raw instanceof Boolean) ? arg.raw : "${arg.raw ?: 'false'}".toBoolean()
+  Boolean RAW = (arg.RAW instanceof Boolean) ? arg.RAW : "${arg.RAW ?: arg.raw ?: 'false'}".toBoolean()
+  Boolean ALLOW_NOT_FOUND = (arg.ALLOW_NOT_FOUND instanceof Boolean) ? arg.ALLOW_NOT_FOUND : "${arg.ALLOW_NOT_FOUND ?: arg.allowNotFound ?: 'false'}".toBoolean()
 
   if (!COMMENT_ID) {
     error('You must supply COMMENT_ID')
@@ -34,6 +36,7 @@ def call(Map arg = [:]) {
       httpMode: 'GET',
       authentication: CREDENTIALS_ID,
       acceptType: 'APPLICATION_JSON',
+      validResponseCodes: ALLOW_NOT_FOUND ? '100:404' : '100:399',
       consoleLogResponseBody: DEBUG,
       quiet: !DEBUG
     )
@@ -41,8 +44,16 @@ def call(Map arg = [:]) {
     error("getConfluenceComment(): Failed to get comment with ID '${COMMENT_ID}': ${e.message}")
   }
 
+  if (ALLOW_NOT_FOUND && jsonResponse?.status == 404) {
+    if (DEBUG) echo "getConfluenceComment(): Comment not found for ID: ${COMMENT_ID}"
+    return null
+  }
+
   def json = null
   try {
+    if (!jsonResponse?.content) {
+      return null
+    }
     json = readJSON(text: jsonResponse.content)
   } catch (Exception e) {
     error("getConfluenceComment(): Failed to read JSON for comment with ID '${COMMENT_ID}': ${e.message}")
@@ -52,6 +63,6 @@ def call(Map arg = [:]) {
     return json
   }
 
-  def commentBody = json?.body?.storage?.value ?: ''
+  def commentBody = json?.body?.storage?.value
   return commentBody
 }

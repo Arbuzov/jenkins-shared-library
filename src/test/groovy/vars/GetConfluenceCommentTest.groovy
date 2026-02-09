@@ -9,10 +9,12 @@ class GetConfluenceCommentTest extends BasePipelineTest {
 
     def script
     def lastHttpRequestArgs
+    def httpResponseContent
 
     @Before
     void setUp() {
         super.setUp()
+        httpResponseContent = '{"id":"123","type":"comment","body":{"storage":{"value":"<p>Hello</p>"}}}'
         helper.registerAllowedMethod('reportUsage', [String], { String path -> })
         helper.registerAllowedMethod('echo', [String], { String message -> })
         helper.registerAllowedMethod('error', [String], { String message ->
@@ -23,7 +25,7 @@ class GetConfluenceCommentTest extends BasePipelineTest {
         })
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args
-            return [content: '{"id":"123","type":"comment","body":{"storage":{"value":"<p>Hello</p>"}}}']
+            return [status: 200, content: httpResponseContent]
         })
         script = loadScript('vars/getConfluenceComment.groovy')
     }
@@ -43,6 +45,28 @@ class GetConfluenceCommentTest extends BasePipelineTest {
         assert result.id == '123'
         assert result.type == 'comment'
         assert result.body.storage.value == '<p>Hello</p>'
+    }
+
+    @Test
+    void returnsNullWhenBodyIsNull() {
+        httpResponseContent = '{"id":"123","type":"comment","body":{"storage":{"value":null}}}'
+
+        def result = script.call([COMMENT_ID: '123'])
+
+        assert result == null
+    }
+
+    @Test
+    void returnsNullWhenNotFoundAndAllowNotFoundEnabled() {
+        helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
+            lastHttpRequestArgs = args
+            return [status: 404, content: '']
+        })
+
+        def result = script.call([COMMENT_ID: '404', ALLOW_NOT_FOUND: true])
+
+        assert result == null
+        assert lastHttpRequestArgs.validResponseCodes == '100:404'
     }
 
     @Test
