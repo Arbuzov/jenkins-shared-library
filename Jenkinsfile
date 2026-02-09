@@ -67,6 +67,7 @@ pipeline {
                                                                   use_commit_id: false))
         print(getNetboxTenants())
         echo "==="
+        // print getConfluenceComment(COMMENT_ID: '717062832', DEBUG: true)
         print(lib.com.spacebridge.NetBox.getTenants())
         print(
           createConfluencePageChain(
