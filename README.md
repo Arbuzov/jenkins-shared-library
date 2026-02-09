@@ -61,6 +61,7 @@
     * [isOrganizationProject](vars/isOrganizationProject.groovy)
     * [isOrigin](vars/isOrigin.groovy)
     * [iterateBuilds](vars/iterateBuilds.groovy)
+    * [gitlabSetMrApproval](vars/gitlabSetMrApproval.groovy) - approve/unapprove merge requests in GitLab ([docs](vars/gitlabSetMrApproval.txt))
     * [labelConfluencePage](vars/labelConfluencePage.groovy)
     * [launchSonarQube](vars/launchSonarQube.groovy) - launch SonarQube analysis ([docs](vars/launchSonarQube.txt))
     * [loadSharedLibraryFile](vars/loadSharedLibraryFile.groovy) - write a library resource to disk and set permissions (helper to deploy shared scripts)

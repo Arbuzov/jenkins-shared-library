@@ -69,19 +69,19 @@ pipeline {
         echo "==="
         // print getConfluenceComment(COMMENT_ID: '717062832', DEBUG: true)
         print(lib.com.spacebridge.NetBox.getTenants())
-        print(
-          createConfluencePageChain(
-            SPACE: 'DEVOPS',
-            ROOT_NAME: 'Debug',
-            CHILDREN: [
-              [title: "Child Page 1 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 1</h2>", label: "automation"],
-              [title: "Child Page 2 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 2</h2>", label: "automation"],
-              [title: "Child Page 3 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 3</h2>", label: "automation"]
-            ],
-            DEBUG: true,
-            FLATTEN: false
-          )
-        )
+        // print(
+        //   createConfluencePageChain(
+        //     SPACE: 'DEVOPS',
+        //     ROOT_NAME: 'Debug',
+        //     CHILDREN: [
+        //       [title: "Child Page 1 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 1</h2>", label: "automation"],
+        //       [title: "Child Page 2 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 2</h2>", label: "automation"],
+        //       [title: "Child Page 3 from chain ${env.BUILD_NUMBER}", content: "<h2>Content for Child Page 3</h2>", label: "automation"]
+        //     ],
+        //     DEBUG: true,
+        //     FLATTEN: false
+        //   )
+        // )
         println(getJenkinsBuildChanges(
           PROJECT_ID:'MCD4_Software/MCD4%2FSoftware%2FMCD4_Lite/master', HEADER:'4', BUILD_NUMBER:'25', DEBUG:true
         ))
@@ -729,6 +729,8 @@ pipeline {
             credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
           ])
         )
+        gitlabSetMrApproval(approve: false)
+
         saveEnvVarsForChangeRequest()
         noteToMrGitlab(
           comment: "**This is a test note from Jenkins new notation.**" + "\n\n" + getJenkinsCommentSignatureStr() + "\n\n"
@@ -783,6 +785,11 @@ pipeline {
           }
         }
       }
+      // post {
+      //   success {
+      //     gitlabSetMrApproval()
+      //   }
+      // }
     }
     stage ('Run SonarQube check') {
       agent {
