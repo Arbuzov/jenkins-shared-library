@@ -25,6 +25,7 @@
     * [doCleanWorkspaceBeforeCheckout](vars/doCleanWorkspaceBeforeCheckout.groovy)
     * [doCleanWorkspaceBeforeStage](vars/doCleanWorkspaceBeforeStage.groovy)
     * [downloadList](vars/downloadList.groovy)
+    * [downloadConfluenceAttachments](vars/downloadConfluenceAttachments.groovy) - download all or selected Confluence attachments to a local directory ([docs](vars/downloadConfluenceAttachments.txt))
     * [dslMethodExists](vars/dslMethodExists.groovy)
     * [findSBCVersion](vars/findSBCVersion.groovy)
     * [getArtifactsURLsByBuild](vars/getArtifactsURLsByBuild.groovy)
