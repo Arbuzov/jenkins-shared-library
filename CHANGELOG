@@ -1,1 +1,16 @@
-I think devops needs some assistance here.
+# Changelog
+
+## MR !337
+
+### Added
+- New shared-library step `downloadConfluenceAttachments` in `vars/downloadConfluenceAttachments.groovy`.
+  - Supports download by `PAGE_ID` or by `PAGE_NAME` + `SPACE` resolution.
+  - Supports selective attachment download and rename via `ATTACHMENTS` (`String`, `List`, `Map`).
+  - Adds `ALLOW_MISSING`, `OVERWRITE`, and `DEBUG` behavior controls.
+  - Returns structured result map with `downloaded`, `skipped`, and `missing` collections.
+- Step documentation for `downloadConfluenceAttachments` in `vars/downloadConfluenceAttachments.txt`.
+- Unit tests for attachment download behavior in `src/test/groovy/vars/DownloadConfluenceAttachmentsTest.groovy`.
+- New contributor guide in `CONTRIBUTING.md` with project patterns for `vars/`, docs, and test requirements.
+
+### Changed
+- Improved contribution standards by documenting repository conventions, validation approach, and Jenkins Pipeline Unit testing expectations.

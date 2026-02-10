@@ -785,11 +785,11 @@ pipeline {
           }
         }
       }
-      // post {
-      //   success {
-      //     gitlabSetMrApproval()
-      //   }
-      // }
+      post {
+        success {
+          gitlabSetMrApproval()
+        }
+      }
     }
     stage ('Run SonarQube check') {
       agent {
