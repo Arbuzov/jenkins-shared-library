@@ -252,13 +252,14 @@ pipeline {
             GIT_URL = env.GIT_URL;
           }
         }
-        tagToGitlab(GIT_URL, "rolling", env.GIT_COMMIT, "rolling tag", "deprecated", false);
+        sh 'env'
+        tagToGitlab(GIT_URL, "rolling", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT, "rolling tag", "deprecated", false);
         withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
-          tagToGitlab(GIT_URL, "1", env.GIT_COMMIT);
+          tagToGitlab(GIT_URL, "1", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT);
           tagToGitlab(
             GIT_URL,
             "${BUILD_NUMBER}",
-            env.GIT_COMMIT,
+            env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT,
             "This is a test tag from build ${BUILD_NUMBER}",
             "## Release ${BUILD_NUMBER}\n\n__Build reference:__ ${BUILD_URL}\n\n__Artifactory:__ ${ARTIFACTORY_UPLOADS[0]}"
           );

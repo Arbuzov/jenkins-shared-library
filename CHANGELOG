@@ -9,6 +9,15 @@
   - Validates required inputs (`PAGE_ID`, `COMMENT`) and returns actionable errors.
 - Step documentation for `addConfluenceComment` in `vars/addConfluenceComment.txt`.
 - Unit tests for comment creation behavior in `src/test/groovy/vars/AddConfluenceCommentTest.groovy`.
+- Unit tests for GitLab tag/release behavior in `src/test/groovy/vars/TagToGitlabTest.groovy`.
+
+### Fixed
+- Fixed `tagToGitlab` GitLab API flow in `vars/tagToGitlab.groovy` to prevent `400 Bad Request` when recreating tags with release notes.
+  - Switched from query-string `private_token` to `PRIVATE-TOKEN` request header.
+  - Added safe fallback: if `POST /repository/tags` with `release_description` returns `400`, retry tag creation without `release_description`.
+  - Removed release deletion/recreation calls that could fail with `403` for limited tokens.
+  - Added idempotent `400` handling: when GitLab says tag creation failed, the step checks existing tag target and succeeds if it already points to requested `ref`.
+  - Added detailed failure diagnostics with status/body excerpts from GitLab responses.
 
 ## MR !337
 
