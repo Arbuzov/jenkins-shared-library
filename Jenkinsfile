@@ -252,7 +252,6 @@ pipeline {
             GIT_URL = env.GIT_URL;
           }
         }
-        sh 'env'
         tagToGitlab(GIT_URL, "rolling", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT, "rolling tag", "deprecated", false);
         withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
           tagToGitlab(GIT_URL, "1", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT);
