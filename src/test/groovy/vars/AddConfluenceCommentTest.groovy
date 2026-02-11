@@ -42,7 +42,7 @@ class AddConfluenceCommentTest extends BasePipelineTest {
         assert result.id == '555'
         assert result.type == 'comment'
         assert result.body == '<p>Hello</p>'
-        assert lastHttpRequestArgs.url == 'https://confluence.spacebridge.com/rest/api/content/123/child/comment'
+        assert lastHttpRequestArgs.url == 'https://confluence.spacebridge.com/rest/api/content'
         assert lastHttpRequestArgs.httpMode == 'POST'
 
         def payload = new JsonSlurper().parseText(lastHttpRequestArgs.requestBody as String)

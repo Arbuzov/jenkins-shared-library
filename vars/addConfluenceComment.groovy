@@ -48,7 +48,7 @@ def call(Map arg = [:]) {
   def response = null
   try {
     response = httpRequest(
-      url: "${CONFLUENCE_API}/content/${PAGE_ID}/child/comment",
+      url: "${CONFLUENCE_API}/content",
       httpMode: 'POST',
       authentication: CREDENTIALS_ID,
       contentType: 'APPLICATION_JSON',

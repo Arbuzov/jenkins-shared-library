@@ -68,6 +68,11 @@ pipeline {
         print(getNetboxTenants())
         echo "==="
         // print getConfluenceComment(COMMENT_ID: '717062832', DEBUG: true)
+        // print addConfluenceComment(
+        //   PAGE_ID: '717062826',
+        //   DEBUG: true,
+        //   COMMENT: "AI review started for PRD. Attachments have been downloaded and will be included in the review context."
+        // )
         print(lib.com.spacebridge.NetBox.getTenants())
         // print(
         //   createConfluencePageChain(
