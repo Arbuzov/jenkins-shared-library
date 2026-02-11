@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- New shared-library step `addConfluenceComment` in `vars/addConfluenceComment.groovy`.
+  - Adds a comment to a Confluence page by `PAGE_ID`.
+  - Supports `RAW` response mode and `DEBUG` logging mode.
+  - Validates required inputs (`PAGE_ID`, `COMMENT`) and returns actionable errors.
+- Step documentation for `addConfluenceComment` in `vars/addConfluenceComment.txt`.
+- Unit tests for comment creation behavior in `src/test/groovy/vars/AddConfluenceCommentTest.groovy`.
+
 ## MR !337
 
 ### Added

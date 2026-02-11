@@ -13,6 +13,7 @@
     * [addJiraIssueLink](vars/addJiraIssueLink.groovy)
     * [addLinkToBuild](vars/addLinkToBuild.groovy)
     * [assignJiraFixVersion](vars/assignJiraFixVersion.groovy) ([docs](vars/assignJiraFixVersion.txt))
+    * [addConfluenceComment](vars/addConfluenceComment.groovy) - add a comment to a Confluence page ([docs](vars/addConfluenceComment.txt))
     * [attachFilesToConfluencePage](vars/attachFilesToConfluencePage.groovy) - attach one or more files to a Confluence page (resolves page ID by title when needed)
     * [changeDefinition](vars/changeDefinition.groovy)
     * [copyFromArtifactory](vars/copyFromArtifactory.groovy)
