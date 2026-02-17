@@ -168,6 +168,7 @@ def call(Map arg = [:]) {
         environment {
           VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
           PROJECT_VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
+          SONAR_PROJECT_VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
@@ -233,6 +234,7 @@ def call(Map arg = [:]) {
         environment {
           VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME?.toLowerCase().replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
           PROJECT_VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME?.toLowerCase().replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
+          SONAR_PROJECT_VERSION = "${readJSON(file: 'package.json').version}-${env.CHANGE_ID?('mr'+env.CHANGE_ID):env.BRANCH_NAME?.toLowerCase().replaceAll('/','-').replaceAll('@','')}b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
