@@ -93,60 +93,58 @@ ${environment}
 </ac:structured-macro>
 <% } %>
 <% if (binding.hasVariable('results') && results != null) { %>
-<h2>Test report</h2>
+<%
+def groupedConfigs = [
+  ['Expected Duration', 'Warm-up Duration'],
+  ['Center Frequency (Mhz)', 'Frequency Bandwidth (MHz)', 'Target ModCod', 'Target Waveform ID', 'Es/No Delta (dB)', 'Es/No override (dB)', 'Roll-off', 'Attenuation Level (dB)', 'Attenuation Step (dB)', 'Attenuation Dwell Time (sec)'],
+  ['MIR Bit Rate (Kbps)', 'CIR Bit Rate (Kbps)', 'CRA Bit Rate (Kbps)'],
+  ['Traffic Rate (Kbps)', 'Rate Step (Kbps)', 'Rate Dwell Time (sec)', 'Packet Size (bytes)', 'Traffic Type'],
+]
+%>
+<h2>Test Cases</h2>
+<% results?.eachWithIndex { tc, idx -> %>
+<h3>Test ${tc.testId}</h3>
+<% def grouped = tc.streams?.groupBy { it.direction } %>
+<% grouped?.each { direction, streams -> %>
+<% if (direction) { %><h4>${direction}:</h4><% } %>
 <table class="relative-table" style="width: 100%;">
-  <colgroup>
-    <col/>
-    <col/>
-    <col/>
-    <col/>
-    <col style="width: 50%;"/>
-  </colgroup>
   <tbody>
     <tr>
-      <th scope="col">Name</th>
-      <th scope="col">Status</th>
-      <th scope="col">Duration</th>
-      <th scope="col">Class Name</th>
-      <th scope="col">Output</th>
+      <th>Status</th>
+      <th>IDU Name</th>
+      <th>Description</th>
+      <th>Duration</th>
+      <th>RF</th>
+      <th>Bandwidth</th>
+      <th>Traffic</th>
+      <th>Success Criteria</th>
+      <th>Warning Criteria</th>
     </tr>
-    <% results?.testsuites?.each { testsuite -> %>
-    <% testsuite?.testcases?.each { testcase -> %>
+    <% streams.each { stream -> %>
     <tr>
-      <td><%= testcase.name.replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '').replaceAll(/>\s+</, '><').replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
       <td>
-        <div class="content-wrapper">
-          <ac:structured-macro ac:name="status" ac:schema-version="1" ac:macro-id="ce178cd5-5503-4026-af1d-fa5c87aec3c6">
-            <ac:parameter ac:name="colour"><%= testcase.failure?.size() > 0 ? 'Red' : (testcase.skipped?.size() > 0 ? 'Grey' : 'Green') %></ac:parameter>
-            <ac:parameter ac:name="title"><%= testcase.failure?.size() > 0 ? 'failed' : (testcase.skipped?.size() > 0 ? 'skipped' : 'passed') %></ac:parameter>
-          </ac:structured-macro>
-        </div>
-      </td>
-      <td><%= testcase.time %></td>
-      <td><%= testcase.classname.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
-      <td>
-        <% if (testcase.failure?.message) { %>
-        <span>
-          <%= testcase.failure?.message.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %>
-        </span>
-        <% } %>
-        <% if (testcase.failure?.content) { %>
-          <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="82160c0a-ad87-408b-b0d5-4525183a6a1c">
-          <ac:rich-text-body>
-            <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="6ae95228-7a8b-46fb-8801-47392f3a97c1">
-              <ac:plain-text-body>
-                <![CDATA[${testcase.failure?.content.replaceAll(/(\r\n|\r|\n)/, '\\\\n').replaceAll(/>\s+</, '><')}]]>
-              </ac:plain-text-body>
-            </ac:structured-macro>
-          </ac:rich-text-body>
+        <ac:structured-macro ac:name="status" ac:schema-version="1">
+          <ac:parameter ac:name="colour"><%= stream['Stream Status']?.toUpperCase() == 'PASS' ? 'Green' : 'Red' %></ac:parameter>
+          <ac:parameter ac:name="title"><%= stream['Stream Status'] ?: '' %></ac:parameter>
         </ac:structured-macro>
+      </td>
+      <td><%= stream['IDU Name'] ?: '' %></td>
+      <td><%= stream['Stream Description'] ?: '' %></td>
+      <% groupedConfigs.each { keys -> %>
+      <td>
+        <% keys.each { key -> %>
+        <% if (stream[key] != null) { %>${key}: ${stream[key]}<br/><% } %>
         <% } %>
       </td>
+      <% } %>
+      <td><%= stream['Success Criteria'] ?: '' %></td>
+      <td><%= stream['Warning Criteria'] ?: '' %></td>
     </tr>
-    <% } %>
     <% } %>
   </tbody>
 </table>
+<% } %>
+<% } %>
 <% } %>
 <% if (binding.hasVariable('footer') && footer != null) { %>
 ${footer}
