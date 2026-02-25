@@ -92,7 +92,7 @@ ${environment}
   </ac:rich-text-body>
 </ac:structured-macro>
 <% } %>
-<% if (binding.hasVariable('results') && results != null) { %>
+<% if (binding.hasVariable('testcases') && testcases != null) { %>
 <%
 def groupedConfigs = [
   ['Expected Duration', 'Warm-up Duration'],
@@ -102,7 +102,7 @@ def groupedConfigs = [
 ]
 %>
 <h2>Test Cases</h2>
-<% results?.eachWithIndex { tc, idx -> %>
+<% testcases?.eachWithIndex { tc, idx -> %>
 <h3>Test ${tc.testId}</h3>
 <% def grouped = tc.streams?.groupBy { it.direction } %>
 <% grouped?.each { direction, streams -> %>
@@ -119,6 +119,7 @@ def groupedConfigs = [
       <th>Traffic</th>
       <th>Success Criteria</th>
       <th>Warning Criteria</th>
+      <th>Errors</th>
     </tr>
     <% streams.each { stream -> %>
     <tr>
@@ -139,6 +140,7 @@ def groupedConfigs = [
       <% } %>
       <td><%= stream['Success Criteria'] ?: '' %></td>
       <td><%= stream['Warning Criteria'] ?: '' %></td>
+      <td><%= '' %></td>
     </tr>
     <% } %>
   </tbody>

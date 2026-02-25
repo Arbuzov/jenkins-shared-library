@@ -2,7 +2,7 @@
 
 Parses a JUnit XML file and returns a structured representation of test results.
 
-The result contains a top-level `status` (`SUCCESS`/`FAILED`) and a `testsuites` list with test suite summaries and their test cases (including failure/skipped info when present).
+The result contains a top-level `status` (`SUCCESS`/`FAILED`) and a `testsuites` list with test suite summaries and their test cases (including failure/skipped/error info when present).
 
 ## Usage
 
