@@ -98,7 +98,7 @@ def groupedConfigs = [
   ['Expected Duration', 'Warm-up Duration'],
   ['Center Frequency (Mhz)', 'Frequency Bandwidth (MHz)', 'Target ModCod', 'Target Waveform ID', 'Es/No Delta (dB)', 'Es/No override (dB)', 'Roll-off', 'Attenuation Level (dB)', 'Attenuation Step (dB)', 'Attenuation Dwell Time (sec)'],
   ['MIR Bit Rate (Kbps)', 'CIR Bit Rate (Kbps)', 'CRA Bit Rate (Kbps)'],
-  ['Traffic Rate (Kbps)', 'Rate Step (Kbps)', 'Rate Dwell Time (sec)', 'Packet Size (bytes)', 'Traffic Type'],
+  ['Traffic Rate (Kbps)', 'Rate Step (Kbps)', 'Rate Dwell Time (sec)', 'Packet Size (bytes)', 'Traffic Type', 'DSCP (dec)', 'Priority Queue'],
 ]
 %>
 <h2>Test Cases</h2>
@@ -125,7 +125,7 @@ def groupedConfigs = [
     <tr>
       <td>
         <ac:structured-macro ac:name="status" ac:schema-version="1">
-          <ac:parameter ac:name="colour"><%= stream['Stream Status']?.toUpperCase() == 'PASS' ? 'Green' : 'Red' %></ac:parameter>
+          <ac:parameter ac:name="colour"><%= stream['Stream Status']?.toUpperCase() == 'PASS' ? 'Green' : stream['Stream Status']?.toUpperCase() == 'WARNING' ? 'Yellow' : stream['Stream Status']?.toUpperCase() == 'FAIL' ? 'Red' : 'Grey' %></ac:parameter>
           <ac:parameter ac:name="title"><%= stream['Stream Status'] ?: '' %></ac:parameter>
         </ac:structured-macro>
       </td>
@@ -138,8 +138,8 @@ def groupedConfigs = [
         <% } %>
       </td>
       <% } %>
-      <td><%= stream['Success Criteria'] ?: '' %></td>
-      <td><%= stream['Warning Criteria'] ?: '' %></td>
+      <td><%= stream['Success Criteria'] != null ? String.format('%.2E', stream['Success Criteria'] as Double) : '' %></td>
+      <td><%= stream['Warning Criteria'] != null ? String.format('%.2E', stream['Warning Criteria'] as Double) : '' %></td>
       <td><%= '' %></td>
     </tr>
     <% } %>
