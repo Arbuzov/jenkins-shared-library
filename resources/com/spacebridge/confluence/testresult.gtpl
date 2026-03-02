@@ -92,18 +92,63 @@ ${environment}
   </ac:rich-text-body>
 </ac:structured-macro>
 <% } %>
-<% if (binding.hasVariable('testcases') && testcases != null) { %>
 <%
+def escapeXml = { str -> str?.toString()?.replace('&', '&amp;')?.replace('<', '&lt;')?.replace('>', '&gt;')?.replace('"', '&quot;') ?: '' }
+def hasSetupErrors = binding.hasVariable('results') && results != null && results.testsuites?.any { it.errors?.isInteger() && (it.errors as Integer) > 0 }
+%>
+<% if (hasSetupErrors) { %>
+<% def firstError = results.testsuites?.getAt(0)?.testcases?.getAt(0) %>
+<h2>Errors</h2>
+<% if (firstError) { %>
+<ac:structured-macro ac:name="warning" ac:schema-version="1">
+  <ac:rich-text-body>
+    <p><strong>${escapeXml(firstError.classname)}: ${escapeXml(firstError.name)}</strong></p>
+    <p>${escapeXml(firstError.error.message)}</p>
+    <% if (firstError.error.content) { %>
+    <ac:structured-macro ac:name="code" ac:schema-version="1">
+      <ac:plain-text-body><![CDATA[${firstError.error.content}]]></ac:plain-text-body>
+    </ac:structured-macro>
+    <% } %>
+  </ac:rich-text-body>
+</ac:structured-macro>
+<% } %>
+<% } else if (binding.hasVariable('testcases') && testcases != null) { %>
+<%
+def allResultTestcases = results?.testsuites?.collectMany { it.testcases ?: [] } ?: []
+def totalTests = (int)(allResultTestcases.size() / 2)
 def groupedConfigs = [
   ['Expected Duration', 'Warm-up Duration'],
   ['Center Frequency (Mhz)', 'Frequency Bandwidth (MHz)', 'Target ModCod', 'Target Waveform ID', 'Es/No Delta (dB)', 'Es/No override (dB)', 'Roll-off', 'Attenuation Level (dB)', 'Attenuation Step (dB)', 'Attenuation Dwell Time (sec)'],
   ['MIR Bit Rate (Kbps)', 'CIR Bit Rate (Kbps)', 'CRA Bit Rate (Kbps)'],
   ['Traffic Rate (Kbps)', 'Rate Step (Kbps)', 'Rate Dwell Time (sec)', 'Packet Size (bytes)', 'Traffic Type', 'DSCP (dec)', 'Priority Queue'],
 ]
+def showMissingTest = { missingId ->
+  def rtc = allResultTestcases[(missingId - 1)]
+  def err = rtc?.error ?: rtc?.failure
+  out << "<h3>Test ${missingId}</h3>"
+  out << '<ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>'
+  if (err?.message) {
+    out << "<p>${escapeXml(err.message)}</p>"
+  }
+  if (err?.content) {
+    out << '<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:plain-text-body><![CDATA[' + err.content + ']]></ac:plain-text-body></ac:structured-macro>'
+  }
+  if (!err) {
+    out << '<p>Test run failed</p>'
+  }
+  out << '</ac:rich-text-body></ac:structured-macro>'
+}
+def expectedId = 1
 %>
 <h2>Test Cases</h2>
-<% testcases?.eachWithIndex { tc, idx -> %>
+<% testcases?.each { tc -> %>
+<% def tcId = tc.testId as Integer %>
+<% while (expectedId < tcId) { %>
+<% showMissingTest(expectedId) %>
+<% expectedId++ %>
+<% } %>
 <h3>Test ${tc.testId}</h3>
+<% expectedId = tcId + 1 %>
 <% def grouped = tc.streams?.groupBy { it.direction } %>
 <% grouped?.each { direction, streams -> %>
 <% if (direction) { %><h4>${direction}:</h4><% } %>
@@ -134,18 +179,24 @@ def groupedConfigs = [
       <% groupedConfigs.each { keys -> %>
       <td>
         <% keys.each { key -> %>
-        <% if (stream[key] != null) { %>${key}: ${stream[key]}<br/><% } %>
+        <% if (stream[key] != null && stream[key] != '-') { %>${key}: ${stream[key]}<br/><% } %>
         <% } %>
       </td>
       <% } %>
       <td><%= stream['Success Criteria'] != null ? String.format('%.2E', stream['Success Criteria'] as Double) : '' %></td>
       <td><%= stream['Warning Criteria'] != null ? String.format('%.2E', stream['Warning Criteria'] as Double) : '' %></td>
-      <td><%= '' %></td>
+      <td>
+        <%= stream['Stream Status']?.toUpperCase() == 'FAIL' ? "Stream didn't meet success criteria" : '' %>
+      </td>
     </tr>
     <% } %>
   </tbody>
 </table>
 <% } %>
+<% } %>
+<% while (expectedId <= totalTests) { %>
+<% showMissingTest(expectedId) %>
+<% expectedId++ %>
 <% } %>
 <% } %>
 <% if (binding.hasVariable('footer') && footer != null) { %>

@@ -1,30 +1,29 @@
 // This method processes a single test case from the JUnit XML and extracts relevant details,
 // including the test case's class name, name, execution time, and failure information (if any).
-@NonCPS
 def processTestCase(testcase) {
   def result = [
-    classname: testcase.getProperty('@classname').toString(),
-    name: testcase.getProperty('@name').toString(),
-    time: testcase.getProperty('@time').toString()
+    classname: testcase.@classname.toString(),
+    name: testcase.@name.toString(),
+    time: testcase.@time.toString()
   ]
   if (testcase.failure.size() > 0) {
     result.failure = [
-      message: testcase.failure.getProperty('@message').toString(),
-      type: testcase.failure.getProperty('@type').toString(),
+      message: testcase.failure.@message.toString(),
+      type: testcase.failure.@type.toString(),
       content: testcase.failure.text().toString()
     ]
   }
   if (testcase.error.size() > 0) {
     result.error = [
-      message: testcase.error.getProperty('@message').toString(),
-      type: testcase.error.getProperty('@type').toString(),
+      message: testcase.error.@message.toString(),
+      type: testcase.error.@type.toString(),
       content: testcase.error.text().toString()
     ]
   }
   if (testcase.skipped.size() > 0) {
     result.skipped = [
-      message: testcase.skipped?.getProperty('@message').toString(),
-      type: testcase.skipped?.getProperty('@type').toString(),
+      message: testcase.skipped?.@message.toString(),
+      type: testcase.skipped?.@type.toString(),
       content: testcase.skipped?.text().toString()
     ]
   }
@@ -34,7 +33,6 @@ def processTestCase(testcase) {
 // This method processes a single test suite from the JUnit XML and extracts relevant details,
 // including the suite's name, error count, failure count, skipped tests, total tests, execution time,
 // and the list of test cases within the suite.
-@NonCPS
 def processTestSuite(suite) {
   def result = [
     name: suite.getProperty('@name').toString(),
@@ -48,7 +46,6 @@ def processTestSuite(suite) {
   suite.testcase.each { testcase ->
     result.testcases << processTestCase(testcase)
   }
-
   return result
 }
 
