@@ -102,13 +102,8 @@ def hasSetupErrors = binding.hasVariable('results') && results != null && result
 <% if (firstError) { %>
 <ac:structured-macro ac:name="warning" ac:schema-version="1">
   <ac:rich-text-body>
-    <p><strong>${escapeXml(firstError.classname)}: ${escapeXml(firstError.name)}</strong></p>
     <p>${escapeXml(firstError.error.message)}</p>
-    <% if (firstError.error.content) { %>
-    <ac:structured-macro ac:name="code" ac:schema-version="1">
-      <ac:plain-text-body><![CDATA[${firstError.error.content}]]></ac:plain-text-body>
-    </ac:structured-macro>
-    <% } %>
+    <p>Check <em>pytest_results.txt</em> for more details.</p>
   </ac:rich-text-body>
 </ac:structured-macro>
 <% } %>
@@ -129,9 +124,6 @@ def showMissingTest = { missingId ->
   out << '<ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>'
   if (err?.message) {
     out << "<p>${escapeXml(err.message)}</p>"
-  }
-  if (err?.content) {
-    out << '<ac:structured-macro ac:name="code" ac:schema-version="1"><ac:plain-text-body><![CDATA[' + err.content + ']]></ac:plain-text-body></ac:structured-macro>'
   }
   if (!err) {
     out << '<p>Test run failed</p>'
