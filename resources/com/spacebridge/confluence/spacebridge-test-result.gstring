@@ -95,6 +95,23 @@ ${environment}
 <%
 def escapeXml = { str -> str?.toString()?.replace('&', '&amp;')?.replace('<', '&lt;')?.replace('>', '&gt;')?.replace('"', '&quot;') ?: '' }
 def hasSetupErrors = binding.hasVariable('results') && results != null && results.testsuites?.any { it.errors?.isInteger() && (it.errors as Integer) > 0 }
+def allResultTestcases = results?.testsuites?.collectMany { it.testcases ?: [] } ?: []
+def totalTests = (int)(allResultTestcases.size() / 2)
+
+def showMissingTest = { missingId ->
+  def rtc = allResultTestcases[(missingId - 1)]
+  def err = rtc?.error ?: rtc?.failure
+  out << "<h3>Test ${missingId}</h3>"
+  out << '<ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>'
+  if (err?.message) {
+    out << "<p>${escapeXml(err.message)}</p>"
+    out << "<p>Check <em>pytest_results.txt</em> for more details.</p>"
+  }
+  if (!err) {
+    out << '<p>Test run failed</p>'
+  }
+  out << '</ac:rich-text-body></ac:structured-macro>'
+}
 %>
 <% if (hasSetupErrors) { %>
 <% def firstError = results.testsuites?.getAt(0)?.testcases?.getAt(0) %>
@@ -109,27 +126,12 @@ def hasSetupErrors = binding.hasVariable('results') && results != null && result
 <% } %>
 <% } else if (binding.hasVariable('testcases') && testcases != null) { %>
 <%
-def allResultTestcases = results?.testsuites?.collectMany { it.testcases ?: [] } ?: []
-def totalTests = (int)(allResultTestcases.size() / 2)
 def groupedConfigs = [
   ['Expected Duration', 'Warm-up Duration'],
   ['Center Frequency (Mhz)', 'Frequency Bandwidth (MHz)', 'Target ModCod', 'Target Waveform ID', 'Es/No Delta (dB)', 'Es/No override (dB)', 'Roll-off', 'Attenuation Level (dB)', 'Attenuation Step (dB)', 'Attenuation Dwell Time (sec)'],
   ['MIR Bit Rate (Kbps)', 'CIR Bit Rate (Kbps)', 'CRA Bit Rate (Kbps)'],
   ['Traffic Rate (Kbps)', 'Rate Step (Kbps)', 'Rate Dwell Time (sec)', 'Packet Size (bytes)', 'Traffic Type', 'DSCP (dec)', 'Priority Queue'],
 ]
-def showMissingTest = { missingId ->
-  def rtc = allResultTestcases[(missingId - 1)]
-  def err = rtc?.error ?: rtc?.failure
-  out << "<h3>Test ${missingId}</h3>"
-  out << '<ac:structured-macro ac:name="warning" ac:schema-version="1"><ac:rich-text-body>'
-  if (err?.message) {
-    out << "<p>${escapeXml(err.message)}</p>"
-  }
-  if (!err) {
-    out << '<p>Test run failed</p>'
-  }
-  out << '</ac:rich-text-body></ac:structured-macro>'
-}
 def expectedId = 1
 %>
 <h2>Test Cases</h2>
@@ -190,6 +192,13 @@ def expectedId = 1
 <% showMissingTest(expectedId) %>
 <% expectedId++ %>
 <% } %>
+<% } else if (binding.hasVariable('results') && results != null && results.testsuites?.any { it.failures?.isInteger() && (it.failures as Integer) > 0 }) { %>
+<h2>Test Cases</h2>
+<%
+(1..totalTests).each { id ->
+    showMissingTest(id)
+}
+%>
 <% } %>
 <% if (binding.hasVariable('footer') && footer != null) { %>
 ${footer}
