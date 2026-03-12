@@ -1,6 +1,7 @@
 import groovy.text.SimpleTemplateEngine;
 
 String call(Map arg) {
+  reportUsage(getClass().protectionDomain.codeSource.location.path)
   def engine = new SimpleTemplateEngine()
   def STRINGIFY = arg.STRINGIFY ?: false
   def TEMPLATE = arg.TEMPLATE ?: ''

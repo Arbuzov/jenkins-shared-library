@@ -157,10 +157,7 @@ def call(Map arg = [:]) {
       }
       stage ('Create production docker image') {
         when {
-          allOf {
-            branch 'master'
             not { changeRequest() }
-          }
         }
         agent {
           label 'farmer-docker-ubuntu'
@@ -225,7 +222,6 @@ def call(Map arg = [:]) {
         when {
           anyOf {
             changeRequest()
-            not { branch 'master' }
           }
         }
         agent {
@@ -280,7 +276,6 @@ def call(Map arg = [:]) {
         when {
           anyOf {
             changeRequest()
-            not { branch 'master' }
           }
         }
         agent {
@@ -301,10 +296,7 @@ def call(Map arg = [:]) {
       }
       stage('Inspect production image') {
         when {
-          allOf {
-            branch 'master'
             not { changeRequest() }
-          }
         }
         agent {
           docker {
