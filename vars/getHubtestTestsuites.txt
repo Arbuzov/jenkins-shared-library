@@ -1,0 +1,25 @@
+# getHubtestTestsuites
+
+Fetches hubtest test suite file names from Nexus.
+
+## Usage
+
+```groovy
+def suites = getHubtestTestsuites()
+echo "Available test suites: ${suites.join(', ')}"
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `baseUrl` | `'https://nexus.asatnet.net/service/rest/v1/search/assets'` | Nexus search API URL |
+| `repository` | `'store'` | Nexus repository name |
+| `namePattern` | `'*.xlsx'` | File name glob |
+| `pathPrefix` | `'/v_v/hub-test-tools/suite/'` | Path prefix filter |
+
+## Returns
+
+List - File names matching the criteria.
