@@ -708,7 +708,7 @@ pipeline {
 
         script {
           echo "Testing getConfluencePageChildren()..."
-          def pageId = '404193285'
+          def pageId = '653164558'
           def children = getConfluencePageChildren(PAGE_ID: pageId)
           def childrenStr = children.collect { it.toString() }.join(', ')
           echo "Page ID ${pageId}, children: ${childrenStr}"

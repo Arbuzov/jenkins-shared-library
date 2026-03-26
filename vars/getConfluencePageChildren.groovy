@@ -26,25 +26,36 @@ def call(Map arg = [:]) {
 
   if (DEBUG) echo "getConfluencePageChildren(): Getting children for page ID: ${PAGE_ID}"
 
-  def jsonResponse = null
-  try {
-    jsonResponse = httpRequest(
-      url: "${CONFLUENCE_API}/content/${PAGE_ID}/child?expand=page",
-      httpMode: 'GET',
-      authentication: CREDENTIALS_ID,
-      acceptType: 'APPLICATION_JSON',
-      consoleLogResponseBody: DEBUG,
-      quiet: !DEBUG
-    )
-  } catch (Exception e) {
-    error("getConfluencePageChildren(): Failed to get children for page with ID '${PAGE_ID}': ${e.message}")
-  }
-
   def results = []
-  try {
-    results = readJSON(text: jsonResponse.content).page.results
-  } catch (Exception e) {
-    error("getConfluencePageChildren(): Failed to read JSON for page with ID '${PAGE_ID}': ${e.message}")
+  def start = 0
+  def limit = 100
+
+  while (true) {
+    def jsonResponse = null
+    try {
+      jsonResponse = httpRequest(
+        url: "${CONFLUENCE_API}/content/${PAGE_ID}/child?expand=page&start=${start}&limit=${limit}",
+        httpMode: 'GET',
+        authentication: CREDENTIALS_ID,
+        acceptType: 'APPLICATION_JSON',
+        consoleLogResponseBody: DEBUG,
+        quiet: !DEBUG
+      )
+    } catch (Exception e) {
+      error("getConfluencePageChildren(): Failed to get children for page with ID '${PAGE_ID}': ${e.message}")
+    }
+
+    def pageResults = []
+    try {
+      pageResults = readJSON(text: jsonResponse.content).page.results ?: []
+    } catch (Exception e) {
+      error("getConfluencePageChildren(): Failed to read JSON for page with ID '${PAGE_ID}': ${e.message}")
+    }
+    if (!pageResults) {
+      break
+    }
+    results.addAll(pageResults)
+    start += limit
   }
 
   if (!results || results.isEmpty()) {
