@@ -113,7 +113,7 @@ ${environment}
     <% results?.testsuites?.each { testsuite -> %>
     <% testsuite?.testcases?.each { testcase -> %>
     <tr>
-      <td><%= testcase.name.replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '').replaceAll(/>\s+</, '><').replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
+      <td><%= testcase.name.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll(/\n/, '') %></td>
       <td>
         <div class="content-wrapper">
           <ac:structured-macro ac:name="status" ac:schema-version="1" ac:macro-id="ce178cd5-5503-4026-af1d-fa5c87aec3c6">
@@ -123,11 +123,11 @@ ${environment}
         </div>
       </td>
       <td><%= testcase.time %></td>
-      <td><%= testcase.classname.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %></td>
+      <td><%= testcase.classname.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;') %></td>
       <td>
         <% if (testcase.failure?.message) { %>
         <span>
-          <%= testcase.failure?.message.replaceAll('>', '&gt;').replaceAll('<', '&lt;') %>
+          <%= testcase.failure?.message.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;') %>
         </span>
         <% } %>
         <% if (testcase.failure?.content) { %>
@@ -135,7 +135,7 @@ ${environment}
           <ac:rich-text-body>
             <ac:structured-macro ac:name="noformat" ac:schema-version="1" ac:macro-id="6ae95228-7a8b-46fb-8801-47392f3a97c1">
               <ac:plain-text-body>
-                <![CDATA[${testcase.failure?.content.replaceAll(/(\r\n|\r|\n)/, '\\\\n').replaceAll(/>\s+</, '><')}]]>
+                <![CDATA[${testcase.failure?.content.replaceAll(']]>', ']]]]><![CDATA[>').replaceAll(/(\r\n|\r|\n)/, '\\\\n')}]]>
               </ac:plain-text-body>
             </ac:structured-macro>
           </ac:rich-text-body>
