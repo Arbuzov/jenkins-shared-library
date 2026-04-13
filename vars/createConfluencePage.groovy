@@ -98,6 +98,7 @@ String call(Map arg) {
     httpMode: 'POST',
     consoleLogResponseBody: DEBUG,
     contentType: 'APPLICATION_JSON',
+    customHeaders: [[name: 'Content-Type', value: 'application/json;charset=UTF-8']],
     authentication: CREDENTIALS_ID,
     requestBody: writeJSON(returnText: true, json: newReleaseContent),
     quiet: !DEBUG
