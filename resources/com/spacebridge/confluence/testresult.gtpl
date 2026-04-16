@@ -139,6 +139,12 @@ ${environment}
           </ac:rich-text-body>
         </ac:structured-macro>
         <% } %>
+        <% def screenshotName = testcase.name.replaceAll('[^\\w\\-]', '_') + '.png' %>
+        <% if (testcase.failure?.size() > 0 && availableScreenshots?.contains(screenshotName)) { %>
+        <ac:image ac:thumbnail="true" ac:width="200">
+          <ri:attachment ri:filename="${screenshotName}" />
+        </ac:image>
+        <% } %>
       </td>
     </tr>
     <% } %>
