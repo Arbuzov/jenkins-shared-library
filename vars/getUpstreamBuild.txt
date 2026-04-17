@@ -1,0 +1,33 @@
+# getUpstreamBuild
+
+Return info about the upstream build that triggered the current one, or
+`null` when the build was not started by another Jenkins job.
+
+## Usage
+
+```groovy
+// Immediate parent
+def upstream = getUpstreamBuild()
+if (upstream) {
+  echo "Triggered by ${upstream.displayName}"
+}
+
+// Top of the upstream chain (e.g. grandparent)
+def root = getUpstreamBuild(root: true)
+```
+
+## Parameters
+
+- `root` - Boolean; when `true`, walk the upstream chain and return the
+  top-most UpstreamCause instead of the immediate parent (default: `false`)
+
+## Returns
+
+Map with:
+
+- `project` - full job name, e.g. `folder/parent-job`
+- `build` - upstream build number
+- `url` - relative URL to the upstream build
+- `displayName` - `"<project> #<build>"`
+
+or `null` if the build has no `UpstreamCause`.
