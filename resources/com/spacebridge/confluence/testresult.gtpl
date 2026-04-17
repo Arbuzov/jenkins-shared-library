@@ -152,9 +152,9 @@ ${environment}
   </tbody>
 </table>
 <% } %>
-<ac:structured-macro ac:name="gallery" ac:schema-version="1" ac:macro-id="e411359e-e620-48b4-a54b-e21d15f9ddea">
-  <ac:parameter ac:name="sort">name</ac:parameter>
-  <ac:parameter ac:name="columns">3</ac:parameter>
+<ac:structured-macro ac:name="attachments" ac:schema-version="1" ac:macro-id="a4c2e7b1-5d8f-4a3e-9f1c-7b2e3d4a5b6c">
+  <ac:parameter ac:name="sortBy">name</ac:parameter>
+  <ac:parameter ac:name="sortOrder">ascending</ac:parameter>
 </ac:structured-macro>
 <% if (binding.hasVariable('footer') && footer != null) { %>
 ${footer}
