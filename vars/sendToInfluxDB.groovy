@@ -1,16 +1,23 @@
-def call(Map args = [:]){
-    def influxDBURL = 'http://192.168.67.55:8086/write?db=devops'
-    String measurement = args.measurement ?: "jenkins_default_metric"
+def call(Map args = [:]) {
+    def influxDBURL = args.url ?: env.INFLUXDB_WRITE_URL
+    if (!influxDBURL) {
+        // Telemetry is best-effort: stay silent when no endpoint is configured
+        // so the step is safe to call from any pipeline.
+        return
+    }
+
+    String measurement = args.measurement ?: 'jenkins_default_metric'
     Map tags = args.tags ?: [project: env.JOB_NAME ?: 'unknown']
     Map fields = args.fields ?: [value: 1]
-    def tagSet = tags.collect { k,v -> "${k}=${v}" }.join(',')
-    def fieldSet = fields.collect { k,v -> "${k}=${v}" }.join(',')
+    def tagSet = tags.collect { k, v -> "${k}=${v}" }.join(',')
+    def fieldSet = fields.collect { k, v -> "${k}=${v}" }.join(',')
     def line = tagSet ? "${measurement},${tagSet} ${fieldSet}" : "${measurement} ${fieldSet}"
-    try{
+
+    try {
         httpRequest(
-            url: influxDBURL, 
-            contentType: 'APPLICATION_FORM', 
-            httpMode: 'POST', 
+            url: influxDBURL,
+            contentType: 'APPLICATION_FORM',
+            httpMode: 'POST',
             requestBody: line,
             quiet: true
         )
