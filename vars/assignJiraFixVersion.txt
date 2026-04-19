@@ -1,1 +1,1 @@
-## Assigns a version to all tickets in the project with the specific state and without the fix version
+## Assigns a version to all tickets in the project with a specific state and without a fix version

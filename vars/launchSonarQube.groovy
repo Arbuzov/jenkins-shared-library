@@ -60,13 +60,14 @@ def call(Map arg = [:]) {
         variable: 'SONAR_TOKEN'
       )
     ]) {
+      def basicAuth = 'Basic ' + "${SONAR_TOKEN}:".bytes.encodeBase64().toString()
       writeFile(
         file: ".scannerwork/sonar-report.json",
         text: httpRequest(
           url: "${env.EXPOSED_SONAR_HOST_URL}/api/issues/search?componentKeys=${URLEncoder.encode(componentKey, 'UTF-8')}&pullRequest=${URLEncoder.encode(pullRequestId, 'UTF-8')}",
           httpMode: 'GET',
           ignoreSslErrors: true,
-          customHeaders: [[name: 'Authorization', value: SONAR_TOKEN]],
+          customHeaders: [[name: 'Authorization', value: basicAuth, maskValue: true]],
           consoleLogResponseBody: DEBUG,
           quiet: !DEBUG
         ).content,

@@ -1,10 +1,11 @@
 def call(Map arg) {
+  String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.example.com/rest/api'
   String ID = arg.ID ?: 'SPACE'
   String LABEL = arg.LABEL ?: ''
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'
   Boolean DEBUG = arg.DEBUG ?: false
 
-  def linksUrl = "https://confluence.example.com/rest/api/content/${ID}/label"
+  def linksUrl = "${CONFLUENCE_API}/content/${ID}/label"
   httpRequest(
     url: linksUrl,
     httpMode: 'POST',

@@ -3,7 +3,9 @@ def call(Map arg) {
     String SPACE           = arg.SPACE           ?: ''
     String PAGE_ID         = arg.PAGE_ID        ?: ''
     String PAGE_NAME       = arg.PAGE_NAME      ?: ''
-    def    files           = arg.FILES instanceof List ? arg.FILES : [arg.FILES]
+    def    files           = (arg.FILES instanceof List
+                                ? arg.FILES
+                                : (arg.FILES ? [arg.FILES] : [])).findAll { it }
     String CREDENTIALS_ID  = arg.CREDENTIALS_ID ?: 'jira-username-password'
     Boolean DEBUG          = arg.DEBUG          ?: false
 

@@ -19,8 +19,6 @@
  */
 @NonCPS
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
-
   def root = args.root ?: false
   def cause = currentBuild.rawBuild.getCauses().find {
     it instanceof hudson.model.Cause.UpstreamCause

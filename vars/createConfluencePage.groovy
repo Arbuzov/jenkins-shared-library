@@ -1,7 +1,10 @@
 String call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
-  
+
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.example.com/rest/api'
+  def apiUri = new URI(CONFLUENCE_API)
+  def contextPath = apiUri.path.replaceAll('/rest/api/?$', '')
+  String CONFLUENCE_BASE = "${apiUri.scheme}://${apiUri.authority}${contextPath}"
   String TITLE = arg.TITLE ?: 'New page'
   String SPACE = arg.SPACE ?: 'SPACE'
   String ROOT = arg.ROOT ?: ''
@@ -75,7 +78,7 @@ String call(Map arg) {
     if (DEBUG) {
       echo "Page already exists (pageId=${existingId}) – skipping creation."
     }
-    return "https://confluence.example.com/pages/viewpage.action?pageId=${existingId}"
+    return "${CONFLUENCE_BASE}/pages/viewpage.action?pageId=${existingId}"
   } 
     
   if (DEBUG) {echo "page is to be created"}
@@ -113,7 +116,8 @@ String call(Map arg) {
   if (DEBUG) {echo "page ${TITLE} is successfully created"}
   if (!LABEL.isEmpty()) {
     labelConfluencePage(
-      ID: readJSON(text: releaseResponse.getContent()).id,
+      CONFLUENCE_API: CONFLUENCE_API,
+      ID: pageId,
       LABEL: LABEL,
       CREDENTIALS_ID: CREDENTIALS_ID,
       DEBUG: DEBUG
@@ -132,5 +136,5 @@ String call(Map arg) {
     )
     if(DEBUG) {echo "attached some files  needed to be attached"}
   } else { if(DEBUG) {echo "no files to attach"}}
-  return 'https://confluence.example.com/pages/viewpage.action?pageId=' + readJSON(text: releaseResponse.getContent()).id
+  return "${CONFLUENCE_BASE}/pages/viewpage.action?pageId=${pageId}"
 }

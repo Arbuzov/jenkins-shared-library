@@ -5,7 +5,6 @@ import java.util.regex.Pattern
 
 @NonCPS
 def call(fullName, buildId) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
     def URLs = [ ]
     build = jenkins.model.Jenkins.instance.getItemByFullName(fullName).getBuildByNumber(buildId)
     build.getActions(org.korosoft.jenkins.plugin.rtp.BuildRichTextAction).each{ action2->
