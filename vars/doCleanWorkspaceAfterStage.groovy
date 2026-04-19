@@ -47,7 +47,7 @@ def call(boolean isLastStage = false, boolean keepWhenFailure = false) {
 			echo "WARNING: will not delete workspace contents in case of failed build"
 			cleanWs deleteDirs: true, disableDeferredWipeout: true,
 					notFailBuild: true,
-					cleanWhenSuccess: false,
+					cleanWhenSuccess: true,
 					cleanWhenFailure: false, cleanWhenUnstable: false,
 					cleanWhenAborted: false, cleanWhenNotBuilt: false
 		}

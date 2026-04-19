@@ -3,7 +3,6 @@ import hudson.util.LogTaskListener
 
 @NonCPS
 def call() {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
   def builds = [ ]
   jenkins.model.Jenkins.instance.getAllItems(jenkins.branch.OrganizationFolder.class).each { folder->
     folder.getItems().each {project ->

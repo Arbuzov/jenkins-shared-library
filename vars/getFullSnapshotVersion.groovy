@@ -6,7 +6,7 @@ String call(Map arg) {
   def groupId = arg.groupId
   def artifactId = arg.artifactId
   def version = "${arg.version}-SNAPSHOT"
-  def credentialsId = arg.credentialsId ?: 'jira-username-password'
+  def credentialsId = arg.credentialsId ?: 'nexus-read'
 
   def apiUrl = "${nexusUrl}/service/rest/v1/search/assets?repository=${repository}&maven.groupId=${groupId}&maven.artifactId=${artifactId}&maven.baseVersion=${version}&maven.extension=${extension}"
 
@@ -14,7 +14,7 @@ String call(Map arg) {
     url: apiUrl,
     httpMode: 'GET',
     contentType: 'APPLICATION_JSON',
-    authentication: 'jira-username-password'
+    authentication: credentialsId
   )
   def json = readJSON(text: response.content)
   def items = json.items

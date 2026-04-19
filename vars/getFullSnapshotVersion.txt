@@ -28,7 +28,7 @@ All parameters are passed through a Map:
 | `groupId` | required | Maven groupId |
 | `artifactId` | required | Maven artifactId |
 | `version` | required | Base version without `-SNAPSHOT` (the step appends `-SNAPSHOT`) |
-| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID (currently not used by the implementation) |
+| `credentialsId` | `'nexus-read'` | Jenkins credentials ID used to authenticate against Nexus |
 
 ## Returns
 

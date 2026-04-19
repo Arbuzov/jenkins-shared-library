@@ -87,7 +87,7 @@ GitLab without the external-status plugin dance.
 - [`publishSummary`](vars/publishSummary.groovy) — add a Jenkins build summary entry ([docs](vars/publishSummary.txt))
 
 ### Build introspection and plumbing
-- [`addBageToBuild`](vars/addBageToBuild.groovy) / [`addLinkToBuild`](vars/addLinkToBuild.groovy) — decorate the build page with badges and links
+- [`addBadgeToBuild`](vars/addBadgeToBuild.groovy) / [`addLinkToBuild`](vars/addLinkToBuild.groovy) — decorate the build page with badges and links
 - [`changeDefinition`](vars/changeDefinition.groovy) — pipeline-to-job parameter reconciliation
 - [`dslMethodExists`](vars/dslMethodExists.groovy) — safely feature-detect a pipeline step
 - [`getBuildCause`](vars/getBuildCause.groovy) — list the causes that triggered the build as a clean string array
@@ -144,7 +144,7 @@ that doesn't expose it.
 ## Template resources
 
 A few Confluence-oriented steps (`createConfluencePageChain`, `getJenkinsBuildChanges`,
-`addBageToBuild`) load default templates via `libraryResource('com/example/confluence/...')`.
+`addBadgeToBuild`) load default templates via `libraryResource('com/example/confluence/...')`.
 This library ships without those templates on purpose — provide your own under
 `resources/com/example/confluence/` or pass `CONTENT` explicitly when calling the step.
 

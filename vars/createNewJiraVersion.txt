@@ -1,1 +1,1 @@
-## Creates a new version at the specified project
+## Creates a new version in the specified project

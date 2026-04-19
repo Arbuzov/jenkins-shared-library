@@ -18,7 +18,7 @@ All parameters are optional and passed through a Map:
 |-----------|---------|-------------|
 | `sonarQubeEnvName` | `'SonarQube Server'` | SonarQube environment name in Jenkins |
 | `gitlabUrl` | `'https://gitlab.example.com/'` | GitLab server URL |
-| `sonarCredentialsId` | `'sonar-secret'` | Jenkins credentials ID for SonarQube credentials type login and password send in a custom header |
+| `sonarCredentialsId` | `'sonar-secret'` | Jenkins credentials ID for SonarQube token credentials (secret text) sent as HTTP Basic auth |
 | `gitlabCredentialsId` | `'gitlab-pat-01'` | Jenkins credentials ID for GitLab credentials type secret text |
 | `projectId` | `env.GITLAB_PROJECT_ID` | GitLab project ID |
 | `timeoutValue` | `5` | Quality Gate wait timeout |

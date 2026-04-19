@@ -6,7 +6,6 @@ import java.util.regex.Pattern
 
 @NonCPS
 def call(fullName, tagName) {
-   reportUsage(getClass().protectionDomain.codeSource.location.path)
    def URLs = [ ]
    jenkins.model.Jenkins.instance.getItemByFullName(fullName).getBuilds().each{ build->
      build.getActions(com.jenkinsci.plugins.badge.action.BadgeAction).each{ action->
