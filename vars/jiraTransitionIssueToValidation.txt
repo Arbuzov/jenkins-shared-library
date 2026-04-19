@@ -1,0 +1,27 @@
+# jiraTransitionIssueToValidation
+
+Transition an issue to validation and assign to Reporter.
+
+- The function finds the transition requirements and tries to fulfill them:
+  -- If possible transitions do not include `In Validation`, the function will throw an error.
+  -- Other required fields will be filled with the first allowed value.
+- If the issue has a reporter, the function will assign the issue to the reporter.
+- If the issue does not have a reporter, the function will not assign the issue to anyone.
+
+## Parameters
+
+- `issueKey`: The key of the issue to transition to validation.
+- `credentialsId` (optional): The credentials ID to use to authenticate to Jira.
+
+## Example
+
+```groovy
+def assignee = jiraTransitionIssueToValidation(
+  issueKey: 'NMSNG-123',
+)
+echo "jiraTransitionIssueToValidation(): assignee: ${assignee}"
+```
+
+## Return
+
+- String: The new assignee display name.

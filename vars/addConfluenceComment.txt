@@ -1,0 +1,44 @@
+# addConfluenceComment
+
+Adds a comment to an existing Confluence page via REST API.
+
+By default, returns a compact map with `id`, `type`, and `body`.
+If `RAW`/`raw` is enabled, returns the full JSON object from Confluence.
+
+## Usage
+
+```groovy
+def comment = addConfluenceComment([
+  PAGE_ID: '123456789',
+  COMMENT: '<p>Release deployed successfully</p>'
+])
+echo "Comment ID: ${comment.id}"
+
+def rawComment = addConfluenceComment([
+  PAGE_ID: '123456789',
+  COMMENT: '<p>Detailed payload for debugging</p>',
+  RAW: true
+])
+echo "Comment title: ${rawComment.title}"
+```
+
+## Parameters
+- `PAGE_ID` or `pageId` (required) - Confluence page ID to comment on.
+- `COMMENT` or `comment` (required) - Comment body in Confluence storage format.
+- `CONFLUENCE_API` (optional, default `https://confluence.example.com/rest/api`) - Base API URL.
+- `CREDENTIALS_ID` (optional, default `jira-username-password`) - Jenkins credentials for auth.
+- `RAW` or `raw` (optional, default `false`) - Return full JSON instead of compact map.
+- `DEBUG` (optional, default `false`) - Enables verbose HTTP logging.
+
+## Returns
+- Default mode: `Map` with:
+  - `id` - created comment ID
+  - `type` - content type (usually `comment`)
+  - `body` - `body.storage.value` from response
+- `RAW=true`: full comment JSON (`Map`).
+- Returns `null` when response content is empty.
+
+## Failure behavior
+- Fails when `PAGE_ID`/`pageId` is not provided.
+- Fails when `COMMENT`/`comment` is not provided.
+- Fails when Confluence API request or JSON parsing fails.

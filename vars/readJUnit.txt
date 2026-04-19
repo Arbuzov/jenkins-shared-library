@@ -1,0 +1,25 @@
+# readJUnit
+
+Parses a JUnit XML file and returns a structured representation of test results.
+
+The result contains a top-level `status` (`SUCCESS`/`FAILED`) and a `testsuites` list with test suite summaries and their test cases (including failure/skipped/error info when present).
+
+## Usage
+
+```groovy
+def res = readJUnit(file: 'build/test-results/test/TESTS-TestSuites.xml')
+echo "Status: ${res.status}"
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `file` | required | Path to JUnit XML file |
+
+## Returns
+
+Map - Parsed results with keys `status` and `testsuites`.
+

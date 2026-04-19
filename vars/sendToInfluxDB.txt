@@ -1,0 +1,30 @@
+# sendToInfluxDB
+
+Sends a single metric point to InfluxDB using the line protocol.
+
+The step formats `measurement`, `tags` and `fields` into a line-protocol string and posts it to the configured InfluxDB `/write` endpoint. Errors are caught and do not fail the pipeline.
+
+## Usage
+
+```groovy
+sendToInfluxDB(
+  measurement: 'jenkins_build',
+  tags: [job: env.JOB_NAME, branch: env.BRANCH_NAME],
+  fields: [value: 1, duration: 123]
+)
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `measurement` | `'jenkins_default_metric'` | Measurement name |
+| `tags` | `[project: env.JOB_NAME ?: 'unknown']` | Tag map |
+| `fields` | `[value: 1]` | Field map |
+
+## Returns
+
+No return value.
+

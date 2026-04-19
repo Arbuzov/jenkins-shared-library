@@ -1,0 +1,70 @@
+# gitlabSetCommitStatus
+
+Post a commit status (named pipeline check) to GitLab. The status appears
+as a separate check next to other pipelines on the MR / commit view, so a
+child Jenkins job triggered from a parent GitLab pipeline can report its
+own outcome independently.
+
+## Usage
+
+```groovy
+// Minimal: report current state against env.GIT_COMMIT / env.BUILD_URL
+gitlabSetCommitStatus(state: 'running')
+
+// Explicit name and target
+gitlabSetCommitStatus(
+  state: 'success',
+  name: 'smoke-test',
+  sha: params.GITLAB_COMMIT_SHA,
+  projectId: params.GITLAB_PROJECT_ID,
+  targetUrl: env.BUILD_URL
+)
+
+// Typical wiring from a child Jenkinsfile
+pipeline {
+  stages {
+    stage('notify start') {
+      steps { gitlabSetCommitStatus(state: 'running', name: 'smoke-test') }
+    }
+    // ...
+  }
+  post {
+    success  { gitlabSetCommitStatus(state: 'success',  name: 'smoke-test') }
+    failure  { gitlabSetCommitStatus(state: 'failed',   name: 'smoke-test') }
+    aborted  { gitlabSetCommitStatus(state: 'canceled', name: 'smoke-test') }
+  }
+}
+```
+
+## Parameters
+
+Passed through a Map.
+
+- `state` (required) - one of `pending`, `running`, `success`, `failed`, `canceled`, `skipped`
+- `name` - status context shown in GitLab (default: `env.JOB_NAME`)
+- `sha` - commit SHA (default: `env.GITLAB_COMMIT_SHA`, `env.gitlabMergeRequestLastCommit`, `env.GIT_COMMIT`)
+- `projectId` - GitLab project ID (default: `env.GITLAB_PROJECT_ID`, else resolved via API from `GIT_URL`)
+- `targetUrl` - URL the check links to (default: `env.BUILD_URL`)
+- `description` - short description shown in GitLab (optional)
+- `ref` - branch or tag name (optional)
+- `coverage` - coverage percentage (optional)
+- `gitlabBaseUrl` - GitLab base URL without `/api/v4` (default: derived from env; fallback `https://gitlab.example.com`)
+- `gitlabCredentialsId` - Jenkins credentials ID with GitLab token (default: `gitlab-text-secret`)
+
+## Returns
+
+Map - GitLab API response for the created/updated status.
+
+## Notes
+
+When the parent pipeline is triggered by the GitLab plugin, pass the
+commit context down to the child build so the child can report against
+the same commit:
+
+```groovy
+build job: 'smoke-test',
+  parameters: [
+    string(name: 'GITLAB_PROJECT_ID', value: env.gitlabMergeRequestTargetProjectId),
+    string(name: 'GITLAB_COMMIT_SHA', value: env.gitlabMergeRequestLastCommit)
+  ]
+```

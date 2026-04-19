@@ -1,0 +1,36 @@
+# getFullSnapshotVersion
+
+Looks up a Maven `-SNAPSHOT` artifact in Nexus and returns the resolved full snapshot version.
+
+This step calls the Nexus 3 REST API (`/service/rest/v1/search/assets`) and returns the first matching item's `maven2.version` value.
+
+## Usage
+
+```groovy
+def fullVersion = getFullSnapshotVersion(
+  groupId: 'com.example.myapp',
+  artifactId: 'myapp',
+  version: '1.2.3',
+  extension: 'deb'
+)
+echo "Resolved snapshot: ${fullVersion}"
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `nexusUrl` | `'https://nexus.example.com'` | Nexus base URL |
+| `repository` | `'maven-snapshots'` | Nexus repository name |
+| `extension` | `'deb'` | Maven extension to filter by |
+| `groupId` | required | Maven groupId |
+| `artifactId` | required | Maven artifactId |
+| `version` | required | Base version without `-SNAPSHOT` (the step appends `-SNAPSHOT`) |
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID (currently not used by the implementation) |
+
+## Returns
+
+String - Full resolved snapshot version (for example, `1.2.3-20250101.123456-7`), or `null` if nothing is found.
+

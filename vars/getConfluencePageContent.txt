@@ -1,0 +1,22 @@
+# getConfluencePageContent
+
+Fetches the title and storage-format HTML of a Confluence page via the REST API.
+
+## Usage
+
+```groovy
+def page = getConfluencePageContent([
+  PAGE_ID: '123456789'
+])
+echo page.title
+echo page.content
+```
+
+## Parameters
+- `PAGE_ID` (required) – Confluence page ID to load.
+- `CONFLUENCE_API` (optional, default `https://confluence.example.com/rest/api`) – Base API URL.
+- `CREDENTIALS_ID` (optional) – Jenkins credentials for basic auth.
+- `DEBUG` (optional, default `false`) – Enables verbose REST logging.
+
+## Returns
+`Map` with `title` and `content` keys (content is Confluence storage HTML). Missing fields are returned as empty strings.

@@ -1,0 +1,32 @@
+# addLinkToBuild
+
+Adds a clickable link to the Jenkins build summary, with optional header, icon and target behavior.
+
+## Usage
+
+```groovy
+addLinkToBuild(
+  LINK: 'https://confluence.example.com/pages/viewpage.action?pageId=12345',
+  TEXT: 'Release notes',
+  HEADER: 'Release',
+  ICON: 'info.gif',
+  BLANK: true
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `LINK` | `''` | URL to link to |
+| `TEXT` | `LINK` | Link text (if omitted, uses the URL) |
+| `BLANK` | `true` | Open link in a new tab (`target="_blank"`) |
+| `HEADER` | `''` | Optional header shown above the link |
+| `ICON` | `'folder.gif'` | Summary icon name |
+
+## Returns
+
+No return value.
+

@@ -1,0 +1,102 @@
+# launchSonarQube
+
+Launches SonarQube analysis with support for pull request analysis and GitLab integration.
+
+## Usage
+
+```groovy
+launchSonarQube([
+    gitlabUrl: 'https://gitlab.example.com/'
+])
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `sonarQubeEnvName` | `'SonarQube Server'` | SonarQube environment name in Jenkins |
+| `gitlabUrl` | `'https://gitlab.example.com/'` | GitLab server URL |
+| `sonarCredentialsId` | `'sonar-secret'` | Jenkins credentials ID for SonarQube credentials type login and password send in a custom header |
+| `gitlabCredentialsId` | `'gitlab-pat-01'` | Jenkins credentials ID for GitLab credentials type secret text |
+| `projectId` | `env.GITLAB_PROJECT_ID` | GitLab project ID |
+| `timeoutValue` | `5` | Quality Gate wait timeout |
+| `timeoutUnit` | `'MINUTES'` | Timeout unit of measurement |
+| `abortPipeline` | `false` | Whether to abort pipeline on failed Quality Gate |
+| `maxViolations` | `99999` | Maximum number of violations for reporting |
+| `minSeverity` | `'INFO'` | Minimum severity of violations |
+| `reportViolations` | `true` | Whether to report violations to GitLab (report file is always saved) |
+| `DEBUG` | `false` | Enable debug mode (verbose logging, sonar-scanner -X flag) |
+
+## Functionality
+
+1. **Automatic Component Key Detection**: If `componentKey` is not provided, reads `sonar.projectKey` from `sonar-project.properties` file
+2. **Pull Request Analysis Setup**: Automatically configures environment variables for pull request/merge request analysis
+3. **SonarQube Analysis Launch**: Executes sonar-scanner with error handling
+4. **Quality Gate Wait**: Waits for Quality Gate result with configurable timeout
+5. **Report Retrieval**: Downloads JSON report with violations via SonarQube API
+6. **GitLab Integration**: Posts violation comments to GitLab merge request
+7. **Error Handling**: Provides clear error messages for analysis failures
+
+## Usage Examples
+
+### Basic usage
+```groovy
+launchSonarQube()
+```
+
+### Auto-detect component key from sonar-project.properties
+```groovy
+launchSonarQube([
+    timeoutValue: 10
+])
+```
+
+### Disable GitLab violation reporting
+```groovy
+launchSonarQube([
+    reportViolations: false
+])
+```
+
+### Enable debug mode
+```groovy
+launchSonarQube([
+    DEBUG: true
+])
+```
+
+### Full configuration
+```groovy
+launchSonarQube([
+    sonarQubeEnvName: 'My SonarQube', 
+    gitlabUrl: 'https://gitlab.company.com/',
+    sonarCredentialsId: 'my-sonar-token',
+    gitlabCredentialsId: 'my-gitlab-token',
+    timeoutValue: 10,
+    timeoutUnit: 'MINUTES',
+    abortPipeline: true,
+    minSeverity: 'MAJOR',
+    reportViolations: true,
+    DEBUG: false
+])
+```
+
+## Required Environment Variables
+
+- `MERGE_REQUEST_IID` or `CHANGE_ID` - merge/pull request ID
+- `CHANGE_BRANCH` - branch with changes  
+- `GIT_BRANCH` - target branch
+- `GITLAB_PROJECT_ID` - GitLab project ID (if not passed explicitly)
+
+## Environment Variables Set by SonarQube
+
+The function uses `withSonarQubeEnv` which automatically sets:
+- `SONAR_HOST_URL` - SonarQube server URL (used for API calls and links)
+
+## Required Plugins
+
+- SonarQube Scanner plugin
+- Violations to GitLab plugin
+- HTTP Request plugin

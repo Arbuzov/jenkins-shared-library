@@ -1,0 +1,20 @@
+# getConfluencePageChildren
+
+Returns a list of Confluence child page IDs for the supplied page, sorted by the UI order (`extensions.position`).
+
+## Usage
+
+```groovy
+def childIds = getConfluencePageChildren([
+  PAGE_ID: '123456789'
+])
+```
+
+## Parameters
+- `PAGE_ID` (required) – Confluence page ID to inspect.
+- `CONFLUENCE_API` (optional, default `https://confluence.example.com/rest/api`) – Base API URL.
+- `CREDENTIALS_ID` (optional) – Jenkins credentials for basic auth.
+- `DEBUG` (optional, default `false`) – When true, logs the REST response details.
+
+## Returns
+`List<String>` containing child page IDs in display order. Empty list when the page has no children.

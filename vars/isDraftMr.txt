@@ -1,0 +1,20 @@
+# isDraftMr
+
+Checks whether the current merge request is a draft (WIP).
+
+## Usage
+
+```groovy
+if (isDraftMr()) {
+  echo "MR is a draft, skipping deployment"
+}
+```
+
+## Parameters
+
+None.
+
+## Returns
+
+`Boolean` — `true` if the MR title starts with `Draft:`, `WIP:`, `Draft ` or `WIP ` (case-insensitive), otherwise `false`.
+Returns `false` if there is no active MR (`CHANGE_ID` is not set) or the title cannot be determined.

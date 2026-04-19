@@ -1,0 +1,25 @@
+# getNetboxTenants
+
+Fetches a list of tenants from NetBox via REST API.
+
+## Usage
+
+```groovy
+def tenants = getNetboxTenants()
+echo "Tenants: ${tenants.size()}"
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `netboxUrl` | `'http://192.168.67.56/netbox/'` | NetBox base URL |
+| `credentialsId` | `'netbox'` | Jenkins credentials ID containing the NetBox API token (Secret text) |
+| `limit` | `500` | Accepted but currently not used by the implementation |
+
+## Returns
+
+List - NetBox response `results` array (tenants).
+

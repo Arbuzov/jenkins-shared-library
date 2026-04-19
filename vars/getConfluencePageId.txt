@@ -1,0 +1,38 @@
+# getConfluencePageId
+
+Extracts a Confluence page ID from URL or path.
+
+This function supports:
+- classic URL with `pageId` query parameter (for example `.../pages/viewpage.action?pageId=12345`)
+- friendly Confluence path/URL format `.../display/{SPACE}/{TITLE}`
+- path-only input like `/display/{SPACE}/{TITLE}`
+
+For `display/{SPACE}/{TITLE}` format, it resolves page ID via Confluence REST API (`/rest/api/content?spaceKey=...&title=...`).
+It handles URL parsing errors gracefully, decodes URL-encoded values, and returns `null` when page ID cannot be resolved.
+
+## Parameters
+
+- `arg` (Map) - Configuration map with the following keys:
+  - `url` / `URL` (String) - Confluence URL
+  - `path` / `PATH` (String) - Confluence path
+  - `CONFLUENCE_API` (String, optional) - Confluence REST API base URL (default `https://confluence.example.com/rest/api`)
+  - `CREDENTIALS_ID` (String, optional) - Jenkins credentials id for API request (default `jira-username-password`)
+  - `DEBUG` (Boolean, optional) - Enable debug logging
+- `String` - URL or path value directly (shortcut form)
+
+## Returns
+
+String - The page ID if found (decoded), `null` otherwise
+
+## Example
+
+```groovy
+def pageId = getConfluencePageId([url: 'https://confluence.example.com/pages/viewpage.action?pageId=12345&spaceKey=SPACE'])
+// Returns: '12345'
+
+def pageIdByDisplayUrl = getConfluencePageId([url: 'https://confluence.example.com/display/DEVOPS/Release+Notes'])
+// Returns page id resolved through REST API
+
+def pageIdByPath = getConfluencePageId([path: '/display/DEVOPS/Release+Notes', CONFLUENCE_API: 'https://confluence.example.com/rest/api'])
+// Returns page id resolved through REST API
+```
