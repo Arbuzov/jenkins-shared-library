@@ -1,0 +1,30 @@
+# inflateTemplate
+
+Renders a Groovy template string using `SimpleTemplateEngine` and values from the provided Map.
+
+All keys from the argument Map are available as variables inside the template.
+
+## Usage
+
+```groovy
+def html = inflateTemplate(
+  TEMPLATE: '<p>Build ${buildNumber}</p>',
+  buildNumber: env.BUILD_NUMBER
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `TEMPLATE` | `''` | Template string |
+| `STRINGIFY` | `false` | If `true`, removes all newlines from the rendered output |
+
+Any additional keys in the Map become template variables.
+
+## Returns
+
+String - Rendered template output.
+

@@ -1,0 +1,42 @@
+# createConfluencePage
+
+Creates a Confluence page under a specified parent page and returns the Confluence page URL.
+
+The step prevents duplicates by checking for an existing page with the same `TITLE` under the same `ROOT` (parent). If a duplicate is found, it returns the existing page URL and skips creation.
+Optionally, it can add a label and attach files to the created page.
+
+## Usage
+
+```groovy
+def url = createConfluencePage(
+  TITLE: 'Release my-service-1.2.3-b45',
+  SPACE: 'DOC',
+  ROOT: '123456',
+  CONTENT: '<p>Release notes...</p>',
+  LABEL: 'release',
+  FILES: ['report.syft.txt', 'report.grype.txt']
+)
+echo "Created/Found page: ${url}"
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `CONFLUENCE_API` | `'https://confluence.example.com/rest/api'` | Base Confluence REST API URL |
+| `TITLE` | `'New page'` | Page title |
+| `SPACE` | `'SPACE'` | Confluence space key |
+| `ROOT` | `''` | Parent page ID (required if `ROOT_NAME` not provided) |
+| `ROOT_NAME` | `''` | Parent page title (used to resolve `ROOT` if `ROOT` is missing) |
+| `CONTENT` | `''` | Page body in Confluence storage format |
+| `FILES` | `[]` | Attachment file path (String) or List of file paths |
+| `LABEL` | `''` | Optional label to add after page creation |
+| `CREDENTIALS_ID` | `'jira-username-password'` | Jenkins credentials ID for Confluence authentication |
+| `DEBUG` | `false` | Enable verbose HTTP logging and extra `echo` output |
+
+## Returns
+
+String - Confluence page URL (existing or newly created).
+

@@ -1,0 +1,32 @@
+# getJenkinsBuildChanges
+
+Generates an HTML changelog (for release notes) from a Jenkins build change set.
+
+The step renders `com/example/confluence/jenkins-build-changes.gtpl` via `inflateTemplate()` and returns the resulting HTML with newlines escaped for Confluence usage.
+
+## Usage
+
+```groovy
+def html = getJenkinsBuildChanges(
+  PROJECT_ID: 'folder/job-name',
+  BUILD_NUMBER: 123,
+  HEADER: '3'
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `BUILD` | optional | Jenkins build object (Run) to use directly |
+| `PROJECT_ID` | optional | Full job name to resolve a build from |
+| `BUILD_NUMBER` | optional | Build number within `PROJECT_ID` |
+| `HEADER` | `'2'` | Header level used by the template |
+| `DEBUG` | `false` | Print debug information to console |
+
+## Returns
+
+String - Rendered HTML changelog, or `false` if the build cannot be resolved.
+

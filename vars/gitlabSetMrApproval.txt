@@ -1,0 +1,31 @@
+# gitlabSetMrApproval
+
+Approve or unapprove a GitLab merge request.
+
+## Usage
+
+```groovy
+// Approve current MR
+gitlabSetMrApproval()
+
+// Unapprove current MR
+gitlabSetMrApproval(action: 'unapprove')
+
+// Same via boolean
+gitlabSetMrApproval(approve: false)
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map.
+
+- `action` - `'approve'` or `'unapprove'` (default: `approve`)
+- `approve` - Boolean flag; when `false` forces `unapprove`
+- `mrIid` - Merge request IID (default: `env.CHANGE_ID`)
+- `projectId` - GitLab project ID (default: `env.GITLAB_PROJECT_ID`)
+- `gitlabBaseUrl` - GitLab base URL without `/api/v4` (default: derived from env; fallback `https://gitlab.example.com`)
+- `gitlabCredentialsId` - Jenkins credentials ID with GitLab token (default: `gitlab-text-secret`)
+
+## Returns
+
+Map - GitLab API response for the approval action.

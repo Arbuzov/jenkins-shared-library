@@ -1,0 +1,83 @@
+# createConfluencePageChain
+
+Creates a chain of nested Confluence pages with hierarchical structure.
+
+This function creates multiple pages either in a nested chain (default) or as a flat list. In chain mode, each subsequent page becomes a child of the previously created page. In flatten mode, all pages are created as direct children of the original parent. It uses the createConfluencePage function internally and automatically manages parent relationships.
+If no content is provided for a child page, it uses a fallback template from resources.
+**Note: The function will fail immediately if any child page creation fails.**
+
+## Parameters
+
+- `arg` (Map) - Configuration map with the following keys:
+  - `CONFLUENCE_API` (String) - Confluence API base URL (default: 'https://confluence.example.com/rest/api')
+  - `SPACE` (String) - Confluence space key (default: 'SPACE')
+  - `ROOT` (String) - Parent page ID
+  - `ROOT_NAME` (String) - Parent page title (alternative to ROOT)
+  - `CREDENTIALS_ID` (String) - Jenkins credentials ID (default: 'jira-username-password')
+  - `DEBUG` (Boolean) - Enable debug logging (default: false)
+  - `FLATTEN` (Boolean) - Create pages as flat list under original parent instead of nested chain (default: false)
+  - `CHILDREN` (List) - **Required**: Array of child page definitions, each containing:
+    - `title` (String) - Page title
+    - `content` (String) - Page content (optional, uses fallback template if not provided)
+    - `label` (String) - Page label (optional)
+    
+    **Note**: If a String is passed instead of List, the function will fail with an error.
+
+## Returns
+
+String - URL of the last successfully created page, null if no pages were created
+
+## Error Handling
+
+The function will fail immediately with an `error()` call in the following cases:
+- `CHILDREN` parameter is a String instead of List
+- `CHILDREN` parameter is not a List type  
+- Any child page creation fails (the error is caught, logged, and re-raised using `error()`)
+
+**Note**: When a child page creation fails, the function logs the error message and stack trace (if DEBUG is enabled), then calls `error()` to stop pipeline execution. Previously created pages in the same call will remain created.
+
+## Corner Cases
+
+- **Empty CHILDREN list**: Returns `null` immediately without calling Confluence. Useful when the caller builds the list dynamically and wants a safe no-op.
+- **Missing `content` in a child definition**: Automatically uses the fallback template loaded from `com/example/confluence/children.gtpl`.
+- **Mixed success and failure**: When a later child fails, earlier pages remain published because Confluence side-effects aren't rolled back.
+- **DEBUG mode**: Enables verbose logging for each page creation attempt and prints the exception stack trace before re-raising the error.
+- **Custom ROOT vs ROOT_NAME**: You may supply either `ROOT` (ID) or `ROOT_NAME` (title). Resolution errors from `createConfluencePage` propagate and will stop execution via `error()`.
+
+## Example
+
+```groovy
+// Chain mode (default) - nested structure
+def children = [
+  [title: 'Test Results', content: '<p>Test content</p>', label: 'test-report'],
+  [title: 'Documentation', label: 'docs'],
+  [title: 'Notes']
+]
+def lastPageUrl = createConfluencePageChain([
+  SPACE: 'MYSPACE',
+  ROOT_NAME: 'Parent Page',
+  CHILDREN: children,
+  DEBUG: true
+])
+// Creates nested structure:
+// Parent Page
+//   └── Test Results
+//       └── Documentation
+//           └── Notes
+// Returns: URL of the 'Notes' page (deepest nested page)
+
+// Flatten mode - flat structure
+def lastPageUrl2 = createConfluencePageChain([
+  SPACE: 'MYSPACE',
+  ROOT_NAME: 'Parent Page',
+  CHILDREN: children,
+  FLATTEN: true,
+  DEBUG: true
+])
+// Creates flat structure:
+// Parent Page
+//   ├── Test Results
+//   ├── Documentation
+//   └── Notes
+// Returns: URL of the 'Notes' page (last created)
+```

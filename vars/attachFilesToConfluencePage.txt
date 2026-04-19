@@ -1,0 +1,39 @@
+# attachFilesToConfluencePage
+
+Attaches one or more files to a Confluence page using the Confluence REST API.
+
+If `PAGE_ID` is not provided but `PAGE_NAME` is, the step first resolves the page ID by searching for the page title in the given space.
+
+## Usage
+
+```groovy
+attachFilesToConfluencePage(
+  SPACE: 'DOC',
+  PAGE_ID: '123456',
+  FILES: ['build/report.html', 'build/report.xml'],
+  DEBUG: true
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `CONFLUENCE_API` | `'https://confluence.example.com/rest/api'` | Base Confluence REST API URL |
+| `SPACE` | `''` | Confluence space key (required when resolving `PAGE_NAME`) |
+| `PAGE_ID` | `''` | Target Confluence page ID |
+| `PAGE_NAME` | `''` | Target Confluence page title (used only if `PAGE_ID` is missing) |
+| `FILES` | required | File path (String) or List of file paths to upload |
+| `CREDENTIALS_ID` | `'jira-username-password'` | Jenkins credentials ID for Confluence authentication |
+| `DEBUG` | `false` | Enable verbose HTTP logging and extra `echo` output |
+
+## Returns
+
+No return value.
+
+## Errors
+
+Fails the build (via `error(...)`) if the page cannot be resolved or an attachment upload fails.
+

@@ -1,0 +1,31 @@
+# getNetboxDevices
+
+Fetches a list of devices from NetBox via REST API.
+
+## Usage
+
+```groovy
+def devices = getNetboxDevices(
+  role: 'server',
+  tenant: 'my-tenant',
+  limit: 200
+)
+echo "Devices: ${devices.size()}"
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `netboxUrl` | `'http://192.168.67.56/netbox/'` | NetBox base URL |
+| `credentialsId` | `'netbox'` | Jenkins credentials ID containing the NetBox API token (Secret text) |
+| `role` | `false` | Optional NetBox role filter |
+| `tenant` | `false` | Optional NetBox tenant filter |
+| `limit` | `500` | Result limit (single request) |
+
+## Returns
+
+List - NetBox response `results` array (devices).
+

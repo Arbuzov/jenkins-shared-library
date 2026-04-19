@@ -1,0 +1,34 @@
+# getConfluenceComment
+
+Fetches a Confluence comment by comment ID via the REST API.
+
+By default, returns only the comment body (`body.storage.value`).
+If `RAW`/`raw` is enabled, returns the full JSON object.
+
+## Usage
+
+```groovy
+def body = getConfluenceComment([
+  COMMENT_ID: '123456789'
+])
+echo "Comment body: ${body}"
+
+def rawComment = getConfluenceComment([
+  COMMENT_ID: '123456789',
+  RAW: true
+])
+echo "Comment type: ${rawComment.type}"
+```
+
+## Parameters
+- `COMMENT_ID` (required) - Confluence comment content ID to load.
+- `CONFLUENCE_API` (optional, default `https://confluence.example.com/rest/api`) - Base API URL.
+- `CREDENTIALS_ID` (optional, default `jira-username-password`) - Jenkins credentials for basic auth.
+- `RAW` or `raw` (optional, default `false`) - Return full JSON instead of just comment body.
+- `ALLOW_NOT_FOUND` or `allowNotFound` (optional, default `false`) - Do not fail when comment is not found (`404`), return `null`.
+- `DEBUG` (optional, default `false`) - Enables verbose REST logging.
+
+## Returns
+- Default mode: comment body (`String`) or `null` when body is empty/missing.
+- `RAW=true`: full comment JSON (`Map`).
+- When `ALLOW_NOT_FOUND=true` and comment does not exist: `null`.

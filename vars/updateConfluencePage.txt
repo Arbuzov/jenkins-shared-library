@@ -1,0 +1,26 @@
+# updateConfluencePage
+
+Updates a Confluence page title and/or storage HTML content while automatically incrementing the page version.
+
+## Usage
+
+```groovy
+updateConfluencePage([
+  PAGE_ID: '123456789',
+  TITLE: 'Deployment Report',
+  CONTENT: htmlBody
+])
+```
+
+## Parameters
+- `PAGE_ID` (required) – Confluence page ID to update.
+- `TITLE` (optional) – New page title; omit to keep the current one.
+- `CONTENT` (optional) – Replacement storage-format HTML body.
+- `CONFLUENCE_API` (optional, default `https://confluence.example.com/rest/api`) – Base API URL.
+- `CREDENTIALS_ID` (optional) – Jenkins credentials for basic auth.
+- `DEBUG` (optional, default `false`) – Verbose REST logging.
+
+At least one of `TITLE` or `CONTENT` must be provided.
+
+## Returns
+`true` on success; otherwise the step fails with a descriptive error.

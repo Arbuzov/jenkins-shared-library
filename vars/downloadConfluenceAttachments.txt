@@ -1,0 +1,66 @@
+# downloadConfluenceAttachments
+
+Downloads attachments from a Confluence page to a local directory.
+
+Supports human-readable attachment addressing:
+- `ATTACHMENTS: ['report.pdf', 'summary.txt']`
+- `ATTACHMENTS: ['report.pdf': 'reports/release-report.pdf']`
+- `ATTACHMENTS: [[title: 'report.pdf', saveAs: 'reports/release-report.pdf']]`
+
+If `ATTACHMENTS` is omitted, all page attachments are downloaded.
+
+## Usage
+
+```groovy
+def result = downloadConfluenceAttachments(
+  PAGE_ID: '123456',
+  SAVE_PATH: 'artifacts/confluence'
+)
+echo "Downloaded: ${result.downloaded.size()}"
+```
+
+```groovy
+downloadConfluenceAttachments(
+  SPACE: 'DOC',
+  PAGE_NAME: 'Release Notes',
+  SAVE_PATH: 'artifacts/confluence',
+  ATTACHMENTS: [
+    'manual.pdf': 'docs/manual-latest.pdf',
+    'checksums.txt': 'docs/checksums.txt'
+  ]
+)
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `CONFLUENCE_API` | `'https://confluence.example.com/rest/api'` | Base Confluence REST API URL |
+| `CREDENTIALS_ID` | `'jira-username-password'` | Jenkins credentials ID for Confluence authentication |
+| `PAGE_ID` | `''` | Confluence page ID |
+| `PAGE_NAME` | `''` | Confluence page title (used only if `PAGE_ID` is missing) |
+| `SPACE` | `''` | Confluence space key (required when `PAGE_NAME` is used) |
+| `SAVE_PATH` | `'.'` | Local directory where files are saved |
+| `ATTACHMENTS` | `null` | Optional filter/rename spec (String, List, or Map) |
+| `ALLOW_MISSING` | `false` | Do not fail if requested attachments are missing |
+| `OVERWRITE` | `true` | Overwrite local files if they already exist |
+| `DEBUG` | `false` | Enable verbose logs |
+
+## Returns
+
+Map:
+- `pageId` - resolved page ID
+- `savePath` - resolved local save directory
+- `downloaded` - list of downloaded items (`source`, `path`, `url`)
+- `skipped` - list of skipped items (for example, existing files with `OVERWRITE: false`)
+- `missing` - list of requested attachments not found on the page
+
+## Errors
+
+Fails the build (via `error(...)`) when:
+- neither `PAGE_ID` nor `PAGE_NAME` is provided
+- `PAGE_NAME` is used without `SPACE`
+- page cannot be resolved uniquely
+- destination directory cannot be created
+- requested attachment is missing and `ALLOW_MISSING` is `false`
+- attachment metadata has no download link

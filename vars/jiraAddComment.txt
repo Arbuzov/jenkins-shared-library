@@ -1,0 +1,23 @@
+# jiraAddComment
+
+Add a comment to a Jira issue.
+
+## Parameters
+
+- `issueKey`: The key of the issue to add the comment to.
+- `comment`: The comment to add.
+- `credentialsId` (optional): The credentials ID to use to authenticate to Jira.
+
+## Example
+
+```groovy
+def comment = jiraAddComment(
+  issueKey: 'DEVOPS-271',
+  comment: 'This is a test comment',
+)
+echo "jiraAddComment(): comment ID: ${comment.id}"
+```
+
+## Return
+
+- `comment`: The comment object.

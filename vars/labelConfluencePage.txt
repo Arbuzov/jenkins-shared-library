@@ -1,0 +1,29 @@
+# labelConfluencePage
+
+Adds a label to a Confluence page (content) via the Confluence REST API.
+
+## Usage
+
+```groovy
+labelConfluencePage(
+  ID: '123456',
+  LABEL: 'release',
+  DEBUG: true
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `ID` | `'SPACE'` | Confluence content ID (page ID) |
+| `LABEL` | `''` | Label name |
+| `CREDENTIALS_ID` | `'jira-username-password'` | Jenkins credentials ID for Confluence authentication |
+| `DEBUG` | `false` | Enable verbose HTTP logging |
+
+## Returns
+
+No return value.
+
