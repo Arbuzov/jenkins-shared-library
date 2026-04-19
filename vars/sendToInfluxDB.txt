@@ -4,6 +4,13 @@ Sends a single metric point to InfluxDB using the line protocol.
 
 The step formats `measurement`, `tags` and `fields` into a line-protocol string and posts it to the configured InfluxDB `/write` endpoint. Errors are caught and do not fail the pipeline.
 
+The endpoint URL is resolved in this order:
+
+1. `url` argument, if provided
+2. `INFLUXDB_WRITE_URL` environment variable (recommended: set it on the Jenkins controller as a global property, e.g. `http://influxdb.internal:8086/write?db=jenkins`)
+
+When neither is set, the step silently returns, so callers (including `reportUsage`) can use it unconditionally without leaking errors on pipelines that don't ship telemetry.
+
 ## Usage
 
 ```groovy
@@ -20,6 +27,7 @@ All parameters are optional and passed through a Map:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
+| `url` | `env.INFLUXDB_WRITE_URL` | InfluxDB `/write` endpoint URL; when absent the step is a no-op |
 | `measurement` | `'jenkins_default_metric'` | Measurement name |
 | `tags` | `[project: env.JOB_NAME ?: 'unknown']` | Tag map |
 | `fields` | `[value: 1]` | Field map |
