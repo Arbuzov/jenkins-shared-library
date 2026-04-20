@@ -3,23 +3,34 @@
 Return info about the upstream build that triggered the current one, or
 `null` when the build was not started by another Jenkins job.
 
+Traverses the full cause tree (top-level causes plus any nested causes
+reachable via `UpstreamCause.getUpstreamCauses()`), so it finds the
+originating upstream even when the build was rebuilt or when the upstream
+cause is only visible as a nested "originally caused by" entry.
+
+Prefers an UpstreamCause whose `upstreamProject` differs from the current
+job, which skips `RebuildCause` (Rebuild plugin) — it extends
+`UpstreamCause` but points back at the same job. Falls back to any
+`UpstreamCause` if no foreign one is present.
+
 ## Usage
 
 ```groovy
-// Immediate parent
+// Immediate foreign upstream
 def upstream = getUpstreamBuild()
 if (upstream) {
   echo "Triggered by ${upstream.displayName}"
 }
 
-// Top of the upstream chain (e.g. grandparent)
+// Top of the upstream chain (e.g. grandparent, skipping same-job hops)
 def root = getUpstreamBuild(root: true)
 ```
 
 ## Parameters
 
-- `root` - Boolean; when `true`, walk the upstream chain and return the
-  top-most UpstreamCause instead of the immediate parent (default: `false`)
+- `root` - Boolean; when `true`, walk the upstream chain from the chosen
+  cause and return the top-most foreign UpstreamCause instead of the
+  immediate one (default: `false`)
 
 ## Returns
 
@@ -30,4 +41,4 @@ Map with:
 - `url` - relative URL to the upstream build
 - `displayName` - `"<project> #<build>"`
 
-or `null` if the build has no `UpstreamCause`.
+or `null` if the cause tree contains no `UpstreamCause`.
