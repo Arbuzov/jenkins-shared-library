@@ -139,11 +139,13 @@ ${environment}
           </ac:rich-text-body>
         </ac:structured-macro>
         <% } %>
-        <% def screenshotName = testcase.name.replaceAll('[^\\w\\-]', '_') + '.png' %>
-        <% if (testcase.failure?.size() > 0 && availableScreenshots?.contains(screenshotName)) { %>
-        <ac:image ac:thumbnail="true" ac:width="200">
-          <ri:attachment ri:filename="${screenshotName}" />
-        </ac:image>
+        <% def screenshotPrefix = testcase.name.replaceAll('[^\\w\\-]', '_') %>
+        <% def testScreenshots = availableScreenshots?.findAll { it.startsWith(screenshotPrefix) && it.endsWith('.png') }?.sort() ?: [] %>
+        <% if (testcase.failure?.size() > 0 && testScreenshots) { %>
+        <ac:structured-macro ac:name="gallery" ac:schema-version="1">
+          <ac:parameter ac:name="columns">3</ac:parameter>
+          <ac:parameter ac:name="include">${testScreenshots.join(',')}</ac:parameter>
+        </ac:structured-macro>
         <% } %>
       </td>
     </tr>
