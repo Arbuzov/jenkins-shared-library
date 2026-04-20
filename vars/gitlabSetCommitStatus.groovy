@@ -2,19 +2,24 @@
  * Post a commit status (pipeline check) to GitLab via the REST API.
  *
  * Produces a separate named status on the target commit, visible as a check
- * next to any other pipelines on the MR / commit in GitLab.
+ * next to any other pipelines on the MR / commit in GitLab. To target a
+ * project different from the current one (e.g. the upstream project that
+ * triggered this build), pass an explicit `gitUrl` (used for project-path
+ * derivation) or a numeric `projectId`.
  *
  * Args:
  *  - state: 'pending', 'running', 'success', 'failed', 'canceled', 'skipped' (required)
  *  - name: status context name shown in GitLab (default: env.JOB_NAME)
  *  - sha: commit SHA (default: env.GITLAB_COMMIT_SHA, env.gitlabMergeRequestLastCommit, env.GIT_COMMIT)
- *  - projectId: GitLab project ID (default: env.GITLAB_PROJECT_ID, else resolved via API)
+ *  - projectId: numeric GitLab project ID; takes precedence over gitUrl (default: env.GITLAB_PROJECT_ID, else resolved via API)
+ *  - gitUrl: git URL used to derive the project path for API lookup (default: env.GIT_URL)
  *  - targetUrl: URL to link the check to (default: env.BUILD_URL)
  *  - description: short description shown in GitLab (optional)
  *  - ref: branch or tag name (optional)
  *  - coverage: coverage percentage (optional)
- *  - gitlabBaseUrl: GitLab base URL without /api/v4 (default: derived from env)
+ *  - gitlabBaseUrl: GitLab base URL without /api/v4 (default: derived from gitUrl/env)
  *  - gitlabCredentialsId: Jenkins credentials ID with GitLab token (default: 'gitlab-text-secret')
+ *  - debug: log request/response details to the build console (default: false)
  */
 def call(Map args = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
@@ -33,21 +38,24 @@ def call(Map args = [:]) {
     throw new Exception("gitlabSetCommitStatus(): Must provide sha or call with commit context (GITLAB_COMMIT_SHA / gitlabMergeRequestLastCommit / GIT_COMMIT).")
   }
 
+  def effectiveGitUrl = args.gitUrl ?: env.GIT_URL
   def name = args.name ?: env.JOB_NAME
   def targetUrl = args.targetUrl ?: env.BUILD_URL
   def gitlabCredentialsId = args.gitlabCredentialsId ?: 'gitlab-text-secret'
+  def debug = args.debug ?: false
 
-  String gitlabBaseUrl = args.gitlabBaseUrl ?: gitlabBaseUrl()
+  String gitlabBaseUrl = args.gitlabBaseUrl ?: gitlabBaseUrl(effectiveGitUrl)
   if (gitlabBaseUrl == null) {
     throw new Exception("gitlabSetCommitStatus(): Unable to determine GitLab base URL.")
   }
   gitlabBaseUrl = gitlabBaseUrl + "/api/v4"
 
   def projectId = args.projectId ?: env.GITLAB_PROJECT_ID
-  if (projectId == null && gitlabProjectNameEscaped()) {
+  def projectPath = gitlabProjectNameEscaped(effectiveGitUrl)
+  if (projectId == null && projectPath) {
     withCredentials([string(credentialsId: gitlabCredentialsId, variable: 'privateToken')]) {
       def response = httpRequest(
-        url: "${gitlabBaseUrl}/projects/${gitlabProjectNameEscaped()}",
+        url: "${gitlabBaseUrl}/projects/${projectPath}",
         customHeaders: [[name: 'PRIVATE-TOKEN', value: privateToken]],
         acceptType: 'APPLICATION_JSON',
         quiet: true,
@@ -58,7 +66,7 @@ def call(Map args = [:]) {
     }
   }
   if (projectId == null) {
-    throw new Exception("gitlabSetCommitStatus(): Unable to determine project ID.")
+    throw new Exception("gitlabSetCommitStatus(): Unable to determine project ID (sha=${sha}, gitUrl=${effectiveGitUrl}).")
   }
   if (!projectId.toString().matches(/^\d+$/)) {
     throw new Exception("gitlabSetCommitStatus(): projectId must be numeric. Got '${projectId}'.")
@@ -72,39 +80,39 @@ def call(Map args = [:]) {
   if (args.coverage != null) query.coverage = args.coverage
   def queryString = query.collect { k, v -> "${k}=${URLEncoder.encode(v.toString(), 'UTF-8')}" }.join('&')
 
+  def url = "${gitlabBaseUrl}/projects/${projectId}/statuses/${sha}?${queryString}"
+  if (debug) {
+    echo "[gitlabSetCommitStatus] POST ${url}"
+  }
   withCredentials([string(credentialsId: gitlabCredentialsId, variable: 'privateToken')]) {
-    def url = "${gitlabBaseUrl}/projects/${projectId}/statuses/${sha}?${queryString}"
     def response = httpRequest(
       url: url,
       httpMode: 'POST',
       customHeaders: [[name: 'PRIVATE-TOKEN', value: privateToken]],
       acceptType: 'APPLICATION_JSON',
       validResponseCodes: '100:399',
-      quiet: true,
-      consoleLogResponseBody: false,
+      quiet: !debug,
+      consoleLogResponseBody: debug,
     )
     return readJSON(text: response?.getContent())
   }
 }
 
 /**
- * Get GitLab base URL from GITLAB_PROJECT_HTTP_URL or GIT_URL environment variables.
+ * Derive a GitLab base URL (scheme + host) from the given git URL, or from
+ * env.GITLAB_PROJECT_HTTP_URL / env.GIT_URL as fallbacks.
  */
-def gitlabBaseUrl() {
+def gitlabBaseUrl(String sourceGitUrl = null) {
   try {
     URL url
-    if (env.GITLAB_PROJECT_HTTP_URL) {
-      url = new URL(env.GITLAB_PROJECT_HTTP_URL)
-    } else if (env.GIT_URL) {
-      def gitUrl = env.GIT_URL?.trim()
-      if (gitUrl?.startsWith('http')) {
-        url = new URL(gitUrl)
-      } else if (gitUrl?.startsWith('git@')) {
-        def hostAndPath = gitUrl.substring(4).replace(':', '/')
-        url = new URL("https://${hostAndPath}")
-      } else {
-        return 'https://gitlab.asatnet.net'
-      }
+    def candidate = sourceGitUrl ?: env.GITLAB_PROJECT_HTTP_URL ?: env.GIT_URL
+    if (!candidate) return 'https://gitlab.asatnet.net'
+    def gitUrl = candidate.trim()
+    if (gitUrl.startsWith('http')) {
+      url = new URL(gitUrl)
+    } else if (gitUrl.startsWith('git@')) {
+      def hostAndPath = gitUrl.substring(4).replace(':', '/')
+      url = new URL("https://${hostAndPath}")
     } else {
       return 'https://gitlab.asatnet.net'
     }
@@ -114,11 +122,27 @@ def gitlabBaseUrl() {
   }
 }
 
-def gitlabProjectNameEscaped() {
-  if (!env.GIT_URL || !env.GIT_URL.startsWith('git@') || !env.GIT_URL.contains(':')) {
+/**
+ * Extract the URL-encoded `namespace/path` of a git URL (ssh or http form),
+ * suitable for use in GitLab REST API `projects/:id` routes.
+ */
+def gitlabProjectNameEscaped(String sourceGitUrl = null) {
+  def candidate = sourceGitUrl ?: env.GIT_URL
+  if (!candidate) return null
+  def gitUrl = candidate.trim()
+  def path
+  if (gitUrl.startsWith('git@') && gitUrl.contains(':')) {
+    path = gitUrl.substring(gitUrl.indexOf(':') + 1)
+  } else if (gitUrl.startsWith('http')) {
+    try {
+      path = new URL(gitUrl).getPath()?.replaceFirst('^/', '')
+    } catch (Exception e) {
+      return null
+    }
+  } else {
     return null
   }
-  def gitUrl = env.GIT_URL?.trim()
-  def ssh = gitUrl - '.git'
-  return ssh.split(':')[1].replaceAll('/', '%2F')
+  if (!path) return null
+  path = path - '.git'
+  return path.replaceAll('/', '%2F')
 }
