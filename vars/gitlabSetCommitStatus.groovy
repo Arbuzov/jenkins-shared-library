@@ -13,6 +13,12 @@
  *  - sha: commit SHA (default: env.GITLAB_COMMIT_SHA, env.gitlabMergeRequestLastCommit, env.GIT_COMMIT)
  *  - projectId: numeric GitLab project ID; takes precedence over gitUrl (default: env.GITLAB_PROJECT_ID, else resolved via API)
  *  - gitUrl: git URL used to derive the project path for API lookup (default: env.GIT_URL)
+ *  - mergeRequestIid: when the resolved projectId is the target project of an MR
+ *                     from a fork, commits only exist in the source project, so
+ *                     GitLab rejects /projects/:target/statuses/:sha. If this
+ *                     arg is set, the helper looks up the MR on projectId and
+ *                     replaces projectId with MR.source_project_id. Commit SHA
+ *                     is left as-is (caller is expected to pass the source head).
  *  - targetUrl: URL to link the check to (default: env.BUILD_URL)
  *  - description: short description shown in GitLab (optional)
  *  - ref: branch or tag name (optional)
@@ -70,6 +76,23 @@ def call(Map args = [:]) {
   }
   if (!projectId.toString().matches(/^\d+$/)) {
     throw new Exception("gitlabSetCommitStatus(): projectId must be numeric. Got '${projectId}'.")
+  }
+
+  if (args.mergeRequestIid) {
+    withCredentials([string(credentialsId: gitlabCredentialsId, variable: 'privateToken')]) {
+      def mrResponse = httpRequest(
+        url: "${gitlabBaseUrl}/projects/${projectId}/merge_requests/${args.mergeRequestIid}",
+        customHeaders: [[name: 'PRIVATE-TOKEN', value: privateToken]],
+        acceptType: 'APPLICATION_JSON',
+        quiet: !debug,
+        consoleLogResponseBody: debug,
+      )
+      def mr = readJSON(text: mrResponse?.getContent())
+      if (mr?.source_project_id) {
+        if (debug) echo "[gitlabSetCommitStatus] MR !${args.mergeRequestIid}: source_project_id=${mr.source_project_id} (target=${projectId})"
+        projectId = mr.source_project_id
+      }
+    }
   }
 
   def query = [state: state]

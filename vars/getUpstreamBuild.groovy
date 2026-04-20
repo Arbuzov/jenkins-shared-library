@@ -25,6 +25,8 @@
  *    - displayName: "<project> #<build>"
  *    - gitUrl:      remote URL of the upstream build's main SCM (or null)
  *    - gitCommit:   commit SHA checked out by the upstream build (or null)
+ *    - mrIid:       GitLab MR IID when the upstream is a branch source MR job
+ *                   (project name ends with "/MR-<digits>"), else null
  *  or null if no foreign UpstreamCause is present anywhere in the tree.
  */
 def call(Map args = [:]) {
@@ -106,6 +108,10 @@ def inspectCauses(boolean wantRoot) {
   def scmInfo = fetchUpstreamScm(project, build)
   trace << "scm project=${project} build=${build} -> ${scmInfo}"
 
+  def mrIid = null
+  def mrMatcher = (project =~ /\/MR-(\d+)$/)
+  if (mrMatcher) mrIid = mrMatcher[0][1]
+
   return [
     result: [
       project: project,
@@ -114,6 +120,7 @@ def inspectCauses(boolean wantRoot) {
       displayName: "${project} #${build}",
       gitUrl: scmInfo.gitUrl,
       gitCommit: scmInfo.gitCommit,
+      mrIid: mrIid,
     ],
     trace: trace,
   ]
