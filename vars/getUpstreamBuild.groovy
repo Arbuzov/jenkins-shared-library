@@ -3,15 +3,13 @@
  *
  * Walks the full cause tree — top-level causes plus any nested causes reachable
  * via UpstreamCause.getUpstreamCauses() — and returns the first UpstreamCause
- * whose project differs from the current job (to ignore RebuildCause-like
- * causes pointing back at the same job). Falls back to the first
- * UpstreamCause of any kind if no foreign one is found. Returns null when the
- * build was not triggered by another job.
+ * whose project differs from the current job. Returns null when no such
+ * foreign upstream exists (manual runs, SCM/timer triggers, and
+ * RebuildCause-only rebuilds of the current job).
  *
  * When the upstream Run is reachable, its SCM details (git URL and commit
- * SHA) are also pulled from the `hudson.plugins.git.util.BuildData` action
- * so callers can, for example, report a commit status back to the upstream
- * project.
+ * SHA) are pulled from the upstream Run's environment (main SCM's
+ * GIT_URL / GIT_COMMIT), falling back to the first BuildData action.
  *
  * Args:
  *  - root:  if true, walk the upstream chain from the chosen cause and return
@@ -25,9 +23,9 @@
  *    - build:       upstream build number
  *    - url:         relative URL to the upstream build
  *    - displayName: "<project> #<build>"
- *    - gitUrl:      remote URL of the upstream build's SCM (or null)
+ *    - gitUrl:      remote URL of the upstream build's main SCM (or null)
  *    - gitCommit:   commit SHA checked out by the upstream build (or null)
- *  or null if no UpstreamCause is present anywhere in the tree.
+ *  or null if no foreign UpstreamCause is present anywhere in the tree.
  */
 def call(Map args = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
@@ -39,8 +37,8 @@ def call(Map args = [:]) {
 
   if (debug) {
     echo "[getUpstreamBuild] currentProject=${env.JOB_NAME} scannedCauses=${data.trace.size()}"
-    data.trace.eachWithIndex { entry, i ->
-      echo "[getUpstreamBuild] #${i}: ${entry}"
+    data.trace.eachWithIndex { entry, index ->
+      echo "[getUpstreamBuild] #${index}: ${entry}"
     }
     echo "[getUpstreamBuild] selected: ${data.result ?: 'null (no upstream found)'}"
   }
@@ -57,22 +55,26 @@ def inspectCauses(boolean wantRoot) {
   def queue = new ArrayList(currentBuild.rawBuild.getCauses())
   def visited = [] as Set
   while (!queue.isEmpty()) {
-    def c = queue.remove(0)
-    if (!visited.add(System.identityHashCode(c))) continue
+    def cause = queue.remove(0)
+    if (!visited.add(System.identityHashCode(cause))) continue
 
-    def className = c.getClass().getName()
-    def shortDesc
-    try { shortDesc = c.getShortDescription() } catch (Throwable e) { shortDesc = "(getShortDescription failed: ${e.message})" }
+    def className = cause.getClass().getName()
+    def shortDescription
+    try {
+      shortDescription = cause.getShortDescription()
+    } catch (Throwable exception) {
+      shortDescription = "(getShortDescription failed: ${exception.message})"
+    }
 
-    def isUpstream = isUpstreamCause(c)
-    def line = "class=${className} isUpstream=${isUpstream} desc=${shortDesc}"
+    def isUpstream = isUpstreamCause(cause)
+    def line = "class=${className} isUpstream=${isUpstream} desc=${shortDescription}"
     if (isUpstream) {
-      def proj = safeGet(c, 'getUpstreamProject')
-      def num  = safeGet(c, 'getUpstreamBuild')
-      line += " project=${proj} build=${num}"
-      upstreamCauses << c
-      def nested = safeGet(c, 'getUpstreamCauses')
-      if (nested instanceof Collection) queue.addAll(nested)
+      def causeProject = safeGet(cause, 'getUpstreamProject')
+      def causeBuild = safeGet(cause, 'getUpstreamBuild')
+      line += " project=${causeProject} build=${causeBuild}"
+      upstreamCauses << cause
+      def nestedCauses = safeGet(cause, 'getUpstreamCauses')
+      if (nestedCauses instanceof Collection) queue.addAll(nestedCauses)
     }
     trace << line
   }
@@ -81,24 +83,28 @@ def inspectCauses(boolean wantRoot) {
     return [result: null, trace: trace]
   }
 
-  def cause = upstreamCauses.find { safeGet(it, 'getUpstreamProject') != currentProject } ?: upstreamCauses.first()
+  def selectedCause = upstreamCauses.find { safeGet(it, 'getUpstreamProject') != currentProject }
+  if (selectedCause == null) {
+    trace << "no foreign upstream found (only same-project rebuild(s)); returning null"
+    return [result: null, trace: trace]
+  }
 
   if (wantRoot) {
     while (true) {
-      def nested = safeGet(cause, 'getUpstreamCauses') ?: []
-      def next = nested.find { isUpstreamCause(it) && safeGet(it, 'getUpstreamProject') != currentProject } ?:
-                 nested.find { isUpstreamCause(it) }
-      if (next == null) break
-      cause = next
+      def nestedCauses = safeGet(selectedCause, 'getUpstreamCauses') ?: []
+      def nextCause = nestedCauses.find { isUpstreamCause(it) && safeGet(it, 'getUpstreamProject') != currentProject } ?:
+                      nestedCauses.find { isUpstreamCause(it) }
+      if (nextCause == null) break
+      selectedCause = nextCause
     }
   }
 
-  def project = safeGet(cause, 'getUpstreamProject')
-  def build = safeGet(cause, 'getUpstreamBuild')
-  def url = safeGet(cause, 'getUpstreamUrl')
+  def project = safeGet(selectedCause, 'getUpstreamProject')
+  def build = safeGet(selectedCause, 'getUpstreamBuild')
+  def url = safeGet(selectedCause, 'getUpstreamUrl')
 
-  def scm = fetchUpstreamScm(project, build)
-  trace << "scm project=${project} build=${build} -> ${scm}"
+  def scmInfo = fetchUpstreamScm(project, build)
+  trace << "scm project=${project} build=${build} -> ${scmInfo}"
 
   return [
     result: [
@@ -106,8 +112,8 @@ def inspectCauses(boolean wantRoot) {
       build: build,
       url: url,
       displayName: "${project} #${build}",
-      gitUrl: scm.gitUrl,
-      gitCommit: scm.gitCommit,
+      gitUrl: scmInfo.gitUrl,
+      gitCommit: scmInfo.gitCommit,
     ],
     trace: trace,
   ]
@@ -116,15 +122,15 @@ def inspectCauses(boolean wantRoot) {
 @NonCPS
 private boolean isUpstreamCause(cause) {
   if (cause instanceof hudson.model.Cause.UpstreamCause) return true
-  def name = cause.getClass().getName()
-  return name.endsWith('UpstreamCause') || name.endsWith('RebuildCause') || name.contains('UpstreamCause$')
+  def className = cause.getClass().getName()
+  return className.endsWith('UpstreamCause') || className.endsWith('RebuildCause') || className.contains('UpstreamCause$')
 }
 
 @NonCPS
-private Object safeGet(Object obj, String method) {
+private Object safeGet(Object target, String methodName) {
   try {
-    return obj.metaClass.respondsTo(obj, method) ? obj."$method"() : null
-  } catch (Throwable e) {
+    return target.metaClass.respondsTo(target, methodName) ? target."$methodName"() : null
+  } catch (Throwable exception) {
     return null
   }
 }
@@ -135,22 +141,35 @@ private Map fetchUpstreamScm(String project, Object build) {
     if (project == null || build == null) return [:]
     def item = jenkins.model.Jenkins.get().getItemByFullName(project)
     if (item == null) return [error: "item not found: ${project}"]
-    def run = item.getBuildByNumber(build instanceof Number ? build.intValue() : Integer.parseInt(build.toString()))
-    if (run == null) return [error: "build not found: ${project} #${build}"]
-    def bd = (run.getActions() ?: []).find { it.getClass().getName() == 'hudson.plugins.git.util.BuildData' }
-    if (bd == null) return [error: 'no BuildData action']
+    def buildNumber = build instanceof Number ? build.intValue() : Integer.parseInt(build.toString())
+    def upstreamRun = item.getBuildByNumber(buildNumber)
+    if (upstreamRun == null) return [error: "build not found: ${project} #${build}"]
+
+    try {
+      def environmentVars = upstreamRun.getEnvironment(hudson.model.TaskListener.NULL)
+      def gitUrl = environmentVars?.get('GIT_URL')
+      def gitCommit = environmentVars?.get('GIT_COMMIT')
+      if (gitUrl && gitCommit) {
+        return [gitUrl: gitUrl, gitCommit: gitCommit, source: 'env']
+      }
+    } catch (Throwable exception) {
+      // fall through to BuildData
+    }
+
+    def buildData = (upstreamRun.getActions() ?: []).find { it.getClass().getName() == 'hudson.plugins.git.util.BuildData' }
+    if (buildData == null) return [error: 'no GIT_URL/GIT_COMMIT in env and no BuildData action']
     String gitUrl = null
     String gitCommit = null
     try {
-      def urls = bd.remoteUrls
-      if (urls) gitUrl = urls.iterator().next()?.toString()
-    } catch (Throwable e) {}
+      def remoteUrls = buildData.remoteUrls
+      if (remoteUrls) gitUrl = remoteUrls.iterator().next()?.toString()
+    } catch (Throwable exception) {}
     try {
-      def rev = bd.lastBuiltRevision
-      if (rev) gitCommit = rev.sha1String
-    } catch (Throwable e) {}
-    return [gitUrl: gitUrl, gitCommit: gitCommit]
-  } catch (Throwable e) {
-    return [error: "fetchUpstreamScm failed: ${e.message}"]
+      def revision = buildData.lastBuiltRevision
+      if (revision) gitCommit = revision.sha1String
+    } catch (Throwable exception) {}
+    return [gitUrl: gitUrl, gitCommit: gitCommit, source: 'BuildData']
+  } catch (Throwable exception) {
+    return [error: "fetchUpstreamScm failed: ${exception.message}"]
   }
 }
