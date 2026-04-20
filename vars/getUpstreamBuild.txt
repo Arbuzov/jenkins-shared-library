@@ -31,6 +31,8 @@ def root = getUpstreamBuild(root: true)
 - `root` - Boolean; when `true`, walk the upstream chain from the chosen
   cause and return the top-most foreign UpstreamCause instead of the
   immediate one (default: `false`)
+- `debug` - Boolean; when `true` (default), echo the full cause tree and
+  the selected cause to the build console. Disable with `debug: false`.
 
 ## Returns
 

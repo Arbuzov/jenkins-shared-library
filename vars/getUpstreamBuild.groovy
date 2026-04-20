@@ -3,14 +3,21 @@
  *
  * Walks the full cause tree — top-level causes plus any nested causes reachable
  * via UpstreamCause.getUpstreamCauses() — and returns the first UpstreamCause
- * whose project differs from the current job (to ignore RebuildCause, which
- * extends UpstreamCause and points back at the current job). Falls back to the
- * first UpstreamCause of any kind if no foreign one is found. Returns null
- * when the build was not triggered by another job (manual, SCM, timer, etc.).
+ * whose project differs from the current job (to ignore RebuildCause-like
+ * causes pointing back at the same job). Falls back to the first
+ * UpstreamCause of any kind if no foreign one is found. Returns null when the
+ * build was not triggered by another job (manual, SCM, timer, etc.).
+ *
+ * Class detection uses both `instanceof hudson.model.Cause.UpstreamCause` and
+ * a class-name suffix match (`UpstreamCause` / `RebuildCause`) so plugin
+ * subclasses that are not visible from the library classloader are still
+ * recognized.
  *
  * Args:
- *  - root: if true, walk the upstream chain from the chosen cause and return
- *          the top-most foreign UpstreamCause (default: false)
+ *  - root:  if true, walk the upstream chain from the chosen cause and return
+ *           the top-most foreign UpstreamCause (default: false)
+ *  - debug: if true, echo the full cause tree and the selected cause to the
+ *           build console (default: true — disable with `debug: false`)
  *
  * Returns:
  *  Map with keys:
@@ -20,45 +27,96 @@
  *    - displayName: "<project> #<build>"
  *  or null if no UpstreamCause is present anywhere in the tree.
  */
-@NonCPS
 def call(Map args = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
 
   def wantRoot = args.root ?: false
+  def debug = args.containsKey('debug') ? args.debug : true
+
+  def data = inspectCauses(wantRoot)
+
+  if (debug) {
+    echo "[getUpstreamBuild] currentProject=${env.JOB_NAME} scannedCauses=${data.trace.size()}"
+    data.trace.eachWithIndex { entry, i ->
+      echo "[getUpstreamBuild] #${i}: ${entry}"
+    }
+    echo "[getUpstreamBuild] selected: ${data.result ?: 'null (no upstream found)'}"
+  }
+
+  return data.result
+}
+
+@NonCPS
+def inspectCauses(boolean wantRoot) {
   def currentProject = env.JOB_NAME
+  def trace = []
+  def upstreamCauses = []
 
   def queue = new ArrayList(currentBuild.rawBuild.getCauses())
   def visited = [] as Set
-  def upstreamCauses = []
   while (!queue.isEmpty()) {
     def c = queue.remove(0)
-    if (!(c instanceof hudson.model.Cause.UpstreamCause)) continue
     if (!visited.add(System.identityHashCode(c))) continue
-    upstreamCauses << c
-    def nested = c.getUpstreamCauses()
-    if (nested) queue.addAll(nested)
-  }
-  if (upstreamCauses.isEmpty()) {
-    return null
+
+    def className = c.getClass().getName()
+    def shortDesc
+    try { shortDesc = c.getShortDescription() } catch (Throwable e) { shortDesc = "(getShortDescription failed: ${e.message})" }
+
+    def isUpstream = isUpstreamCause(c)
+    def line = "class=${className} isUpstream=${isUpstream} desc=${shortDesc}"
+    if (isUpstream) {
+      def proj = safeGet(c, 'getUpstreamProject')
+      def num  = safeGet(c, 'getUpstreamBuild')
+      line += " project=${proj} build=${num}"
+      upstreamCauses << c
+      def nested = safeGet(c, 'getUpstreamCauses')
+      if (nested instanceof Collection) queue.addAll(nested)
+    }
+    trace << line
   }
 
-  def cause = upstreamCauses.find { it.upstreamProject != currentProject } ?: upstreamCauses.first()
+  if (upstreamCauses.isEmpty()) {
+    return [result: null, trace: trace]
+  }
+
+  def cause = upstreamCauses.find { safeGet(it, 'getUpstreamProject') != currentProject } ?: upstreamCauses.first()
 
   if (wantRoot) {
     while (true) {
-      def nested = cause.getUpstreamCauses() ?: []
-      def next = nested.find {
-        it instanceof hudson.model.Cause.UpstreamCause && it.upstreamProject != currentProject
-      } ?: nested.find { it instanceof hudson.model.Cause.UpstreamCause }
+      def nested = safeGet(cause, 'getUpstreamCauses') ?: []
+      def next = nested.find { isUpstreamCause(it) && safeGet(it, 'getUpstreamProject') != currentProject } ?:
+                 nested.find { isUpstreamCause(it) }
       if (next == null) break
       cause = next
     }
   }
 
+  def project = safeGet(cause, 'getUpstreamProject')
+  def build = safeGet(cause, 'getUpstreamBuild')
+  def url = safeGet(cause, 'getUpstreamUrl')
   return [
-    project: cause.upstreamProject,
-    build: cause.upstreamBuild,
-    url: cause.upstreamUrl,
-    displayName: "${cause.upstreamProject} #${cause.upstreamBuild}",
+    result: [
+      project: project,
+      build: build,
+      url: url,
+      displayName: "${project} #${build}",
+    ],
+    trace: trace,
   ]
+}
+
+@NonCPS
+private boolean isUpstreamCause(cause) {
+  if (cause instanceof hudson.model.Cause.UpstreamCause) return true
+  def name = cause.getClass().getName()
+  return name.endsWith('UpstreamCause') || name.endsWith('RebuildCause') || name.contains('UpstreamCause$')
+}
+
+@NonCPS
+private Object safeGet(Object obj, String method) {
+  try {
+    return obj.metaClass.respondsTo(obj, method) ? obj."$method"() : null
+  } catch (Throwable e) {
+    return null
+  }
 }
