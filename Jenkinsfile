@@ -374,7 +374,8 @@ pipeline {
                          "IDU repository path example without commit IDs")
         }
         script {
-            Map envmap = [
+            final String MR_GITLAB_URL = "git@gitlab.asatnet.net:my-ns/my-project.git"
+            final Map ENV_MR = [
                 CI: "true",
                 BRANCH_NAME: "MR-532",
                 BUILD_NUMBER: "4",
@@ -382,122 +383,91 @@ pipeline {
                 CHANGE_BRANCH: "my-change",
                 CHANGE_TARGET: "long-term",
                 GITLAB_OA_TARGET_BRANCH: "long-term",
-                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+                GITLAB_PROJECT_SSH_URL: MR_GITLAB_URL,
             ]
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "Merge request to merge branch \"my-change\" into branch \"long-term\"",
-                namespace: 'my-ns',
-                packageName: 'my-project',
-                _envP: envmap,
-            )
-
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
-        }
-        script {
-            Map envmap = [
+            final Map ENV_LONG_TERM = [
                 CI: "true",
                 BRANCH_NAME: "long-term",
                 BUILD_NUMBER: "210",
-                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+                GITLAB_PROJECT_SSH_URL: MR_GITLAB_URL,
             ]
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "Long term branch \"long-term\"",
-                namespace: 'my-ns',
-                packageName: 'my-project',
-                _envP: envmap,
-            )
-
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
-        }
-        script {
-            Map envmap = [
+            final Map ENV_MAIN = [
                 CI: "true",
                 BRANCH_NAME: "main",
                 BRANCH_IS_PRIMARY: "true",
                 BUILD_NUMBER: "321",
-                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+                GITLAB_PROJECT_SSH_URL: MR_GITLAB_URL,
             ]
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "Main long-term branch called \"main\" (set as default branch in GitLab)",
-                namespace: 'my-ns',
-                packageName: 'my-project',
-                _envP: envmap,
-            )
 
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
-        }
-        script {
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "This project",
-                namespace: 'my-ns-2',
-                packageName: 'my-project-2',
-            )
-
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
-        }
-        script {
-            Map envmap = [
-                CI: "true",
-                BRANCH_NAME: "MR-532",
-                BUILD_NUMBER: "4",
-                CHANGE_ID: "532",
-                CHANGE_BRANCH: "my-change",
-                CHANGE_TARGET: "long-term",
-                GITLAB_OA_TARGET_BRANCH: "long-term",
-                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
+            List scenarios = [
+                [
+                    title: 'MR to long-term',
+                    args : [
+                        _dbgComment: 'Merge request to merge branch "my-change" into branch "long-term"',
+                        namespace  : 'my-ns',
+                        packageName: 'my-project',
+                        _envP      : ENV_MR,
+                    ],
+                ],
+                [
+                    title: 'Long-term branch',
+                    args : [
+                        _dbgComment: 'Long term branch "long-term"',
+                        namespace  : 'my-ns',
+                        packageName: 'my-project',
+                        _envP      : ENV_LONG_TERM,
+                    ],
+                ],
+                [
+                    title: 'Main primary branch',
+                    args : [
+                        _dbgComment: 'Main long-term branch called "main" (set as default branch in GitLab)',
+                        namespace  : 'my-ns',
+                        packageName: 'my-project',
+                        _envP      : ENV_MAIN,
+                    ],
+                ],
+                [
+                    title: 'This project (no envmap)',
+                    args : [
+                        _dbgComment: 'This project',
+                        namespace  : 'my-ns-2',
+                        packageName: 'my-project-2',
+                    ],
+                ],
+                [
+                    title: 'MR to long-term with baseVersion',
+                    args : [
+                        _dbgComment: 'Merge request to merge branch "my-change" into branch "long-term", with baseVersion',
+                        namespace  : 'my-ns',
+                        packageName: 'my-project',
+                        baseVersion: 'bver-20220531',
+                        branchForBV: 'long-term',
+                        _envP      : ENV_MR,
+                    ],
+                ],
+                [
+                    title: 'Long-term branch with baseVersion',
+                    args : [
+                        _dbgComment: 'Long term branch "long-term", with baseVersion',
+                        namespace  : 'my-ns',
+                        packageName: 'my-project',
+                        baseVersion: 'bver-20220531',
+                        branchForBV: 'long-term',
+                        _envP      : ENV_LONG_TERM,
+                    ],
+                ],
             ]
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "Merge request to merge branch \"my-change\" into branch \"long-term\", with baseVersion",
-                namespace: 'my-ns',
-                packageName: 'my-project',
-                baseVersion: 'bver-20220531',
-                branchForBV: 'long-term',
-                _envP: envmap,
-            )
 
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
-        }
-        script {
-            Map envmap = [
-                CI: "true",
-                BRANCH_NAME: "long-term",
-                BUILD_NUMBER: "210",
-                GITLAB_PROJECT_SSH_URL: "git@gitlab.asatnet.net:my-ns/my-project.git",
-            ]
-            Map iminfo
-            iminfo = getIDUDockerImageInfo(
-                _dbgComment: "Long term branch \"long-term\", with baseVersion",
-                namespace: 'my-ns',
-                packageName: 'my-project',
-                baseVersion: 'bver-20220531',
-                branchForBV: 'long-term',
-                _envP: envmap,
-            )
-
-            String str = IDUDockerImageInfoToString(iminfo)
-
-            publishSummary('<pre>\n' + str + '</pre>\n',
-                           "Get Docker image info")
+            Map branches = scenarios.collectEntries { scenario ->
+                [(scenario.title): {
+                    Map iminfo = getIDUDockerImageInfo(scenario.args)
+                    String str = IDUDockerImageInfoToString(iminfo)
+                    publishSummary('<pre>\n' + str + '</pre>\n',
+                                   "IDU Docker image info: ${scenario.title}")
+                }]
+            }
+            parallel branches
         }
         script {
             String commit_1_info_str = getGitCommitInfoStr(commitId: env.TEST_GIT_COMMIT_SHA)
