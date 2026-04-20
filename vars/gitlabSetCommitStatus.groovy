@@ -16,9 +16,12 @@
  *  - mergeRequestIid: when the resolved projectId is the target project of an MR
  *                     from a fork, commits only exist in the source project, so
  *                     GitLab rejects /projects/:target/statuses/:sha. If this
- *                     arg is set, the helper looks up the MR on projectId and
- *                     replaces projectId with MR.source_project_id. Commit SHA
- *                     is left as-is (caller is expected to pass the source head).
+ *                     arg is set, the helper performs
+ *                     GET /projects/:id/merge_requests/:iid and replaces both
+ *                     projectId (-> source_project_id) and sha (-> mr.sha, i.e.
+ *                     the current MR head). Using mr.sha avoids 404s when the
+ *                     upstream-captured sha has been orphaned by a force-push
+ *                     on the MR.
  *  - targetUrl: URL to link the check to (default: env.BUILD_URL)
  *  - description: short description shown in GitLab (optional)
  *  - ref: branch or tag name (optional)
@@ -87,11 +90,10 @@ def call(Map args = [:]) {
         quiet: !debug,
         consoleLogResponseBody: debug,
       )
-      def mr = readJSON(text: mrResponse?.getContent())
-      if (mr?.source_project_id) {
-        if (debug) echo "[gitlabSetCommitStatus] MR !${args.mergeRequestIid}: source_project_id=${mr.source_project_id} (target=${projectId})"
-        projectId = mr.source_project_id
-      }
+      def mergeRequest = readJSON(text: mrResponse?.getContent())
+      echo "[gitlabSetCommitStatus] MR !${args.mergeRequestIid}: source_project_id=${mergeRequest?.source_project_id} sha=${mergeRequest?.sha} (target=${projectId}, upstream sha=${sha})"
+      if (mergeRequest?.source_project_id) projectId = mergeRequest.source_project_id
+      if (mergeRequest?.sha) sha = mergeRequest.sha
     }
   }
 
