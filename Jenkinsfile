@@ -17,6 +17,18 @@ pipeline {
     timeout(time: 24, unit: 'HOURS')
     newContainerPerStage()
   }
+  environment {
+    CUSTOM_LIB_CREDENTIALS_ID         = 'efedb983-6b76-42ee-ad7f-ed211b08657a'
+    GITLAB_API_CREDENTIALS_ID         = 'gitlab-text-secret'
+    TEST_GITLAB_REPO_URL              = 'git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git'
+    TEST_CONFLUENCE_SPACE             = 'DEVOPS'
+    TEST_CONFLUENCE_ROOT_ID           = '592773125'
+    TEST_CONFLUENCE_ROOT_NAME         = 'Debug'
+    TEST_CONFLUENCE_PAGE_FOR_CONTENT  = '404193285'
+    TEST_CONFLUENCE_PAGE_FOR_CHILDREN = '653164558'
+    TEST_CONFLUENCE_PAGE_FOR_ATTACH   = '668434500'
+    TEST_GIT_COMMIT_SHA               = 'df080764493676d5cfd8fae55d336875647e59db'
+  }
   stages {
     stage('Unit Tests') {
       agent {
@@ -56,8 +68,8 @@ pipeline {
           identifier: "custom-lib@${env.GIT_BRANCH}",
           retriever: modernSCM([
             $class: 'GitSCMSource',
-            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL?env.GITLAB_OA_SOURCE_GIT_SSH_URL:env.GIT_URL}",
-            credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
+            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL ?: env.GIT_URL}",
+            credentialsId: env.CUSTOM_LIB_CREDENTIALS_ID
           ])
         )
 
@@ -251,14 +263,10 @@ pipeline {
         )
 
         script {
-          if (env.GIT_URL == null) {
-            GIT_URL = env.GIT_URL_1;
-          } else {
-            GIT_URL = env.GIT_URL;
-          }
+          GIT_URL = env.GIT_URL ?: env.GIT_URL_1
         }
         tagToGitlab(GIT_URL, "rolling", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT, "rolling tag", "deprecated", false);
-        withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+        withCredentials([string(credentialsId: env.GITLAB_API_CREDENTIALS_ID, variable: 'gitLabAPISecret')]) {
           tagToGitlab(GIT_URL, "1", env.GITLAB_OA_LAST_COMMIT_ID ?: env.GIT_COMMIT);
           tagToGitlab(
             GIT_URL,
@@ -492,7 +500,7 @@ pipeline {
                            "Get Docker image info")
         }
         script {
-            String commit_1_info_str = getGitCommitInfoStr(commitId: 'df080764493676d5cfd8fae55d336875647e59db')
+            String commit_1_info_str = getGitCommitInfoStr(commitId: env.TEST_GIT_COMMIT_SHA)
             String commit_2_info_str = getGitCommitInfoStr()
             String sum_text = ''
 
@@ -529,8 +537,8 @@ pipeline {
           // Creating a page with a numeric ID (existing behavior)
           def urlById = createConfluencePage(
             TITLE     : "Numeric ID Test 1",
-            SPACE     : 'DEVOPS',
-            ROOT      : '592773125',
+            SPACE     : env.TEST_CONFLUENCE_SPACE,
+            ROOT      : env.TEST_CONFLUENCE_ROOT_ID,
             CONTENT   : '<h2>Numeric ID test</h2>',
             DEBUG     : true
           )
@@ -539,8 +547,8 @@ pipeline {
           // Creating a page with a root name
           def urlByName = createConfluencePage(
             TITLE     : "Named Root Test 1",
-            SPACE     : 'DEVOPS',
-            ROOT_NAME : 'Debug',
+            SPACE     : env.TEST_CONFLUENCE_SPACE,
+            ROOT_NAME : env.TEST_CONFLUENCE_ROOT_NAME,
             CONTENT   : '<h2>Named root test</h2>',
             DEBUG     : true
           )
@@ -558,7 +566,7 @@ pipeline {
           try {
             createConfluencePage(
               TITLE   : "No Root Test 1",
-              SPACE   : 'DEVOPS',
+              SPACE   : env.TEST_CONFLUENCE_SPACE,
               CONTENT : '<h2>No root provided</h2>',
               DEBUG   : true
             )
@@ -577,39 +585,35 @@ pipeline {
 
 
           // Attach a single file (normal case)
-          try {
+          catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE', message: 'Failed to attach single file to Confluence') {
               attachFilesToConfluencePage(
-                  PAGE_NAME    : 'Numeric ID Test',
-                  FILES : 'test-attachment-1.txt',
-                  DEBUG : true
+                  PAGE_NAME : 'Numeric ID Test',
+                  FILES     : 'test-attachment-1.txt',
+                  DEBUG     : true
               )
               echo "Attached single file successfully"
-          } catch (Exception e) {
-              echo "Failed to attach single file: ${e.message}"
           }
 
           // Attach multiple files using a mask
-          try {
+          catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE', message: 'Failed to attach multiple files to Confluence') {
               def files = findFiles(glob: 'test-*.txt')
               if (files) {
                   attachFilesToConfluencePage(
-                      SPACE : 'DEVOPS',
-                      PAGE_NAME    : 'Named Root Test',
-                      FILES : files.collect { it.path },
-                      DEBUG : true
+                      SPACE     : env.TEST_CONFLUENCE_SPACE,
+                      PAGE_NAME : 'Named Root Test',
+                      FILES     : files.collect { it.path },
+                      DEBUG     : true
                   )
                   echo "Attached multiple files successfully"
               } else {
                   echo "No matching files found for mask"
               }
-          } catch (Exception e) {
-              echo "Failed to attach multiple files: ${e.message}"
           }
 
-          // Non-existent file case
+          // Non-existent file case (expected to fail — keep try/catch to assert the failure)
           try {
             attachFilesToConfluencePage(
-              ID    : '668434500',
+              ID    : env.TEST_CONFLUENCE_PAGE_FOR_ATTACH,
               FILES : 'nonexistent-file.txt',
               DEBUG : true
             )
@@ -628,24 +632,24 @@ pipeline {
 
           // Create page with a single attachment
           def urlSingle = createConfluencePage(
-            TITLE   : "Single Attachment Test",
-            SPACE   : 'DEVOPS',
-            ROOT_NAME    : 'Debug',
-            CONTENT : '<h2>Single attach test</h2>',
-            FILES   : 'attach-one.txt',
-            DEBUG   : true
+            TITLE     : "Single Attachment Test",
+            SPACE     : env.TEST_CONFLUENCE_SPACE,
+            ROOT_NAME : env.TEST_CONFLUENCE_ROOT_NAME,
+            CONTENT   : '<h2>Single attach test</h2>',
+            FILES     : 'attach-one.txt',
+            DEBUG     : true
           )
           echo "Created page with single file at: ${urlSingle}\n"
 
           // Create page with multiple attachments via mask
           def multiFiles = findFiles(glob: 'attach-*.txt').collect{it.toString()}
           def urlMulti = createConfluencePage(
-            TITLE   : "Multiple Attachment Test",
-            SPACE   : 'DEVOPS',
-            ROOT_NAME    : 'Debug',
-            CONTENT : '<h2>Multiple attach test</h2>',
-            FILES   : multiFiles,
-            DEBUG   : true
+            TITLE     : "Multiple Attachment Test",
+            SPACE     : env.TEST_CONFLUENCE_SPACE,
+            ROOT_NAME : env.TEST_CONFLUENCE_ROOT_NAME,
+            CONTENT   : '<h2>Multiple attach test</h2>',
+            FILES     : multiFiles,
+            DEBUG     : true
           )
           echo "Created page with multiple files at: ${urlMulti}\n"
         }
@@ -665,16 +669,16 @@ pipeline {
           echo "Files to attach: ${filesToAttach}"
 
           def url = createConfluencePage(
-            TITLE: "Release test1",
-                SPACE    : 'DEVOPS',
-                ROOT_NAME: 'Debug',
+            TITLE    : "Release test1",
+            SPACE    : env.TEST_CONFLUENCE_SPACE,
+            ROOT_NAME: env.TEST_CONFLUENCE_ROOT_NAME,
                 CONTENT: inflateTemplate(
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(new ArrayList<>([]), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "1",
                   projectId: 'DEMO',
-                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/D}/.tar.gz",
+                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/1/application-plugin-1.tar.gz",
                   build: null
                 ),
                 FILES: (findFiles(glob: '**/*.syft.txt') + findFiles(glob: '**/*.grype.txt')).collect { it.path }
@@ -683,16 +687,16 @@ pipeline {
 
 
           def url2 = createConfluencePage(
-                TITLE: "Release test22",
-                SPACE    : 'DEVOPS',
-                ROOT_NAME: 'Debug',
+                TITLE    : "Release test22",
+                SPACE    : env.TEST_CONFLUENCE_SPACE,
+                ROOT_NAME: env.TEST_CONFLUENCE_ROOT_NAME,
                 CONTENT: inflateTemplate(
                   TEMPLATE: libraryResource('com/spacebridge/confluence/application-plugin.release.gtpl'),
                   date: new Date().format('yyyy-MM-dd'),
                   images: arrayToString(new ArrayList<>([]), ["<li>", "</li>"], ["<ul>", "</ul>"]),
                   version: "1",
                   projectId: 'DEMO',
-                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/D}/.tar.gz",
+                  pluginUrl: "https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/1/application-plugin-1.tar.gz",
                   boms: loadReports (mask: '*.syft.txt'),
                   vulnerability: loadReports (mask: "*.grype.txt"),
                   build: null
@@ -706,7 +710,7 @@ pipeline {
     
         script {
           echo "Testing getConfluencePageContent()..."
-          def pageId = '404193285'
+          def pageId = env.TEST_CONFLUENCE_PAGE_FOR_CONTENT
           def page = getConfluencePageContent(PAGE_ID: pageId)
           // trim to 128 symbols
           def content = page.content.substring(0, 128) + '...'
@@ -716,7 +720,7 @@ pipeline {
 
         script {
           echo "Testing getConfluencePageChildren()..."
-          def pageId = '653164558'
+          def pageId = env.TEST_CONFLUENCE_PAGE_FOR_CHILDREN
           def children = getConfluencePageChildren(PAGE_ID: pageId)
           def childrenStr = children.collect { it.toString() }.join(', ')
           echo "Page ID ${pageId}, children: ${childrenStr}"
@@ -738,8 +742,8 @@ pipeline {
           identifier: "custom-lib@${env.GIT_BRANCH}",
           retriever: modernSCM([
             $class: 'GitSCMSource',
-            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL?env.GITLAB_OA_SOURCE_GIT_SSH_URL:env.GIT_URL}",
-            credentialsId: 'efedb983-6b76-42ee-ad7f-ed211b08657a'
+            remote: "${env.GITLAB_OA_SOURCE_GIT_SSH_URL ?: env.GIT_URL}",
+            credentialsId: env.CUSTOM_LIB_CREDENTIALS_ID
           ])
         )
         gitlabSetMrApproval(approve: false)
@@ -750,7 +754,7 @@ pipeline {
         )
         // Find a related branch for this merge request - BEGIN
         sh "env"
-        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'gitlab-text-secret')
+        getRelatedBranch(env.TEST_GITLAB_REPO_URL, env.GITLAB_API_CREDENTIALS_ID)
         sh "env"
         // Find a related branch for this merge request - END
 
@@ -767,7 +771,7 @@ pipeline {
           env.putAt('GITLAB_OA_SOURCE_BRANCH', 'z_branch_240')
         }
         sh "env"
-        getRelatedBranch('git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git', 'gitlab-text-secret')
+        getRelatedBranch(env.TEST_GITLAB_REPO_URL, env.GITLAB_API_CREDENTIALS_ID)
         sh "env"
 
         script {
@@ -818,7 +822,7 @@ pipeline {
   post {
     failure {
       echo "======== **Pipeline execution FAILED.** ========"
-      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+      withCredentials([string(credentialsId: env.GITLAB_API_CREDENTIALS_ID, variable: 'gitLabAPISecret')]) {
         noteToMrGitlab(
           "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
           "${env.CHANGE_ID}",
@@ -828,7 +832,7 @@ pipeline {
     }
     unstable {
       echo "======== **Pipeline execution result is UNSTABLE.** ========"
-      withCredentials([string(credentialsId: 'gitlab-text-secret', variable: 'gitLabAPISecret')]) {
+      withCredentials([string(credentialsId: env.GITLAB_API_CREDENTIALS_ID, variable: 'gitLabAPISecret')]) {
         noteToMrGitlab(
           "${env.GITLAB_OA_TARGET_GIT_SSH_URL}",
           "${env.CHANGE_ID}",
