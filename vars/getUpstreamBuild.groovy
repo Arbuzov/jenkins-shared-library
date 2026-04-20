@@ -145,19 +145,27 @@ private Map fetchUpstreamScm(String project, Object build) {
     def upstreamRun = item.getBuildByNumber(buildNumber)
     if (upstreamRun == null) return [error: "build not found: ${project} #${build}"]
 
+    def mainScmUrl = resolveJobMainScmUrl(item)
+    def scmCommit = resolveRunScmCommit(upstreamRun, mainScmUrl)
+    if (mainScmUrl && scmCommit) {
+      return [gitUrl: mainScmUrl, gitCommit: scmCommit, source: 'Job+Run']
+    }
+
     try {
       def environmentVars = upstreamRun.getEnvironment(hudson.model.TaskListener.NULL)
-      def gitUrl = environmentVars?.get('GIT_URL')
-      def gitCommit = environmentVars?.get('GIT_COMMIT')
-      if (gitUrl && gitCommit) {
-        return [gitUrl: gitUrl, gitCommit: gitCommit, source: 'env']
+      def envGitUrl = environmentVars?.get('GIT_URL')
+      def envGitCommit = environmentVars?.get('GIT_COMMIT')
+      if (envGitUrl && envGitCommit) {
+        return [gitUrl: envGitUrl, gitCommit: envGitCommit, source: 'env']
       }
     } catch (Throwable exception) {
-      // fall through to BuildData
+      // fall through
     }
 
     def buildData = (upstreamRun.getActions() ?: []).find { it.getClass().getName() == 'hudson.plugins.git.util.BuildData' }
-    if (buildData == null) return [error: 'no GIT_URL/GIT_COMMIT in env and no BuildData action']
+    if (buildData == null) {
+      return [error: "could not resolve SCM (scmUrl=${mainScmUrl}, commit=${scmCommit})"]
+    }
     String gitUrl = null
     String gitCommit = null
     try {
@@ -172,4 +180,77 @@ private Map fetchUpstreamScm(String project, Object build) {
   } catch (Throwable exception) {
     return [error: "fetchUpstreamScm failed: ${exception.message}"]
   }
+}
+
+/**
+ * Resolve the main SCM remote URL for a Jenkins item.
+ * - Multibranch Pipeline branch job: take the parent folder's first SCMSource.
+ * - Plain Pipeline from SCM: take the first userRemoteConfig of the job's SCM.
+ */
+@NonCPS
+private String resolveJobMainScmUrl(Object item) {
+  try {
+    def parent = item.metaClass.respondsTo(item, 'getParent') ? item.getParent() : null
+    if (parent?.metaClass?.respondsTo(parent, 'getSCMSources')) {
+      def sources = parent.getSCMSources() ?: []
+      if (!sources.isEmpty()) {
+        def firstSource = sources.first()
+        if (firstSource?.metaClass?.respondsTo(firstSource, 'getRemote')) {
+          return firstSource.getRemote()?.toString()
+        }
+      }
+    }
+    if (item.metaClass.respondsTo(item, 'getDefinition')) {
+      def definition = item.getDefinition()
+      if (definition?.metaClass?.respondsTo(definition, 'getScm')) {
+        def scm = definition.getScm()
+        if (scm?.metaClass?.respondsTo(scm, 'getUserRemoteConfigs')) {
+          def configs = scm.getUserRemoteConfigs() ?: []
+          if (!configs.isEmpty()) return configs.first().getUrl()?.toString()
+        }
+      }
+    }
+  } catch (Throwable exception) {
+    // swallow
+  }
+  return null
+}
+
+/**
+ * Resolve the commit SHA checked out by the main SCM of the given Run.
+ * - Prefer SCMRevisionAction (set by multibranch branch sources).
+ * - Otherwise pick the BuildData action whose remoteUrls contain the expected
+ *   main SCM URL, returning its lastBuiltRevision.
+ */
+@NonCPS
+private String resolveRunScmCommit(Object upstreamRun, String mainScmUrl) {
+  try {
+    def scmRevisionAction = (upstreamRun.getActions() ?: []).find {
+      it.getClass().getName() == 'jenkins.scm.api.SCMRevisionAction'
+    }
+    if (scmRevisionAction?.metaClass?.respondsTo(scmRevisionAction, 'getRevision')) {
+      def revision = scmRevisionAction.getRevision()
+      if (revision?.metaClass?.respondsTo(revision, 'getHash')) {
+        def hash = revision.getHash()?.toString()
+        if (hash) return hash
+      }
+    }
+    if (mainScmUrl) {
+      def matchingBuildData = (upstreamRun.getActions() ?: []).find {
+        if (it.getClass().getName() != 'hudson.plugins.git.util.BuildData') return false
+        try {
+          def urls = it.remoteUrls ?: []
+          return urls.any { remoteUrl -> remoteUrl?.toString() == mainScmUrl }
+        } catch (Throwable exception) {
+          return false
+        }
+      }
+      if (matchingBuildData?.lastBuiltRevision) {
+        return matchingBuildData.lastBuiltRevision.sha1String
+      }
+    }
+  } catch (Throwable exception) {
+    // swallow
+  }
+  return null
 }
