@@ -1,0 +1,56 @@
+# gitlabCleanupOldTags
+
+Deletes old GitLab tags in a project, keeping only the N most recent by
+creation date.
+
+> **INTERNAL / HOUSEKEEPING ONLY.** This step is **not** meant for general
+> pipeline use. It exists to clean up throwaway tags left over by
+> function-testing jobs. Do NOT call it from release or production flows —
+> there is no safety net around which tags get removed beyond the
+> "keep N newest" rule.
+
+Default target is the current repository (resolved via `env.GIT_URL`).
+
+## Usage
+
+```groovy
+// Keep the 3 newest tags in the current repo, delete the rest.
+gitlabCleanupOldTags()
+
+// Preview only — log what would be deleted, don't touch anything.
+gitlabCleanupOldTags(keep: 3, dryRun: true)
+
+// Custom retention / another project.
+gitlabCleanupOldTags(
+  keep: 5,
+  gitUrl: 'git@gitlab.example.com:group/project.git',
+  credentialsId: 'gitlab-text-secret'
+)
+```
+
+## Parameters
+- `keep` (optional, default `3`) — number of most recent tags to keep.
+- `gitUrl` (optional, default `env.GIT_URL`) — SSH or HTTPS repo URL; used
+  to derive the GitLab host and the URL-encoded project path.
+- `projectId` (optional) — GitLab numeric project ID or URL-encoded path;
+  overrides the project derived from `gitUrl`.
+- `gitlabBaseUrl` (optional) — GitLab base URL **without** `/api/v4`
+  (e.g. `https://gitlab.example.com`); derived from `gitUrl` when omitted.
+- `credentialsId` (optional, default `gitlab-text-secret`) — Jenkins
+  credentials ID holding a GitLab personal/project access token with
+  `api` scope and tag-delete permission.
+- `dryRun` (optional, default `false`) — when `true`, only logs which tags
+  would be deleted; no DELETE requests are sent.
+
+## Returns
+`Map` with:
+- `kept` — `List<String>` of tag names retained.
+- `deleted` — `List<String>` of tag names successfully deleted.
+- `skipped` — `List<String>` of tag names skipped (dryRun or delete failure).
+
+## Failure behavior
+- Fails when `keep` is negative.
+- Fails when neither `gitUrl`/`env.GIT_URL` nor `projectId`+`gitlabBaseUrl`
+  can be resolved.
+- Individual tag deletions that return a non-2xx status are reported in
+  `skipped` and logged, but do not abort the whole step.

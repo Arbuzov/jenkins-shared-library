@@ -268,6 +268,14 @@ pipeline {
             "## Release ${BUILD_NUMBER}\n\n__Build reference:__ ${BUILD_URL}\n\n__Artifactory:__ ${ARTIFACTORY_UPLOADS[0]}"
           );
         }
+
+        // Housekeeping: the steps above create a fresh `${BUILD_NUMBER}` tag on
+        // every run of this test pipeline. Keep only the 3 most recent tags in
+        // the current repo to prevent unbounded growth. INTERNAL use only.
+        script {
+          def cleanup = gitlabCleanupOldTags(keep: 3, gitUrl: GIT_URL)
+          echo "gitlabCleanupOldTags: kept=${cleanup.kept}, deleted=${cleanup.deleted}, skipped=${cleanup.skipped}"
+        }
         sh """#!/bin/sh
               set -x
               set -e
