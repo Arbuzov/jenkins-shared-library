@@ -1,55 +1,60 @@
-def allImages = new HashSet<String>()
-def processedFiles = new HashSet<String>()
-
-def processComposeFile(parentDir, composeFile, envProps) {
-  processedFiles.add(composeFile)
-
-  def composeRaw = readFile(file: composeFile)
-
-  if (envProps) {
-    envProps.each{ key, val ->
-      composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
-    }
-  }
-
-  def composeYaml = readYaml(text: composeRaw)
-
-  // Collect images
-  if (composeYaml.services) {
-    composeYaml.services.each{ key, val ->
-      if (val.image) {
-        allImages.add(val.image)
-      }
-    }
-  }
-
-  // Process includes
-  if (composeYaml.include) {
-    composeYaml.include.each { includeSpec ->
-      def includePath = includeSpec instanceof Map ? includeSpec.path : includeSpec
-      def includeFile = new File(parentDir, includePath)
-      def dir = includeFile.getParent().toString()
-
-      processComposeFile(dir, includeFile.toString(), envProps)
-    }
-  }
-}
-
 Set<String> getImageList() {
-  // Read env properties
-  def envProps = [:]
-  if (fileExists(".env")) {
-    envProps = readProperties(
-      interpolate: true,
-      file: ".env"
-    )
-  }
+    // Read env properties
+    def envProps = [:]
+    if (fileExists(".env")) {
+        envProps = readProperties(
+            interpolate: true,
+            file: ".env"
+        )
+    }
 
-  // start with the main compose file
-  def mainComposeFile = fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
-  processComposeFile(".", mainComposeFile, envProps)
+    // Start with main file
+    static def allImages = new HashSet<String>()
+    def composeFile = fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
+    def dir = "."
+    def composeQueue = [] as LinkedList
+    composeQueue.add([dir, composeFile])
 
-  return allImages
+
+    while (!composeQueue.isEmpty()) {
+        //processedFiles.add(composeFile)
+
+        def values = composeQueue.poll()
+        dir = values[0]
+        composeFile = values[1]
+
+        def composeRaw = readFile(file: composeFile)
+
+        if (envProps) {
+            envProps.each{ key, val ->
+                composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
+            }
+        }
+
+        def composeYaml = readYaml(text: composeRaw)
+
+        // Collect images
+        if (composeYaml.services) {
+            composeYaml.services.each{ key, val ->
+                if (val.image) {
+                    allImages.add(val.image)
+                }
+            }
+        }
+
+        // Process includes
+        if (composeYaml.include) {
+            composeYaml.include.each { includeSpec ->
+                def includePath = includeSpec instanceof Map ? includeSpec.path : includeSpec
+                def includeFile = new File(dir, includePath)
+                def includeDir = includeFile.getParent().toString()
+
+                composeQueue.add([includeDir, includeFile.toString()])
+            }
+        }
+    }
+
+    return allImages
 }
 
 Set<String> getImageListOld() {
