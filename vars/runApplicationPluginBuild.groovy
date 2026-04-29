@@ -1,4 +1,58 @@
+def allImages = new HashSet<String>()
+def processedFiles = new HashSet<String>()
+
+def processComposeFile(parentDir, composeFile, envProps) {
+  processedFiles.add(composeFile)
+
+  def composeRaw = readFile(file: composeFile)
+
+  if (envProps) {
+    envProps.each{ key, val ->
+      composeRaw = composeRaw.replaceAll('\\$\\{'+key.trim()+'\\}', val.trim())
+    }
+  }
+
+  def composeYaml = readYaml(text: composeRaw)
+
+  // Collect images
+  if (composeYaml.services) {
+    composeYaml.services.each{ key, val ->
+      if (val.image) {
+        allImages.add(val.image)
+      }
+    }
+  }
+
+  // Process includes
+  if (composeYaml.include) {
+    composeYaml.include.each { includeSpec ->
+      def includePath = includeSpec instanceof Map ? includeSpec.path : includeSpec
+      def includeFile = new File(parentDir, includePath)
+      def dir = includeFile.getParent().toString()
+
+      processComposeFile(dir, includeFile.toString(), envProps)
+    }
+  }
+}
+
 Set<String> getImageList() {
+  // Read env properties
+  def envProps = [:]
+  if (fileExists(".env")) {
+    envProps = readProperties(
+      interpolate: true,
+      file: ".env"
+    )
+  }
+
+  // start with the main compose file
+  def mainComposeFile = fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
+  processComposeFile(".", mainComposeFile, envProps)
+
+  return allImages
+}
+
+Set<String> getImageListOld() {
   def images = new HashSet<String>()
   def composeRaw = readFile(
     file: fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
