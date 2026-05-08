@@ -1,20 +1,62 @@
 # notifyTeams
 
-Placeholder step for Microsoft Teams notifications.
+Post a chat message to Microsoft Teams via the Graph API, authenticating with delegated permissions on behalf of a service-account user.
 
-The current implementation only records usage (`reportUsage(...)`) and does not send any messages.
+## Why delegated, not app-only
+
+Graph's `POST /chats/{id}/messages` endpoint requires `Teamwork.Migrate.All` when called with app-only permissions, and that role is intended only for one-off chat history migrations. Delegated `Chat.ReadWrite` works for ongoing automation and avoids the migration-only path.
+
+## Setup (one-time per Jenkins instance)
+
+1. Azure AD app must have **Delegated** permission `Chat.ReadWrite` (or `ChatMessage.Send`), with admin consent granted.
+2. A dedicated service-account user must exist:
+   - has a Teams license,
+   - has no MFA / Conditional-Access block,
+   - is a member of every chat the pipeline posts to.
+3. Jenkins username/password credentials:
+   - `azure-teams-app`     — username = `client_id`, password = `client_secret`
+   - `virtual-user-azure`  — username = UPN, password = user password
+
+Both default credential IDs are overridable via parameters.
 
 ## Usage
 
 ```groovy
-notifyTeams([:])
+notifyTeams(
+  CHAT_ID: '19:....@unq.gbl.spaces',
+  MESSAGE: '<p>Build <b>OK</b></p>'
+)
+
+// Multiple chats, plain text:
+notifyTeams(
+  CHAT_ID: ['19:a@unq.gbl.spaces', '19:b@unq.gbl.spaces'],
+  MESSAGE: 'plain text alert',
+  FORMAT: 'text'
+)
 ```
 
 ## Parameters
 
-`arg` (Map) - currently unused.
+| Parameter             | Default                                | Description                                                  |
+|-----------------------|----------------------------------------|--------------------------------------------------------------|
+| `CHAT_ID`             | (required)                             | Single chat ID or List of chat IDs.                          |
+| `MESSAGE`             | (required)                             | Message body. HTML by default, plain text if `FORMAT='text'`.|
+| `FORMAT`              | `html`                                 | `html` or `text`.                                            |
+| `TENANT_ID`           | `b177c9bd-46b9-4bf4-86d3-eefbb46ba01a` | Azure AD tenant ID.                                          |
+| `APP_CREDENTIALS_ID`  | `azure-teams-app`                      | Jenkins credential with `client_id` / `client_secret`.       |
+| `USER_CREDENTIALS_ID` | `virtual-user-azure`                   | Jenkins credential with service-account UPN / password.      |
+| `GRAPH_BASE_URL`      | `https://graph.microsoft.com/v1.0`     | Base URL for Graph API.                                      |
+| `DEBUG`               | `false`                                | Log non-secret request/response detail.                      |
 
 ## Returns
 
-No return value.
+`List<String>` of chatMessage IDs (one per `CHAT_ID`), or `null` if `CHAT_ID` was empty.
 
+## Failure modes
+
+| Condition                                  | Behavior                                           |
+|--------------------------------------------|----------------------------------------------------|
+| `MESSAGE` empty                            | `error()` — fails the build.                       |
+| Token endpoint returns non-2xx             | `error()` with full response body in message.      |
+| Chat message POST returns non-2xx          | `error()` with full response body in message.      |
+| `CHAT_ID` empty / null                     | Returns `null`, no API calls made.                 |
