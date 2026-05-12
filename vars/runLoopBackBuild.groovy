@@ -324,7 +324,7 @@ def call(Map arg = [:]) {
           }
         }
         environment {
-          VERSION = "${readJSON(file: 'package.json').version}-${env.BRANCH_NAME.equals('master')?'':env.BRANCH_NAME?.toLowerCase()}b${BUILD_NUMBER}"
+          VERSION = "${readJSON(file: 'package.json').version}-b${BUILD_NUMBER}"
           PACKAGE_NAME = "${readJSON(file: 'package.json').name.replaceAll('/','-').replaceAll('@','')}"
         }
         steps {
