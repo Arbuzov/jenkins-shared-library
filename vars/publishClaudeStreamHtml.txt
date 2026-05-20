@@ -1,0 +1,85 @@
+# publishClaudeStreamHtml
+
+Render the NDJSON output of `claude --output-format=stream-json` as a
+human-readable HTML transcript and publish it as a Jenkins HTML report.
+
+One call does parsing, rendering and publishing.
+
+## Usage
+
+```groovy
+publishClaudeStreamHtml(
+  SOURCE:      'debug.jsonp',
+  REPORT_NAME: 'PRD Review Transcript',
+  TITLE:       'PRD review transcript',
+  CONTEXT:     ['PRD page': PRD_PAGE]
+)
+```
+
+Inside a Declarative Pipeline `post` block:
+
+```groovy
+post {
+  always {
+    publishClaudeStreamHtml(
+      SOURCE:      'debug.jsonp',
+      REPORT_NAME: 'PRD Review Transcript',
+      CONTEXT:     ['PRD page': PRD_PAGE]
+    )
+    archiveArtifacts artifacts: '**/*', allowEmptyArchive: true
+  }
+}
+```
+
+## Parameters
+
+All parameters are passed through a Map. `UPPER_SNAKE_CASE` keys.
+
+| Parameter                    | Default                       | Description |
+|------------------------------|-------------------------------|-------------|
+| `SOURCE`                     | `'debug.jsonp'`               | Path to the stream-json NDJSON file. |
+| `OUTPUT`                     | `'claude-transcript.html'`    | Path to write the rendered HTML to. |
+| `REPORT_NAME`                | `'Claude Stream Transcript'`  | Jenkins HTML report name shown in the build sidebar. |
+| `TITLE`                      | `'Claude run transcript'`     | H1 on the rendered page. |
+| `CONTEXT`                    | `[:]`                         | Map of label -> value rendered in the meta line. URL values are auto-linkified. |
+| `BUILD_NUMBER`               | `env.BUILD_NUMBER`            | Override the displayed build number. |
+| `BUILD_URL`                  | `env.BUILD_URL`               | Override the build link. |
+| `PREVIEW_LIMIT`              | `4000`                        | Max chars kept per tool input/output preview. Larger payloads stay archived in `SOURCE`. |
+| `KEEP_ALL`                   | `true`                        | publishHTML `keepAll` flag. |
+| `ALWAYS_LINK_TO_LAST_BUILD`  | `true`                        | publishHTML flag. |
+| `ALLOW_MISSING`              | `false`                       | publishHTML `allowMissing` flag (i.e. the rendered HTML itself). |
+| `ALLOW_MISSING_SOURCE`       | `true`                        | When true and `SOURCE` does not exist, echo a notice and return null instead of failing — safe to call from `post.always`. |
+| `DEBUG`                      | `false`                       | Verbose echo. |
+
+## Returns
+
+`Map` with the parsed structure, or `null` if `SOURCE` was missing and
+`ALLOW_MISSING_SOURCE` was true. Shape:
+
+| Key                  | Type    | Description |
+|----------------------|---------|-------------|
+| `events`             | `List<Map>` | Ordered transcript events. Kinds: `assistant_text`, `tool_invocation` (paired call+result), `tool_result` (orphan), `final_result`. |
+| `stats`              | `Map`   | `turns`, `durationMs`, `costUsd`, `toolCalls`, `toolErrors`, `outputTokens`, `isError`. |
+| `sessionId`          | `String` | claude session id from `system` / `result` records. |
+| `publishFailureLine` | `String` | First `PUBLISH FAILED:` line found in assistant output, or `''`. |
+| `generatedAt`        | `String` | ISO-8601 UTC parsing timestamp. |
+| `outputFile`         | `String` | Path of the rendered HTML on disk. |
+
+## Failure behavior
+
+- `SOURCE` missing and `ALLOW_MISSING_SOURCE: false` -> `error(...)` (pipeline fails).
+- `SOURCE` missing and `ALLOW_MISSING_SOURCE: true`  -> echo notice, return null.
+- Malformed JSON lines are skipped silently — the file may contain non-JSON
+  noise (Jenkins timestamp prefixes are handled).
+- `publishHTML` failures propagate.
+
+## Notes
+
+- The rendered HTML loads marked.js from a CDN to render Markdown in
+  assistant text (headings, lists, tables, code blocks). When the CDN is
+  unreachable, an inline fallback switches to readable preformatted text.
+- The template lives at `resources/claude/transcript.html.gtpl` and is
+  inflated by [`inflateTemplate`](inflateTemplate.txt).
+- The parser pairs each `tool_call` with its matching `tool_result` by
+  `tool_use_id` into a single `tool_invocation` so the rendered page shows
+  one card per tool action with input and output side by side.
