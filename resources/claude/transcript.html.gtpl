@@ -134,13 +134,13 @@
       </div>
       <div class="event-body">
         <details>
-          <summary>Input (${ev.inputBytes} bytes)</summary>
+          <summary>Input (${ev.inputChars} chars)</summary>
           <pre class="code">${ev.inputPreview?.replace('&', '&amp;')?.replace('<', '&lt;')?.replace('>', '&gt;')}</pre>
           <% if (ev.inputTruncated) { %><div class="truncated">truncated to ${ev.previewLimit} chars; full input archived in the source file</div><% } %>
         </details>
         <% if (ev.hasResult) { %>
         <details ${ev.isError ? 'open' : ''}>
-          <summary>Output (${ev.contentBytes} bytes)${ev.isError ? ' &mdash; error' : ''}</summary>
+          <summary>Output (${ev.contentChars} chars)${ev.isError ? ' &mdash; error' : ''}</summary>
           <pre class="code ${ev.isError ? 'error' : ''}">${ev.contentPreview?.replace('&', '&amp;')?.replace('<', '&lt;')?.replace('>', '&gt;')}</pre>
           <% if (ev.contentTruncated) { %><div class="truncated">truncated to ${ev.previewLimit} chars; full content archived in the source file</div><% } %>
         </details>
@@ -157,7 +157,7 @@
       </div>
       <div class="event-body">
         <details ${ev.isError ? 'open' : ''}>
-          <summary>Output (${ev.contentBytes} bytes)</summary>
+          <summary>Output (${ev.contentChars} chars)</summary>
           <pre class="code ${ev.isError ? 'error' : ''}">${ev.contentPreview?.replace('&', '&amp;')?.replace('<', '&lt;')?.replace('>', '&gt;')}</pre>
           <% if (ev.contentTruncated) { %><div class="truncated">truncated to ${ev.previewLimit} chars; full content archived in the source file</div><% } %>
         </details>
@@ -180,14 +180,18 @@
   Generated ${generatedAt}. Source: <code>${sourceFile}</code>.
 </div>
 
-<!-- Client-side Markdown rendering for assistant text. marked.js is loaded
-     from a CDN; if it fails (offline / strict CSP) the inline fallback
-     switches the divs back to .text-plain (pre-wrap) so the text stays
-     readable. -->
+<!-- Client-side Markdown rendering for assistant text.
+     marked.js parses Markdown; DOMPurify sanitizes the output before it
+     reaches innerHTML so that any raw HTML present in the model output
+     (or echoed from tool results) cannot inject script tags or other
+     active content. If either library fails to load (offline / strict
+     CSP) the inline fallback switches the divs to .text-plain
+     (pre-wrap) so the text stays readable. -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js" crossorigin="anonymous"></script>
 <script>
   (function () {
-    if (typeof marked === 'undefined') {
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
       document.querySelectorAll('.markdown').forEach(function (el) {
         el.classList.remove('markdown');
         el.classList.add('text-plain');
@@ -196,7 +200,7 @@
     }
     marked.setOptions({ gfm: true, breaks: false });
     document.querySelectorAll('.markdown[data-md="1"]').forEach(function (el) {
-      el.innerHTML = marked.parse(el.textContent);
+      el.innerHTML = DOMPurify.sanitize(marked.parse(el.textContent));
     });
   })();
 </script>
