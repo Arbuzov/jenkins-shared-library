@@ -75,9 +75,11 @@ All parameters are passed through a Map. `UPPER_SNAKE_CASE` keys.
 
 ## Notes
 
-- The rendered HTML loads marked.js from a CDN to render Markdown in
-  assistant text (headings, lists, tables, code blocks). When the CDN is
-  unreachable, an inline fallback switches to readable preformatted text.
+- The rendered HTML loads marked.js and DOMPurify from a CDN to render and
+  sanitize Markdown in assistant text (headings, lists, tables, code blocks).
+  DOMPurify strips any raw HTML the model might have produced before the
+  result reaches `innerHTML`. When either CDN is unreachable, an inline
+  fallback switches to readable preformatted text.
 - The template lives at `resources/claude/transcript.html.gtpl` and is
   inflated by [`inflateTemplate`](inflateTemplate.txt).
 - The parser pairs each `tool_call` with its matching `tool_result` by

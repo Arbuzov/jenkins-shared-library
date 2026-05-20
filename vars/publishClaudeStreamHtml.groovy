@@ -63,7 +63,7 @@ def call(Map arg = [:]) {
   }
 
   String raw = readFile(SOURCE)
-  if (DEBUG) echo "publishClaudeStreamHtml(): parsing ${raw.length()} bytes from '${SOURCE}'"
+  if (DEBUG) echo "publishClaudeStreamHtml(): parsing ${raw.length()} chars from '${SOURCE}'"
 
   Map data = parseStream(raw, PREVIEW_LIMIT)
   if (DEBUG) {
@@ -118,20 +118,23 @@ private static Boolean toBool(value, Boolean dflt) {
  * Event kinds in the returned list:
  *   - assistant_text   { kind, model, text }
  *   - tool_invocation  { kind, name, id,
- *                        inputBytes, inputPreview, inputTruncated,
+ *                        inputChars, inputPreview, inputTruncated,
  *                        hasResult, isError,
- *                        contentBytes, contentPreview, contentTruncated,
+ *                        contentChars, contentPreview, contentTruncated,
  *                        previewLimit }
  *   - tool_result      orphan result with no matching call (rare)
  *   - final_result     { kind, subtype, numTurns, durationMs, costUsd, resultText }
+ *
+ * Note: *Chars fields are character counts (String.length()), not bytes —
+ * relevant for non-ASCII content where UTF-8 byte size differs.
  */
 @NonCPS
 private static Map parseStream(String text, int previewLimit) {
   def truncate = { String s ->
-    if (s == null) return [text: '', truncated: false, bytes: 0]
+    if (s == null) return [text: '', truncated: false, chars: 0]
     int n = s.length()
-    if (n <= previewLimit) return [text: s, truncated: false, bytes: n]
-    return [text: s.substring(0, previewLimit) + '\n...[truncated]', truncated: true, bytes: n]
+    if (n <= previewLimit) return [text: s, truncated: false, chars: n]
+    return [text: s.substring(0, previewLimit) + '\n...[truncated]', truncated: true, chars: n]
   }
   def stringify = { v ->
     (v instanceof String) ? v : JsonOutput.prettyPrint(JsonOutput.toJson(v))
@@ -154,16 +157,25 @@ private static Map parseStream(String text, int previewLimit) {
   String sessionId = ''
   String publishFailure = ''
 
-  // Pre-filter: stream_event deltas dominate the file; only assembled
-  // assistant/user/result/system records carry the data we render.
-  def keepPrefixes = ['{"type":"assistant"', '{"type":"user"', '{"type":"result"', '{"type":"system"']
+  // Lines we care about: the assembled assistant/user/result/system records.
+  // Everything else (stream_event deltas, malformed lines, log noise) is
+  // dropped. We do NOT pre-filter by literal `{"type":"..."` prefix because
+  // some Jenkins log pipelines prepend per-line timestamps to the file
+  // (`21:51:15  {"type":...}`). Instead we strip any prefix before the
+  // first `{` and let `obj.type` decide.
+  Set keepTypes = ['assistant', 'user', 'result', 'system'] as Set
 
   text.split('\n').each { String rawLine ->
     String line = rawLine?.trim()
-    if (!line || !keepPrefixes.any { line.startsWith(it) }) return
+    if (!line) return
+    int brace = line.indexOf('{')
+    if (brace < 0) return
+    if (brace > 0) line = line.substring(brace)
     def obj
     try { obj = slurper.parseText(line) } catch (Exception ignored) { return }
+    if (!(obj instanceof Map)) return
     def t = obj.type
+    if (!keepTypes.contains(t)) return
 
     if (t == 'assistant') {
       def msg = obj.message ?: [:]
@@ -179,7 +191,7 @@ private static Map parseStream(String text, int previewLimit) {
           def p = truncate(inputStr)
           toolCalls << [
             kind: 'tool_call', name: block.name ?: '?', id: block.id ?: '',
-            inputBytes: p.bytes, inputPreview: p.text, inputTruncated: p.truncated,
+            inputChars: p.chars, inputPreview: p.text, inputTruncated: p.truncated,
             previewLimit: previewLimit
           ]
         }
@@ -195,14 +207,24 @@ private static Map parseStream(String text, int previewLimit) {
         if (!(block instanceof Map) || block.type != 'tool_result') return
         def body = joinTextBlocks(block.content)
         boolean isError = block.is_error == true
-        if (!isError && (body.contains('"success": false') || body.contains('"success":false'))) {
-          isError = true
+        // Many MCP tools wrap their result in a JSON object with a `success`
+        // flag — try parsing first; fall back to a substring scan only if
+        // parsing fails. Either signal flags the result as an error.
+        if (!isError) {
+          try {
+            def parsed = slurper.parseText(body)
+            if (parsed instanceof Map && parsed.success == false) isError = true
+          } catch (Exception ignored) {
+            if (body.contains('"success": false') || body.contains('"success":false')) {
+              isError = true
+            }
+          }
         }
         if (isError) stats.toolErrors = (stats.toolErrors as int) + 1
         def p = truncate(body)
         events << [
           kind: 'tool_result', toolUseId: block.tool_use_id ?: '', isError: isError,
-          contentBytes: p.bytes, contentPreview: p.text, contentTruncated: p.truncated,
+          contentChars: p.chars, contentPreview: p.text, contentTruncated: p.truncated,
           previewLimit: previewLimit
         ]
       }
@@ -238,10 +260,10 @@ private static Map parseStream(String text, int previewLimit) {
     if (ev.kind == 'tool_call') {
       def inv = [
         kind: 'tool_invocation', name: ev.name, id: ev.id,
-        inputBytes: ev.inputBytes, inputPreview: ev.inputPreview, inputTruncated: ev.inputTruncated,
+        inputChars: ev.inputChars, inputPreview: ev.inputPreview, inputTruncated: ev.inputTruncated,
         previewLimit: ev.previewLimit,
         hasResult: false, isError: false,
-        contentBytes: 0, contentPreview: '', contentTruncated: false
+        contentChars: 0, contentPreview: '', contentTruncated: false
       ]
       merged << inv
       pendingById[ev.id] = inv
@@ -250,7 +272,7 @@ private static Map parseStream(String text, int previewLimit) {
       if (inv) {
         inv.hasResult = true
         inv.isError = ev.isError
-        inv.contentBytes = ev.contentBytes
+        inv.contentChars = ev.contentChars
         inv.contentPreview = ev.contentPreview
         inv.contentTruncated = ev.contentTruncated
       } else {
