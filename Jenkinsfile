@@ -23,7 +23,7 @@ pipeline {
     TEST_GITLAB_REPO_URL              = 'git@gitlab.asatnet.net:vsat/satnet-dev-sit2.git'
     TEST_CONFLUENCE_SPACE             = 'DEVOPS'
     TEST_CONFLUENCE_ROOT_ID           = '592773125'
-    TEST_CONFLUENCE_ROOT_NAME         = 'Debug'
+    TEST_CONFLUENCE_ROOT_NAME         = 'Sandbox'
     TEST_CONFLUENCE_PAGE_FOR_CONTENT  = '404193285'
     TEST_CONFLUENCE_PAGE_FOR_CHILDREN = '653164558'
     TEST_CONFLUENCE_PAGE_FOR_ATTACH   = '668434500'
