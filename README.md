@@ -46,6 +46,7 @@ CI for GitLab projects.
 - [publishArtifactsInGitlabComment](vars/publishArtifactsInGitlabComment.groovy) — publish build artifacts as an MR comment
 - [mergeRequestsChangeLog](vars/mergeRequestsChangeLog.groovy) — assemble a changelog from merged MRs
 - [tagToGitlab](vars/tagToGitlab.groovy) — create/delete tags via the GitLab API
+- [gitlabUpdateFile](vars/gitlabUpdateFile.groovy) — update a single repo file via the GitLab API ([docs](vars/gitlabUpdateFile.txt))
 
 ### Jira
 - [addJiraIssueLink](vars/addJiraIssueLink.groovy) — attach a remote link (e.g. build URL) to an issue

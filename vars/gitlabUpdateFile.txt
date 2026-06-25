@@ -1,0 +1,64 @@
+# gitlabUpdateFile
+
+Update a single existing file in a GitLab repository through the REST API,
+creating one commit on the target branch. Wraps
+`PUT /projects/:id/repository/files/:file_path`.
+
+Use it when a pipeline needs to write back a small managed file (a version
+stamp, a generated config, a status marker) without a full git checkout.
+
+## Usage
+
+```groovy
+// Minimal: update a file on the current project's master branch
+gitlabUpdateFile(
+  filePath: 'deploy/version.txt',
+  content: "${env.BUILD_NUMBER}\n",
+)
+
+// Explicit project, branch and commit message
+gitlabUpdateFile(
+  filePath: 'config/state.json',
+  content: writeJSON(returnText: true, json: [ready: true]),
+  branch: 'main',
+  commitMessage: "ci: mark ready [${env.BUILD_TAG}]",
+  gitUrl: 'git@gitlab.asatnet.net:team/project.git',
+)
+
+// Target a foreign project by numeric ID
+gitlabUpdateFile(
+  filePath: 'README.md',
+  content: readFile('README.md'),
+  projectId: 1234,
+  gitlabBaseUrl: 'https://gitlab.asatnet.net',
+)
+```
+
+## Parameters
+
+Passed through a Map.
+
+- `filePath` (required) - repo-relative path of the file to update
+- `content` (required) - new file content; pass `''` to empty the file
+- `branch` - branch to commit on (default: `env.BRANCH_NAME`, else `master`)
+- `commitMessage` - commit message (default: `Update <filePath>`)
+- `gitUrl` - SSH or HTTPS repo URL (default: `env.GIT_URL`)
+- `projectId` - numeric GitLab project ID or URL-encoded path (default: derived from `gitUrl`)
+- `gitlabBaseUrl` - GitLab base URL without `/api/v4` (default: derived from `gitUrl`; required when `projectId` is given without `gitUrl`)
+- `credentialsId` - Jenkins credentials ID with a GitLab token (default: `gitlab-text-secret`)
+- `authorName` - commit author name override (optional)
+- `authorEmail` - commit author email override (optional)
+- `startBranch` - branch to create `branch` from if it does not yet exist (optional)
+- `debug` - log request URL and response body (default: `false`)
+
+## Returns
+
+Map - the GitLab API response, e.g. `[file_path: 'deploy/version.txt', branch: 'master']`.
+
+## Failure behavior
+
+- Fails with `error(...)` when `filePath` or `content` is missing, or when
+  neither `gitUrl`/`projectId` nor a derivable base URL is available.
+- The file must already exist on `branch`; GitLab returns `400 Bad Request`
+  for a non-existent path. This step updates only — it does not create files.
+- Any non-`100:399` HTTP response aborts the step via the `httpRequest` plugin.

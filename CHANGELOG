@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- New shared-library step `gitlabUpdateFile` in `vars/gitlabUpdateFile.groovy`.
+  - Updates a single existing repository file via `PUT /repository/files/:path`, creating one commit on the target branch.
+  - Derives project/base URL from `gitUrl` or accepts an explicit `projectId`; sends content as a JSON body with `PRIVATE-TOKEN` auth.
+  - Validates required inputs (`filePath`, `content`) and supports `branch`, `commitMessage`, author overrides, and `debug`.
+- Step documentation for `gitlabUpdateFile` in `vars/gitlabUpdateFile.txt`.
+- Unit tests for file-update behavior in `src/test/groovy/vars/GitlabUpdateFileTest.groovy`.
 - New shared-library step `addConfluenceComment` in `vars/addConfluenceComment.groovy`.
   - Adds a comment to a Confluence page by `PAGE_ID`.
   - Supports `RAW` response mode and `DEBUG` logging mode.
