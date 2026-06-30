@@ -272,7 +272,7 @@ def call(Map arg) {
       stage('Check images') {
         agent {
           docker {
-            image 'registry.nexus.asatnet.net/spacebridge/dind-anchore:1.0.2-b23'
+            image 'docker.nexus.asatnet.net/spacebridge/dind-anchore:latest'
             args '--privileged'
           }
         }
