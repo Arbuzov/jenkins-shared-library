@@ -9,7 +9,7 @@ Set<String> getImageList() {
     }
 
     // Start with main file
-    static def allImages = new HashSet<String>()
+    def allImages = new HashSet<String>()
     def composeFile = fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
     def dir = "."
     def composeQueue = [] as LinkedList
@@ -120,6 +120,25 @@ def saveImages(images, dest ) {
   }
 }
 
+// Manifest (YAML) is the new company-wide passport format; manifest.json is the
+// deprecated fallback. Prefer YAML, fall back to JSON. NMSNG-1284
+def readManifest() {
+  if (fileExists('Manifest')) {
+    return readYaml(file: 'Manifest')
+  }
+  return readJSON(file: 'manifest.json')
+}
+
+// Persist the stamped version into the manifest(s) that ship in ${dir} so the
+// deployed meta plugin reports the build version. Manifest (YAML) is always
+// written (it is the meta's passport); manifest.json only when already present. NMSNG-1284
+def writeManifest(dir, manifest) {
+  writeYaml(file: "${dir}/Manifest", data: manifest, overwrite: true)
+  if (fileExists("${dir}/manifest.json")) {
+    writeJSON(file: "${dir}/manifest.json", json: manifest, pretty: 2)
+  }
+}
+
 def call(Map arg) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
   MANIFEST = [:]
@@ -154,13 +173,13 @@ def call(Map arg) {
         }
         steps {
           script {
-            MANIFEST = readYaml(file: 'Manifest')
+            MANIFEST = readManifest()
           }
           fileOperations(
             [folderCreateOperation(
               folderPath: "${WORKSPACE}/package"
             )] +
-            readYaml(file: 'Manifest').plugins.collect { pluginName, pluginVersion ->
+            MANIFEST.plugins.collect { pluginName, pluginVersion ->
               [
                 fileDownloadOperation(
                   url: "http://nexus.asatnet.net/repository/maven-releases/com/spacebridge/application-plugin/${pluginName}/${pluginVersion.replace('-offline','')}/${pluginName}-${pluginVersion}.tar.gz",
@@ -217,7 +236,8 @@ def call(Map arg) {
               }
             }
             saveImages(IMAGES, 'package/images' )
-            MANIFEST.version = "${MANIFEST.version}-b${BUILD_ID}"
+            MANIFEST.version = "${MANIFEST.version}-b${BUILD_ID}".toString()
+            writeManifest('package', MANIFEST)
           }
           tar(
             file: "${MANIFEST.name}-${MANIFEST.version}.tar.gz",
@@ -253,7 +273,8 @@ def call(Map arg) {
               }
             }
             saveImages(IMAGES, 'package/images' )
-            MANIFEST.version = "${MANIFEST.version}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT"
+            MANIFEST.version = "${MANIFEST.version}-mr${CHANGE_ID}b${BUILD_ID}-SNAPSHOT".toString()
+            writeManifest('package', MANIFEST)
           }
           tar(
             file: "${MANIFEST.name}-${MANIFEST.version}.tar.gz",

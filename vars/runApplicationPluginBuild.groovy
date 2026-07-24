@@ -9,7 +9,7 @@ Set<String> getImageList() {
     }
 
     // Start with main file
-    static def allImages = new HashSet<String>()
+    def allImages = new HashSet<String>()
     def composeFile = fileExists('docker-compose.yaml')?'docker-compose.yaml':'docker-compose.yml'
     def dir = "."
     def composeQueue = [] as LinkedList
@@ -80,12 +80,21 @@ Set<String> getImageListOld() {
   return images
 }
 
+// Manifest (YAML) is the new company-wide passport format; manifest.json is the
+// deprecated fallback. Prefer YAML, fall back to JSON. NMSNG-1284
+def readManifest() {
+  if (fileExists('Manifest')) {
+    return readYaml(file: 'Manifest')
+  }
+  return readJSON(file: 'manifest.json')
+}
+
 def getManifestData() {
   node {
     stage('Get manifest data') {
       cleanWs()
       checkout scm
-      return readJSON(file: 'manifest.json')
+      return readManifest()
     }
   }
 }
@@ -121,10 +130,19 @@ def inspectImages(images) {
   )
 }
 
+// Stamp the build version into every manifest that ships so the deployed plugin
+// reports it (the backend reads Manifest YAML first, manifest.json as fallback). NMSNG-1284
 def updateManifest(buildVersion) {
-  def manifest = readJSON(file: 'manifest.json')
-  manifest.version = buildVersion
-  writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
+  if (fileExists('Manifest')) {
+    def manifest = readYaml(file: 'Manifest')
+    manifest.version = buildVersion
+    writeYaml(file: 'Manifest', data: manifest, overwrite: true)
+  }
+  if (fileExists('manifest.json')) {
+    def manifest = readJSON(file: 'manifest.json')
+    manifest.version = buildVersion
+    writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
+  }
 }
 
 def call(Map arg) {
@@ -160,8 +178,8 @@ def call(Map arg) {
       )
     }
     environment {
-      ARTIFACT_ID="${readJSON(file: 'manifest.json').name}"
-      BASE_VERSION="${readJSON(file: 'manifest.json').version}"
+      ARTIFACT_ID="${readManifest().name}"
+      BASE_VERSION="${readManifest().version}"
     }
     stages {
       stage ('Clean the old version info') {
@@ -173,7 +191,7 @@ def call(Map arg) {
         }
         steps {
           script {
-            def PLUGIN_DATA = readJSON(file: 'manifest.json')
+            def PLUGIN_DATA = readManifest()
             currentBuild.displayName = "${PLUGIN_DATA.name}-${COMPONENT_VERSION}"
             def responseVersions = httpRequest(
               url: "https://jira.spacebridge.com/rest/api/2/project/${arg.JIRA_PROJECT}/versions",
