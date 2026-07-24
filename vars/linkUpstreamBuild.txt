@@ -1,0 +1,57 @@
+# linkUpstreamBuild
+
+Links a specific build to the **current** build as an upstream cause, so the
+current build's page shows *"Started by upstream project &lt;X&gt; #&lt;N&gt;"* and the
+upstream job appears to its left in the Pipeline upstream/downstream graph —
+exactly the link a native `build job:` step would have recorded.
+
+This is the low-level primitive. Its purpose is to restore a `Cause` that never
+got written: when an upstream pipeline pushes a commit into a build repo, a
+GitLab push webhook starts the consumer build as a graph *root* with an empty
+`UpstreamCause`, and no plugin can reconstruct the link after the fact. Calling
+this from the consumer pipeline re-injects it. For the commit-driven wrapper that
+recovers the coordinates automatically, see [`linkUpstreamFromCommit`](linkUpstreamFromCommit.txt).
+
+The injection uses `rawBuild` / `replaceAction` / `save` / `Jenkins.get`, which
+are outside the Groovy sandbox whitelist, so this **must** run from a trusted
+global library (this one is — [`getUpstreamBuild`](getUpstreamBuild.txt) relies on
+the same APIs).
+
+The existing `CauseAction` is *merged*, not replaced: any cause already present
+(the GitLab push cause, a manual cause, ...) is preserved and the new
+`UpstreamCause` is appended. Re-linking the same upstream build is idempotent.
+
+## Usage
+
+```groovy
+// By project full name + build number
+linkUpstreamBuild(project: 'v_v/test-pipelines/test-orchestrator/master', build: 42)
+
+// By an existing Run / RunWrapper (e.g. the result of getUpstreamBuild or a build step)
+linkUpstreamBuild(run: someRun)
+
+// Quietly (no console output)
+linkUpstreamBuild(project: 'folder/job', build: 7, debug: false)
+```
+
+## Parameters
+
+The upstream build is identified one of two ways (checked in this order):
+
+- `run` (optional) — a `hudson.model.Run` or pipeline `RunWrapper` to link
+  directly. Takes precedence over `project`/`build`.
+- `project` (optional) — full job name of the upstream job
+  (`folder/sub/job`, or a multibranch branch/MR job like `.../master`,
+  `.../MR-12`).
+- `build` (optional) — upstream build number (int or numeric String).
+- `debug` (optional, default `true`) — echo the outcome to the build log.
+
+## Returns
+
+`Boolean` — `true` when the link is present after the call (added now, or already
+there); `false` when the upstream build could not be resolved.
+
+## Failure behavior
+
+Best-effort — never throws on a missing / unresolvable upstream. It logs the
+reason and returns `false`, so callers can treat linking as non-fatal.

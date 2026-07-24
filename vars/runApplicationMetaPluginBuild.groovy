@@ -152,6 +152,20 @@ def call(Map arg) {
       buildDiscarder(logRotator(numToKeepStr: '10'))
     }
     stages {
+      stage ('Link upstream build') {
+        when {
+          allOf {
+            not { changeRequest() }
+            not { triggeredBy 'GenericCause' }
+          }
+        }
+        steps {
+          // Restore the "Started by upstream" link that the GitLab push webhook
+          // drops when the test-orchestrator auto-bumps this repo. Safe no-op for
+          // ordinary developer commits.
+          linkUpstreamFromCommit()
+        }
+      }
       stage ('Clean the old version info') {
         when {
           allOf {

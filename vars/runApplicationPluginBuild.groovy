@@ -182,6 +182,20 @@ def call(Map arg) {
       BASE_VERSION="${readManifest().version}"
     }
     stages {
+      stage ('Link upstream build') {
+        when {
+          allOf {
+            not { changeRequest() }
+            not { triggeredBy 'GenericCause' }
+          }
+        }
+        steps {
+          // Restore the "Started by upstream" link that the GitLab push webhook
+          // drops when the test-orchestrator auto-bumps this repo. Safe no-op for
+          // ordinary developer commits.
+          linkUpstreamFromCommit()
+        }
+      }
       stage ('Clean the old version info') {
         when {
           allOf {

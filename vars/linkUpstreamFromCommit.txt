@@ -1,0 +1,91 @@
+# linkUpstreamFromCommit
+
+Restores the upstream `Cause` link that a GitLab push-webhook boundary destroys.
+
+When an upstream pipeline (e.g. `test-orchestrator`) pushes an auto-bump commit
+into a build repo, a GitLab push webhook starts the build over that repo as a
+graph *root*: the upstream run that produced the commit is missing from Jenkins'
+upstream/downstream graph. This reads the triggering commit message, recovers the
+upstream build coordinates from it, and calls
+[`linkUpstreamBuild`](linkUpstreamBuild.txt) to re-inject the `UpstreamCause` — so
+the build shows *"Started by upstream project &lt;test-orchestrator&gt; #&lt;N&gt;"*.
+
+It is a safe **no-op** for any commit that carries no upstream coordinates
+(ordinary developer pushes), so it can be called unconditionally right after SCM
+checkout.
+
+Upstream coordinates are recovered from the commit message, trying in order:
+
+1. explicit trailers (preferred, wording-independent):
+
+   ```
+   Jenkins-Upstream-Project: <full job name>
+   Jenkins-Upstream-Build:   <number>
+   ```
+
+2. a Jenkins build URL `https://.../job/a/job/b/<number>/` — the `${BUILD_URL}`
+   the orchestrator appends to its auto-bump commit message.
+3. the orchestrator's own auto-bump sentence
+   `Auto-bump verified versions from <full job name> #<number>`.
+
+The commit message itself is resolved from, in order: `message`; the env var
+named by `messageEnvVar`; `env.GITLAB_OA_LAST_COMMIT_MESSAGE` (set by the GitLab
+branch-source plugin — the same `GITLAB_OA_` family used by
+[`getGitBuildTriggerCommitID`](getGitBuildTriggerCommitID.groovy)); finally, only
+when `gitFallback: true`, `git log -1 --pretty=%B` of the checked-out workspace.
+
+## Usage
+
+```groovy
+// Typical: call right after checkout; reads env.GITLAB_OA_LAST_COMMIT_MESSAGE.
+// Safe no-op for ordinary commits.
+linkUpstreamFromCommit()
+
+// Provide the message explicitly (e.g. in tests or custom flows)
+linkUpstreamFromCommit(message: env.GITLAB_OA_LAST_COMMIT_MESSAGE)
+
+// Opt in to reading HEAD via git when no message env var is available
+// (only safe when this build was actually started by the push of that commit).
+linkUpstreamFromCommit(gitFallback: true)
+```
+
+Declarative pipeline stage (as wired into `runApplicationPluginBuild` /
+`runApplicationMetaPluginBuild`):
+
+```groovy
+stage('Link upstream build') {
+  when {
+    allOf {
+      not { changeRequest() }
+      not { triggeredBy 'GenericCause' }
+    }
+  }
+  steps {
+    linkUpstreamFromCommit()
+  }
+}
+```
+
+## Parameters
+
+- `message` (optional) — commit message to parse; overrides every source below.
+- `messageEnvVar` (optional) — name of an env var holding the commit message.
+- `gitFallback` (optional, default `false`) — when no message env var is set,
+  read HEAD's message via `git log`. Off by default because it is only correct
+  when this build was actually started by the push of that commit (a build
+  started by something else — e.g. a `GenericTrigger` deletion webhook — would
+  otherwise mis-attribute the branch's latest commit).
+- `debug` (optional, default `true`) — echo parsing / linking details.
+
+## Returns
+
+`Map` `[project, build, source, linked]` describing what was linked
+(`source` is `trailer`, `buildUrl`, or `sentence`), or `null` when the message
+carried no recognisable upstream coordinates.
+
+## Failure behavior
+
+Best-effort — a failing `git` read degrades to a no-op (`null`); a pipeline abort
+raised while reading git is **not** swallowed and propagates as expected. The
+actual cause injection is delegated to [`linkUpstreamBuild`](linkUpstreamBuild.txt),
+which never throws on an unresolvable upstream.
