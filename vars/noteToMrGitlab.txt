@@ -1,0 +1,68 @@
+# noteToMrGitlab
+
+Post a comment (note) to a GitLab merge request. With the optional `marker`
+argument the step maintains a single identifiable note across pipeline re-runs
+instead of stacking duplicates.
+
+Outside a merge-request build (no MR IID / git URL) the step silently does
+nothing, so it is safe to call from `post {}` blocks.
+
+Two forms exist:
+
+- Map form (described here) — authenticates with a PRIVATE-TOKEN header taken
+  from secret-text credentials.
+- Legacy positional form `noteToMrGitlab(gitUrl, mrIid, body)` — kept unchanged
+  for existing callers; requires the `gitLabAPISecret` binding to be set before
+  the call.
+
+## Parameters (Map form)
+
+- `comment`: note body in GitLab markdown (required).
+- `mrIid` (optional): merge request IID (default: `env.CHANGE_ID`).
+- `gitUrl` (optional): SSH or HTTPS repo URL (default:
+  `env.GITLAB_OA_TARGET_GIT_SSH_URL`).
+- `apiSecretId` (optional): Jenkins secret-text credentials with the GitLab
+  token (default: `gitlab-text-secret`).
+- `marker` (optional): unique identifying string, e.g.
+  `'<!-- my-pipeline:check -->'`. Appended to the note body as an HTML comment —
+  invisible in rendered GitLab markdown — and searched for among the MR's
+  existing notes; when found, the existing note is replaced instead of a new one
+  added.
+- `bump` (optional, marker mode only, default: `true`): `true` deletes the old
+  note and posts a fresh one, so the note lands as the newest comment in the
+  discussion (the note id changes). `false` edits the existing note in place —
+  it keeps its id and its original (possibly buried) position.
+- `updateIfExists` (optional, marker mode only, default: `false`): when `true`,
+  replace an existing marker note but do NOT create a new one when none exists.
+- `debug` (optional, default: `false`): log request URLs and response bodies.
+- `skipIfExist`: accepted for backward compatibility and ignored (it was never
+  implemented).
+
+`bump` and `updateIfExists` are ignored when `marker` is not given.
+
+## Example
+
+```groovy
+// Plain comment (one more note on every run)
+noteToMrGitlab(comment: '**Build finished.**')
+
+// One status note, always shown as the newest comment
+noteToMrGitlab(
+  marker: '<!-- my-pipeline:status -->',
+  comment: "**Build ${env.BUILD_NUMBER} passed.**",
+)
+
+// Quietly refresh the note in place, only if it already exists
+noteToMrGitlab(
+  marker: '<!-- my-pipeline:status -->',
+  bump: false,
+  updateIfExists: true,
+  comment: "**Build ${env.BUILD_NUMBER} passed.**",
+)
+```
+
+## Return
+
+- Integer: the note id — a new id when posted or bumped, the same id when
+  edited in place — or null when nothing was posted (outside an MR build, or
+  `updateIfExists: true` with no existing marker note).

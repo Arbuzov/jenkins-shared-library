@@ -796,31 +796,41 @@ pipeline {
         }
 
         script {
-          echo "Testing upsertNoteToMrGitlab() (create -> recreate -> onlyUpdate)..."
-          def marker = '<!-- shared-lib-test:upsert -->'
-          def firstId = upsertNoteToMrGitlab(
+          echo "Testing noteToMrGitlab() marker mode (create -> bump -> edit in place -> updateIfExists)..."
+          def marker = '<!-- shared-lib-test:marker-note -->'
+          def firstId = noteToMrGitlab(
             marker: marker,
-            comment: "**Upsert test** — written by build ${env.BUILD_NUMBER}.",
+            comment: "**Marker note test** — created by build ${env.BUILD_NUMBER}.",
             debug: true
           )
-          def secondId = upsertNoteToMrGitlab(
+          def secondId = noteToMrGitlab(
             marker: marker,
-            comment: "**Upsert test** — recreated by build ${env.BUILD_NUMBER}.",
+            comment: "**Marker note test** — bumped by build ${env.BUILD_NUMBER}.",
             debug: true
           )
-          echo "upsertNoteToMrGitlab: first=${firstId}, second=${secondId}"
+          echo "noteToMrGitlab(marker): first=${firstId}, second=${secondId}"
           if (firstId == null || secondId == null || secondId == firstId) {
-            error('upsertNoteToMrGitlab must delete the old note and post a NEW one (fresh id) on the second call')
+            error('noteToMrGitlab(marker) must by default delete the old note and post a NEW one (fresh id)')
           }
-          // onlyUpdate with an unknown marker must not create anything
-          def ghostId = upsertNoteToMrGitlab(
+          // bump: false must edit the existing note in place, keeping its id
+          def thirdId = noteToMrGitlab(
+            marker: marker,
+            bump: false,
+            comment: "**Marker note test** — edited in place by build ${env.BUILD_NUMBER}.",
+            debug: true
+          )
+          if (thirdId != secondId) {
+            error('noteToMrGitlab(marker, bump: false) must edit the existing note in place (same id)')
+          }
+          // updateIfExists with an unknown marker must not create anything
+          def ghostId = noteToMrGitlab(
             marker: "<!-- shared-lib-test:no-such-marker-${env.BUILD_NUMBER} -->",
-            onlyUpdate: true,
+            updateIfExists: true,
             comment: 'must not be posted',
             debug: true
           )
           if (ghostId != null) {
-            error('upsertNoteToMrGitlab(onlyUpdate: true) must not create a new note')
+            error('noteToMrGitlab(updateIfExists: true) must not create a new note')
           }
         }
       }
