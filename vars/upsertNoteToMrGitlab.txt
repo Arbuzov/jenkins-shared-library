@@ -1,9 +1,12 @@
 # upsertNoteToMrGitlab
 
-Create or update a single merge-request note identified by a hidden HTML-comment
-marker. Re-running the pipeline updates the same note instead of stacking
-duplicates (which is what `noteToMrGitlab` does — its `skipIfExist` parameter is
-not implemented).
+Maintain a single merge-request note identified by a hidden HTML-comment marker.
+Re-running the pipeline keeps ONE note instead of stacking duplicates (which is
+what `noteToMrGitlab` does — its `skipIfExist` parameter is not implemented).
+
+The existing marker note is deleted and a fresh one is posted, so the note always
+appears as the most recent comment in the MR discussion. The note id therefore
+changes on every call.
 
 Authentication uses the `PRIVATE-TOKEN` header (the token never appears in URLs
 or logs).
@@ -33,4 +36,4 @@ upsertNoteToMrGitlab(
 )
 ```
 
-Returns the note id, or `null` when `onlyUpdate: true` and no marker note exists.
+Returns the new note id, or `null` when `onlyUpdate: true` and no marker note exists.

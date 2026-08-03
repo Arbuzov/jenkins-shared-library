@@ -1,9 +1,12 @@
 import groovy.json.JsonOutput
 
 /**
- * Create or update a single merge-request note identified by a hidden marker, so
- * pipeline re-runs maintain ONE comment instead of stacking duplicates (unlike
- * noteToMrGitlab, whose skipIfExist parameter is not implemented).
+ * Maintain a single merge-request note identified by a hidden marker, so pipeline
+ * re-runs keep ONE comment instead of stacking duplicates (unlike noteToMrGitlab,
+ * whose skipIfExist parameter is not implemented). The existing marker note is
+ * DELETED and a fresh one is posted — the note always appears as the most recent
+ * comment in the MR discussion (a PUT-updated note would stay buried at its
+ * original position). The note id therefore changes on every call.
  *
  * The marker — an HTML comment, invisible in rendered GitLab markdown — is appended
  * to the note body and searched for among the MR's existing notes.
@@ -17,13 +20,13 @@ import groovy.json.JsonOutput
  *  - projectId:     GitLab numeric project ID or URL-encoded path
  *                   (default: derived from gitUrl)
  *  - gitlabBaseUrl: GitLab base URL without /api/v4 (default: derived from gitUrl)
- *  - onlyUpdate:    when true, update an existing marker note but do NOT create a
+ *  - onlyUpdate:    when true, replace an existing marker note but do NOT create a
  *                   new one when none exists (default: false)
  *  - credentialsId: Jenkins secret-text credentials with the GitLab token
  *                   (default: 'gitlab-text-secret')
  *  - debug:         log request URLs / response bodies (default: false)
  *
- * Returns the note id (Integer), or null when nothing was posted or updated.
+ * Returns the new note id (Integer), or null when nothing was posted.
  */
 def call(Map args = [:]) {
   reportUsage(getClass().protectionDomain.codeSource.location.path)
@@ -81,38 +84,37 @@ def call(Map args = [:]) {
       consoleLogResponseBody: debug,
       quiet: !debug,
     )
-    def existing = readJSON(text: listResponse.getContent()).find {
+    def existingNotes = readJSON(text: listResponse.getContent()).findAll {
       it.body?.contains(args.marker)
     }
 
-    if (existing) {
-      if (existing.body == body) {
-        if (debug) {
-          echo "[upsertNoteToMrGitlab] Note ${existing.id} is already up to date."
-        }
-        return existing.id
-      }
-      if (debug) {
-        echo "[upsertNoteToMrGitlab] PUT ${notesUrl}/${existing.id}"
-      }
-      httpRequest(
-        url: "${notesUrl}/${existing.id}",
-        httpMode: 'PUT',
-        contentType: 'APPLICATION_JSON',
-        acceptType: 'APPLICATION_JSON',
-        requestBody: JsonOutput.toJson([body: body]),
-        customHeaders: headers,
-        consoleLogResponseBody: debug,
-        quiet: !debug,
-      )
-      return existing.id
-    }
-
-    if (args.onlyUpdate) {
+    if (!existingNotes && args.onlyUpdate) {
       if (debug) {
         echo "[upsertNoteToMrGitlab] No marker note found and onlyUpdate=true — nothing to do."
       }
       return null
+    }
+
+    // Delete the old note(s) — all of them, in case duplicates ever crept in —
+    // so the fresh note below lands as the newest comment in the discussion.
+    // A failed delete is logged, not fatal: the new note is still posted, and
+    // the next run deletes every marker note it finds, so leftovers self-heal.
+    for (note in existingNotes) {
+      try {
+        if (debug) {
+          echo "[upsertNoteToMrGitlab] DELETE ${notesUrl}/${note.id}"
+        }
+        httpRequest(
+          url: "${notesUrl}/${note.id}",
+          httpMode: 'DELETE',
+          customHeaders: headers,
+          consoleLogResponseBody: debug,
+          quiet: !debug,
+          validResponseCodes: '100:399,404', // already gone is fine
+        )
+      } catch (Exception e) {
+        echo "[upsertNoteToMrGitlab] WARNING: failed to delete note ${note.id}: ${e?.message ?: e}"
+      }
     }
 
     if (debug) {

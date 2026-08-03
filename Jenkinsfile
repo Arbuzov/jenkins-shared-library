@@ -816,7 +816,7 @@ pipeline {
         }
 
         script {
-          echo "Testing upsertNoteToMrGitlab() (create -> update -> onlyUpdate)..."
+          echo "Testing upsertNoteToMrGitlab() (create -> recreate -> onlyUpdate)..."
           def marker = '<!-- shared-lib-test:upsert -->'
           def firstId = upsertNoteToMrGitlab(
             marker: marker,
@@ -825,12 +825,12 @@ pipeline {
           )
           def secondId = upsertNoteToMrGitlab(
             marker: marker,
-            comment: "**Upsert test** — updated by build ${env.BUILD_NUMBER}.",
+            comment: "**Upsert test** — recreated by build ${env.BUILD_NUMBER}.",
             debug: true
           )
           echo "upsertNoteToMrGitlab: first=${firstId}, second=${secondId}"
-          if (firstId == null || secondId != firstId) {
-            error('upsertNoteToMrGitlab must update the same note on the second call, not create another one')
+          if (firstId == null || secondId == null || secondId == firstId) {
+            error('upsertNoteToMrGitlab must delete the old note and post a NEW one (fresh id) on the second call')
           }
           // onlyUpdate with an unknown marker must not create anything
           def ghostId = upsertNoteToMrGitlab(
