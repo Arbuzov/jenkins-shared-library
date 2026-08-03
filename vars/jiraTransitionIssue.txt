@@ -1,0 +1,36 @@
+# jiraTransitionIssue
+
+Transition a Jira issue to a target status by status name, optionally removing or
+changing the assignee. Replaces the deprecated `jiraTransitionIssueToValidation`.
+
+- Idempotent: an issue already in the target status is not transitioned again
+  (a requested assignee change is still applied).
+- Required transition fields are auto-filled with their first allowed value.
+- The assignee change uses a separate issue update, so it works even when the
+  transition screen has no assignee field.
+- Throws when no transition to the target status is available from the current
+  status.
+
+## Usage
+
+```groovy
+// Send a failed ticket back to the backlog and unassign it
+def r = jiraTransitionIssue(
+  issueKey: 'NMSNG-1234',
+  targetStatus: 'To Do',
+  unassign: true,
+)
+echo "Previous assignee: ${r.previousAssigneeDisplayName}"
+
+// Assign to a specific user while transitioning
+jiraTransitionIssue(
+  issueKey: 'NMSNG-1234',
+  targetStatus: 'In Progress',
+  assignee: 'j.doe',
+)
+
+// Inside an MR build the issue key is resolved from the MR title
+jiraTransitionIssue(targetStatus: 'In Review')
+```
+
+Returns a Map: `[issueKey, transitioned, previousAssigneeName, previousAssigneeDisplayName]`.

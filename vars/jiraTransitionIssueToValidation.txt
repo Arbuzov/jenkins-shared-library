@@ -1,10 +1,13 @@
 # jiraTransitionIssueToValidation
 
+**Deprecated.** Use `jiraTransitionIssue(targetStatus: 'In Validation', assignee: <reporter>)`
+instead. This step is now a thin wrapper around `jiraTransitionIssue` and is kept only for
+existing pipelines.
+
 Transition an issue to validation and assign to Reporter.
 
-- The function finds the transition requirements and tries to fulfill them:
-  -- If possible transitions do not include `In Validation`, the function will throw an error.
-  -- Other required fields will be filled with the first allowed value.
+- If possible transitions do not include `In Validation`, the function will throw an error.
+- Other required transition fields will be filled with the first allowed value.
 - If the issue has a reporter, the function will assign the issue to the reporter.
 - If the issue does not have a reporter, the function will not assign the issue to anyone.
 
