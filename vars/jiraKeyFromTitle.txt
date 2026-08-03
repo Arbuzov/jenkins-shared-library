@@ -1,0 +1,19 @@
+# jiraKeyFromTitle
+
+Extract the Jira issue key from a merge-request title (`"NMSNG-123: Fix login"`
+→ `"NMSNG-123"`). Handles the `Draft:` prefix and is case-insensitive; the
+returned key is uppercased.
+
+Pass a project key to accept only that project's tickets — without it any
+`<TOKEN>-<digits>:` prefix matches (e.g. a MR titled `"Upgrade to node-22: bump
+deps"` yields `"NODE-22"`).
+
+## Usage
+
+```groovy
+jiraKeyFromTitle('Draft: nmsng-123: Fix login')                // 'NMSNG-123'
+jiraKeyFromTitle('NMSNG-123: Fix login', 'NMSNG')              // 'NMSNG-123'
+jiraKeyFromTitle('Upgrade to node-22: bump deps', 'NMSNG')     // null
+```
+
+Returns the issue key, or `null` when the title has no matching key.
