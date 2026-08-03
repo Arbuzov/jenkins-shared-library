@@ -85,14 +85,20 @@ private Map injectUpstream(Map args) {
         cause.getUpstreamProject() == upstreamProject &&
         cause.getUpstreamBuild() == upstreamNumber
     }
-    if (already) {
-      return [linked: true, message: "already linked to ${upstreamProject} #${upstreamNumber}"]
-    }
 
-    causes.add(new Cause.UpstreamCause(upstreamRun))
-    build.replaceAction(new CauseAction(causes))
-    build.save()
-    return [linked: true, message: "linked ${upstreamProject} #${upstreamNumber}"]
+    String message
+    if (already) {
+      message = "already linked to ${upstreamProject} #${upstreamNumber}"
+    } else {
+      causes.add(new Cause.UpstreamCause(upstreamRun))
+      build.replaceAction(new CauseAction(causes))
+      build.save()
+      message = "linked ${upstreamProject} #${upstreamNumber}"
+    }
+    // Refresh the graph cache on both paths: the cause may be persisted while the
+    // cache is still stale (an earlier refresh failed, or the plugin was absent then).
+    refreshDownstreamCache(build)
+    return [linked: true, message: message]
   } catch (Throwable throwable) {
     return [linked: false, message: "failed to link upstream: ${throwable.getClass().getName()}: ${throwable.message}"]
   }
@@ -127,4 +133,21 @@ private Run resolveRun(Map args) {
 @NonCPS
 private String describeArgs(Map args) {
   return "run=${args.run != null}, project=${args.project}, build=${args.build}"
+}
+
+// yabv (downstream-build-cache) indexes downstream edges only at onStarted, before
+// this late injection; re-index best-effort — absent/changed plugin is a no-op, and
+// the cache self-heals on its next full rebuild since the cause is persisted.
+@NonCPS
+private void refreshDownstreamCache(Run downstreamBuild) {
+  try {
+    ClassLoader pluginClassLoader = Jenkins.get().getPluginManager().uberClassLoader
+    Class buildCacheClass = pluginClassLoader.loadClass('com.axis.system.jenkins.plugins.downstream.cache.BuildCache')
+    Object buildCache = buildCacheClass.getMethod('getCache').invoke(null)
+    def updateCache = buildCacheClass.getDeclaredMethod('updateCache', Run)
+    updateCache.setAccessible(true)
+    updateCache.invoke(buildCache, downstreamBuild)
+  } catch (Throwable ignored) {
+    // plugin absent or internals changed — the injected cause still persists
+  }
 }
