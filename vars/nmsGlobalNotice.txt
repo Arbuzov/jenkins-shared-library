@@ -1,0 +1,34 @@
+# nmsGlobalNotice
+
+Set or remove the NMS global notice — the modal dialog every logged-in NMS user
+sees (the frontend polls it every 60 s). Implemented via the NMS GraphQL API as
+the global setting `global_notice`.
+
+Typical use: mark a test HUB as "under automated test" while a pipeline uses it,
+and clear the notice afterwards. By default failures are logged, not thrown
+(`failOnError: false`), so a `remove` in `post { always }` never masks the build
+result.
+
+## Usage
+
+```groovy
+// Before touching the HUB
+nmsGlobalNotice(
+  nmsUrl: "https://${hubIp}/nms-ng/",
+  action: 'set',
+  text: "⚠ This system is under automated test (AI Ticket Validation, build ${env.BUILD_NUMBER}) — please do not use it until this notice disappears.",
+)
+
+// In post { always }
+nmsGlobalNotice(nmsUrl: "https://${hubIp}/nms-ng/", action: 'remove')
+
+// Non-default NMS admin credentials
+nmsGlobalNotice(
+  nmsUrl: nmsUrl,
+  action: 'set',
+  text: 'Maintenance in progress',
+  credentialsId: 'nms-admin-credentials',
+)
+```
+
+Returns `true` on success, `false` on a swallowed failure (see `failOnError`).
