@@ -28,8 +28,7 @@ pipeline {
     TEST_CONFLUENCE_PAGE_FOR_CHILDREN = '653164558'
     TEST_CONFLUENCE_PAGE_FOR_ATTACH   = '668434500'
     TEST_GIT_COMMIT_SHA               = 'df080764493676d5cfd8fae55d336875647e59db'
-    // Scratch Jira ticket for the jiraTransitionIssue no-op test ('' = skip the test)
-    TEST_JIRA_ISSUE                   = ''
+    TEST_JIRA_ISSUE                   = 'NMSNG-1313'
   }
   stages {
     stage('Unit Tests') {
@@ -792,6 +791,24 @@ pipeline {
             echo "guessJiraIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
           } else {
             echo "guessJiraIssueInfo(): Jira issue not found"
+          }
+        }
+
+        script {
+          echo "Testing jiraKeyFromTitle()..."
+          def key = jiraKeyFromTitle('NMSNG-1: Fix the widget')
+          if (key != 'NMSNG-1') {
+            error("jiraKeyFromTitle() must return 'NMSNG-1' without a projectKey, got '${key}'")
+          }
+          // A projectKey must not match as a suffix of a longer key...
+          key = jiraKeyFromTitle('SUBNMSNG-123: Fix the widget', 'NMSNG')
+          if (key != null) {
+            error("jiraKeyFromTitle(projectKey: 'NMSNG') must not match inside 'SUBNMSNG-123', got '${key}'")
+          }
+          // ...while still matching its own keys
+          key = jiraKeyFromTitle('NMSNG-123: Fix the widget', 'NMSNG')
+          if (key != 'NMSNG-123') {
+            error("jiraKeyFromTitle(projectKey: 'NMSNG') must return 'NMSNG-123', got '${key}'")
           }
         }
 
