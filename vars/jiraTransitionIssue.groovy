@@ -1,4 +1,9 @@
 import groovy.json.JsonOutput
+import groovy.transform.Field
+
+// Fallback for exceptions that carry no message
+@Field
+String UNKNOWN_ERROR = 'unknown error'
 
 // Returns null only when no transition to targetStatus exists; request failures propagate
 def findTransitionTo(String issueKey, String targetStatus, credentialsId, debug = false) {
@@ -13,7 +18,7 @@ def findTransitionTo(String issueKey, String targetStatus, credentialsId, debug 
       consoleLogResponseBody: debug,
       quiet: !debug)
   } catch (Exception e) {
-    throw new Exception("jiraTransitionIssue(): Failed to list transitions of ${issueKey}: ${e?.message ?: 'unknown error'}")
+    throw new Exception("jiraTransitionIssue(): Failed to list transitions of ${issueKey}: ${e?.message ?: UNKNOWN_ERROR}")
   }
   def transitions = readJSON(text: issueResponse.getContent()).transitions
   return transitions.find { it.to.name.equalsIgnoreCase(targetStatus) }
@@ -55,7 +60,7 @@ def call(Map arg = [:]) {
         )
       : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null)
   } catch (Exception e) {
-    throw new Exception("jiraTransitionIssue(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
+    throw new Exception("jiraTransitionIssue(): Failed to get Jira issue info: ${e?.message ?: UNKNOWN_ERROR}")
   }
   if (!issue) {
     throw new Exception("jiraTransitionIssue(): Must provide issueKey or call within a MR context")
@@ -75,7 +80,9 @@ def call(Map arg = [:]) {
     result.previousAssigneeDisplayName = issue.fields.assignee.displayName
   }
 
-  if (DEBUG) echo "jiraTransitionIssue(): ${issue.key} '${issue.fields.status.name}' -> '${arg.targetStatus}', previous assignee: ${result.previousAssigneeName}"
+  if (DEBUG) {
+    echo "jiraTransitionIssue(): ${issue.key} '${issue.fields.status.name}' -> '${arg.targetStatus}', previous assignee: ${result.previousAssigneeName}"
+  }
 
   // Transition, unless the issue is already in the target status
   if (!issue.fields.status.name.equalsIgnoreCase(arg.targetStatus)) {
@@ -112,7 +119,9 @@ def call(Map arg = [:]) {
       request.remove('fields')
     }
 
-    if (DEBUG) echo "jiraTransitionIssue(): Transition request: ${request}"
+    if (DEBUG) {
+      echo "jiraTransitionIssue(): Transition request: ${request}"
+    }
 
     try {
       httpRequest(
@@ -127,7 +136,7 @@ def call(Map arg = [:]) {
       )
       result.transitioned = true
     } catch (Exception e) {
-      throw new Exception("jiraTransitionIssue(): Failed to transition ${issue.key} to '${arg.targetStatus}': ${e?.message ?: 'unknown error'}")
+      throw new Exception("jiraTransitionIssue(): Failed to transition ${issue.key} to '${arg.targetStatus}': ${e?.message ?: UNKNOWN_ERROR}")
     }
   } else if (DEBUG) {
     echo "jiraTransitionIssue(): Issue is already in '${arg.targetStatus}'"
@@ -140,7 +149,9 @@ def call(Map arg = [:]) {
         "assignee": arg.unassign ? null : ["name": arg.assignee]
       ]
     ]
-    if (DEBUG) echo "jiraTransitionIssue(): Assignee update: ${update}"
+    if (DEBUG) {
+      echo "jiraTransitionIssue(): Assignee update: ${update}"
+    }
     try {
       httpRequest(
         url: "https://jira.spacebridge.com/rest/api/2/issue/${issue.key}",
@@ -153,7 +164,7 @@ def call(Map arg = [:]) {
         consoleLogResponseBody: DEBUG,
       )
     } catch (Exception e) {
-      throw new Exception("jiraTransitionIssue(): Failed to update assignee of ${issue.key}: ${e?.message ?: 'unknown error'}")
+      throw new Exception("jiraTransitionIssue(): Failed to update assignee of ${issue.key}: ${e?.message ?: UNKNOWN_ERROR}")
     }
   }
 

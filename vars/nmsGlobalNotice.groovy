@@ -55,7 +55,9 @@ def applyNotice(Map arg, Boolean debug, String username, String password) {
   if (result?.errors) {
     // Removing an absent notice is fine — the desired state is reached
     if (arg.action == 'remove' && result.errors.toString().toLowerCase().contains('not found')) {
-      if (debug) echo "nmsGlobalNotice(): notice was not set — nothing to remove"
+      if (debug) {
+        echo "nmsGlobalNotice(): notice was not set — nothing to remove"
+      }
       return
     }
     throw new Exception("NMS API error: ${result.errors}")
@@ -108,7 +110,9 @@ def call(Map arg = [:]) {
     } else {
       applyNotice(arg, debug, 'superadmin', 'superadmin')
     }
-    if (debug) echo "nmsGlobalNotice(): '${arg.action}' done on ${arg.nmsUrl}"
+    if (debug) {
+      echo "nmsGlobalNotice(): '${arg.action}' done on ${arg.nmsUrl}"
+    }
     return true
 
   } catch (Exception e) {

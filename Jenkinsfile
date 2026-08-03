@@ -28,9 +28,6 @@ pipeline {
     TEST_CONFLUENCE_PAGE_FOR_CHILDREN = '653164558'
     TEST_CONFLUENCE_PAGE_FOR_ATTACH   = '668434500'
     TEST_GIT_COMMIT_SHA               = 'df080764493676d5cfd8fae55d336875647e59db'
-    // Dev HUB for the nmsGlobalNotice test (the step swallows failures by design,
-    // so an unreachable HUB does not fail this pipeline)
-    TEST_NMS_URL                      = 'https://192.168.71.120/nms-ng/'
     // Scratch Jira ticket for the jiraTransitionIssue no-op test ('' = skip the test)
     TEST_JIRA_ISSUE                   = ''
   }
@@ -701,23 +698,6 @@ pipeline {
           echo "Page ID ${pageId}, children: ${childrenStr}"
         }
 
-        script {
-          echo "Testing nmsGlobalNotice() (set -> remove on the dev HUB)..."
-          def setOk = nmsGlobalNotice(
-            nmsUrl: env.TEST_NMS_URL,
-            action: 'set',
-            text: "Shared-library test (build ${env.BUILD_NUMBER}) — ignore, removed automatically.",
-            debug: true
-          )
-          def removeOk = nmsGlobalNotice(nmsUrl: env.TEST_NMS_URL, action: 'remove', debug: true)
-          echo "nmsGlobalNotice: set=${setOk}, remove=${removeOk}"
-          if (setOk && !removeOk) {
-            error("nmsGlobalNotice: set succeeded but remove failed — a test notice may be left on ${env.TEST_NMS_URL}")
-          }
-          if (!setOk) {
-            echo "WARNING: could not set the notice on ${env.TEST_NMS_URL} — HUB unreachable from this agent?"
-          }
-        }
 
         script {
           // No-op transition: target the issue's CURRENT status — exercises the
