@@ -28,6 +28,11 @@ pipeline {
     TEST_CONFLUENCE_PAGE_FOR_CHILDREN = '653164558'
     TEST_CONFLUENCE_PAGE_FOR_ATTACH   = '668434500'
     TEST_GIT_COMMIT_SHA               = 'df080764493676d5cfd8fae55d336875647e59db'
+    // Dev HUB for the nmsGlobalNotice test (the step swallows failures by design,
+    // so an unreachable HUB does not fail this pipeline)
+    TEST_NMS_URL                      = 'https://192.168.71.120/nms-ng/'
+    // Scratch Jira ticket for the jiraTransitionIssue no-op test ('' = skip the test)
+    TEST_JIRA_ISSUE                   = ''
   }
   stages {
     stage('Unit Tests') {
@@ -695,6 +700,44 @@ pipeline {
           def childrenStr = children.collect { it.toString() }.join(', ')
           echo "Page ID ${pageId}, children: ${childrenStr}"
         }
+
+        script {
+          echo "Testing nmsGlobalNotice() (set -> remove on the dev HUB)..."
+          def setOk = nmsGlobalNotice(
+            nmsUrl: env.TEST_NMS_URL,
+            action: 'set',
+            text: "Shared-library test (build ${env.BUILD_NUMBER}) — ignore, removed automatically.",
+            debug: true
+          )
+          def removeOk = nmsGlobalNotice(nmsUrl: env.TEST_NMS_URL, action: 'remove', debug: true)
+          echo "nmsGlobalNotice: set=${setOk}, remove=${removeOk}"
+          if (setOk && !removeOk) {
+            error("nmsGlobalNotice: set succeeded but remove failed — a test notice may be left on ${env.TEST_NMS_URL}")
+          }
+          if (!setOk) {
+            echo "WARNING: could not set the notice on ${env.TEST_NMS_URL} — HUB unreachable from this agent?"
+          }
+        }
+
+        script {
+          // No-op transition: target the issue's CURRENT status — exercises the
+          // fetch/transition-lookup/idempotency paths without changing the ticket
+          if (env.TEST_JIRA_ISSUE) {
+            echo "Testing jiraTransitionIssue() (no-op transition on ${env.TEST_JIRA_ISSUE})..."
+            def currentStatus = getJiraIssueInfo(env.TEST_JIRA_ISSUE).fields.status.name
+            def result = jiraTransitionIssue(
+              issueKey: env.TEST_JIRA_ISSUE,
+              targetStatus: currentStatus,
+              DEBUG: true
+            )
+            echo "jiraTransitionIssue: ${result}"
+            if (result.transitioned) {
+              error("jiraTransitionIssue must be a no-op when the issue is already in '${currentStatus}'")
+            }
+          } else {
+            echo 'TEST_JIRA_ISSUE is not set — skipping the jiraTransitionIssue test'
+          }
+        }
       }
 
       post {
@@ -769,6 +812,35 @@ pipeline {
             echo "guessJiraIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
           } else {
             echo "guessJiraIssueInfo(): Jira issue not found"
+          }
+        }
+
+        script {
+          echo "Testing upsertNoteToMrGitlab() (create -> update -> onlyUpdate)..."
+          def marker = '<!-- shared-lib-test:upsert -->'
+          def firstId = upsertNoteToMrGitlab(
+            marker: marker,
+            comment: "**Upsert test** — written by build ${env.BUILD_NUMBER}.",
+            debug: true
+          )
+          def secondId = upsertNoteToMrGitlab(
+            marker: marker,
+            comment: "**Upsert test** — updated by build ${env.BUILD_NUMBER}.",
+            debug: true
+          )
+          echo "upsertNoteToMrGitlab: first=${firstId}, second=${secondId}"
+          if (firstId == null || secondId != firstId) {
+            error('upsertNoteToMrGitlab must update the same note on the second call, not create another one')
+          }
+          // onlyUpdate with an unknown marker must not create anything
+          def ghostId = upsertNoteToMrGitlab(
+            marker: "<!-- shared-lib-test:no-such-marker-${env.BUILD_NUMBER} -->",
+            onlyUpdate: true,
+            comment: 'must not be posted',
+            debug: true
+          )
+          if (ghostId != null) {
+            error('upsertNoteToMrGitlab(onlyUpdate: true) must not create a new note')
           }
         }
       }
