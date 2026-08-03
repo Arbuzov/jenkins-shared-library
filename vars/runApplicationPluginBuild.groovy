@@ -192,8 +192,10 @@ def call(Map arg) {
         steps {
           // Restore the "Started by upstream" link that the GitLab push webhook
           // drops when the test-orchestrator auto-bumps this repo. Safe no-op for
-          // ordinary developer commits.
-          linkUpstreamFromCommit()
+          // ordinary developer commits. gitFallback reads HEAD via `git log`
+          // because GitLab Branch Source jobs don't set GITLAB_OA_LAST_COMMIT_MESSAGE
+          // (safe here — the stage is gated off GenericCause deletion builds).
+          linkUpstreamFromCommit(gitFallback: true)
         }
       }
       stage ('Clean the old version info') {
