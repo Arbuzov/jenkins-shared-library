@@ -7,7 +7,9 @@ changing the assignee. Replaces the deprecated `jiraTransitionIssueToValidation`
   (a requested assignee change is still applied).
 - Required transition fields are auto-filled with their first allowed value.
 - The assignee change uses a separate issue update, so it works even when the
-  transition screen has no assignee field.
+  transition screen has no assignee field. When the screen does have the assignee
+  field, a new assignee is also sent with the transition itself, so screens that
+  require an assignee are satisfied even on unassigned issues.
 - Throws when no transition to the target status is available from the current
   status.
 

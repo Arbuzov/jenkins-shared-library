@@ -31,7 +31,9 @@ def findTransitionTo(String issueKey, String targetStatus, credentialsId, debug 
  * The transition is idempotent: an issue already in the target status is not
  * transitioned again (the assignee change, when requested, is still applied).
  * The assignee change is performed with a separate issue update, so it works even
- * when the transition screen has no assignee field.
+ * when the transition screen has no assignee field. When the screen does have the
+ * assignee field, a new assignee is also sent with the transition itself, so screens
+ * that require an assignee are satisfied even on unassigned issues.
  *
  * @param arg.targetStatus Target status name, e.g. 'To Do' (required)
  * @param arg.issueKey Jira issue key (default: resolved from the MR title via guessJiraIssueInfo)
@@ -114,6 +116,13 @@ def call(Map arg = [:]) {
           ]
         }
       }
+    }
+    // A screen that requires the assignee rejects a request without one — when a new
+    // assignee is given, send it with the transition too (the update below still has
+    // the final word). For unassign, keep the field out: the current assignee satisfies
+    // the screen and the update clears it afterwards.
+    if (arg.assignee && !arg.unassign && transition.fields?.assignee) {
+      request.fields.assignee = ["name": arg.assignee]
     }
     if (request.fields.isEmpty()) {
       request.remove('fields')
