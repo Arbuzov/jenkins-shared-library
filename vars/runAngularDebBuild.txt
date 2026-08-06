@@ -1,0 +1,59 @@
+# runAngularDebBuild
+
+Whole-build pipeline for an Angular UI shipped as a Debian package.
+
+Replaces the per-repo `Jenkinsfile` of the Angular/deb frontends, which had
+drifted apart. Builds in the repo's own `Dockerfile` (stage `tools`), publishes
+lint, test, coverage and audit reports, keeps a build snapshot on merge
+requests, and pushes the resulting `.deb` to the `local-deb-repo` reprepro
+archive on `master`.
+
+The consuming repository must provide:
+
+- a `Dockerfile` with a `tools` stage carrying node, `build-essential`,
+  `debhelper` and `devscripts`
+- npm scripts `lint:ci`, `lint:styles:ci`, `test:coverage`, `audit`, `stats`
+  and `deb:prod`
+- a `package.json` version containing the literal `develver`, which is replaced
+  with `$BUILD_NUMBER` before the build
+- `src/environments/environment.config.ts`, likewise carrying `develver`
+- `deb:prod` leaving exactly one `.deb` in `artifacts/`
+
+## Usage
+
+The whole `Jenkinsfile` of a consuming repository:
+
+```groovy
+@Library('asatnet@master')_
+runAngularDebBuild(PROJECT_NAME: 'application-host-frontend')
+```
+
+## Parameters
+
+- `PROJECT_NAME` (required) — exported as `SPACEBRIDGE_PROJECT_NAME`, which
+  [`launchSonarQube`](launchSonarQube.txt) reads to pick the Sonar project.
+
+## Stages
+
+- **Build project** — npm install, version stamp, lint, tests, audit, stats and
+  the deb build, in the repo's `Dockerfile`. Reports are published from
+  `post { always }` so they survive a failing build. `set -euo pipefail` is set
+  explicitly: the `#!/bin/bash` shebang suppresses the durable-task plugin's
+  default `-xe`, so without it only the last command's exit code would count.
+- **Sonarqube check** — `launchSonarQube` in the sonar-scanner image, over the
+  unstashed coverage.
+- **Keep snapshot of the build** — merge requests only; archives the package,
+  dist, coverage, documentation and checkstyle reports.
+- **Push deb package to the repository** — `master` only, skipped when the build
+  is not SUCCESS, so an unstable build does not publish.
+
+## Returns
+
+Nothing — this is a whole-build entry point, not a step.
+
+## Failure behavior
+
+Fails the build via `error(...)` when `PROJECT_NAME` is missing, and when
+`artifacts/` does not hold exactly one `.deb` at publish time. The latter check
+runs before `reprepro`, so a mismatch fails the stage without touching the
+archive.
