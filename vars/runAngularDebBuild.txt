@@ -40,6 +40,13 @@ runAngularDebBuild(PROJECT_NAME: 'application-host-frontend')
   `post { always }` so they survive a failing build. `set -euo pipefail` is set
   explicitly: the `#!/bin/bash` shebang suppresses the durable-task plugin's
   default `-xe`, so without it only the last command's exit code would count.
+  The stage then asserts that `deb:prod` actually produced exactly one
+  `artifacts/*.deb` and echoes its name. `debian-packager` spawns `debuild`
+  asynchronously and reports a failure only through its exit callback, so it
+  exits 0 even when no package was built, and `cpx tmp/*.deb artifacts/` then
+  copies nothing and also exits 0 — a fail-fast shell cannot see any of it.
+  Without this check a broken package build stays green until the publish
+  stage, which runs on `master` only.
 - **Sonarqube check** — `launchSonarQube` in the sonar-scanner image, over the
   unstashed coverage.
 - **Keep snapshot of the build** — merge requests only; archives the package,
@@ -54,6 +61,15 @@ Nothing — this is a whole-build entry point, not a step.
 ## Failure behavior
 
 Fails the build via `error(...)` when `PROJECT_NAME` is missing, and when
-`artifacts/` does not hold exactly one `.deb` at publish time. The latter check
-runs before `reprepro`, so a mismatch fails the stage without touching the
-archive.
+`artifacts/` does not hold exactly one `.deb`. The package count is checked
+twice: in **Build project**, right after `deb:prod`, so a package that was never
+produced fails the build that produced it — including on merge requests, where
+the publish stage never runs — and again in **Push deb package to the
+repository** before `reprepro`, so a mismatch there fails the stage without
+touching the archive.
+
+When the build-stage check fires, the four stashes are skipped, so no later
+stage can `unstash` from that build. That costs nothing in practice: `error(...)`
+skips those stages anyway. The stage's own `post { always }` still records the
+checkstyle, junit and HTML reports straight from the workspace, and
+`post { failure }` still archives `artifacts/**` together with the npm logs.

@@ -53,6 +53,7 @@ def call(Map arg = [:]) {
           npm run stats
           npm run deb:prod
           '''
+          script { echo "Built ${resolveDebPackage()}" }
           stash includes: 'artifacts/**', name: 'package'
           stash includes: 'dist/**', name: 'dist'
           stash includes: 'checkstyle*.xml', name: 'reports'
