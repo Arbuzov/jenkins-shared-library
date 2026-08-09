@@ -100,8 +100,6 @@ def call (Map args) {
   Boolean bump = args.bump != null ? args.bump : true
   Boolean updateIfExists = args.updateIfExists != null ? args.updateIfExists : false
 
-  echo "======== Comment to GitLab: " + comment + " ========"
-
   String mrIid = (args.mrIid ?: env.CHANGE_ID)?.toString()
   String gitUrl = args.gitUrl ?: env.GITLAB_OA_TARGET_GIT_SSH_URL
   if (!mrIid || mrIid == 'null' || !gitUrl || gitUrl == 'null') {
@@ -137,12 +135,14 @@ def call (Map args) {
       }
 
       if (!existingNotes && updateIfExists) {
-        if (debug) {
-          echo "[noteToMrGitlab] No marker note found and updateIfExists=true — nothing to do."
-        }
+        echo "[noteToMrGitlab] No existing marker note found and updateIfExists=true — comment not added."
         return null
       }
+    }
 
+    echo "======== Comment to GitLab: " + comment + " ========"
+
+    if (marker) {
       if (existingNotes && !bump) {
         // Edit in place: the newest note keeps its id and position; duplicates
         // that crept in earlier are removed
