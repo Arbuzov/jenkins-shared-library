@@ -39,7 +39,7 @@ def applyNotice(Map arg, Boolean debug, String username, String password) {
     result = graphql(
       arg.nmsUrl,
       'mutation SetGlobalSetting($key: String!, $value: String!) { setGlobalSetting(key: $key, value: $value) { key } }',
-      [key: 'global_notice', value: JsonOutput.toJson([text: arg.text])],
+      [key: 'global_notice', value: JsonOutput.toJson([text: arg.text, author: arg.author ?: username])],
       token,
       debug,
     )
@@ -75,6 +75,8 @@ def applyNotice(Map arg, Boolean debug, String username, String password) {
  * @param arg.nmsUrl Base NMS URL, e.g. 'https://192.168.71.120/nms-ng/' (required)
  * @param arg.action 'set' or 'remove' (required)
  * @param arg.text Notice text (required for 'set')
+ * @param arg.author Name shown to users as "Created by: ..." (optional; defaults
+ *        to the username the step authenticates as)
  * @param arg.credentialsId usernamePassword credentials of an NMS admin
  *        (optional; defaults to superadmin/superadmin — the test-HUB default)
  * @param arg.failOnError Throw on failure (default: false — the notice is a courtesy;
