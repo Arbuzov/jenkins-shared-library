@@ -1,0 +1,42 @@
+# jiraAddRemoteIssueLink
+
+Attaches a remote issue link (web link) to a Jira issue — for example a build or a
+report URL. Not to be confused with Jira issue links (`fields.issuelinks`), which
+describe relations between issues.
+
+Replaces the deprecated `addJiraIssueLink`.
+
+- The issue key may be omitted inside an MR build: it is then resolved from the MR
+  title via `jiraGuessIssueInfo`.
+- Jira does not deduplicate remote links — use `jiraGetRemoteIssueLinks` to check
+  whether the link is already there.
+
+## Usage
+
+```groovy
+jiraAddRemoteIssueLink(issueKey: 'NMSNG-1234', url: env.BUILD_URL, title: 'Build')
+
+// Title defaults to the last segment of the URL, issue key to the one of the MR
+jiraAddRemoteIssueLink(url: env.BUILD_URL)
+
+// Add a link only when it is not there yet
+if (!jiraGetRemoteIssueLinks(issueKey: 'NMSNG-1234', url: env.BUILD_URL)) {
+  jiraAddRemoteIssueLink(issueKey: 'NMSNG-1234', url: env.BUILD_URL, title: 'Build')
+}
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `url` | required | Link target |
+| `issueKey` | resolved from the MR title | Jira issue key (for example, `NMSNG-1234`) |
+| `title` | last segment of `url` | Link title |
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
+
+## Returns
+
+The `httpRequest` response of the link creation. Throws when the issue key cannot be
+resolved or the Jira API call fails.

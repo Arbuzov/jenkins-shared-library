@@ -1,0 +1,37 @@
+# jiraAssignFixVersionToIssues
+
+Assigns an existing version as the fix version of every issue of a project that has no
+fix version yet and sits in the given status. Bulk counterpart of `jiraAddFixVersion`,
+which sets the fix version of a single issue.
+
+Runs through the Jenkins Jira plugin site of the job configuration
+(`JiraSite.get(project)`), so it does not take `credentialsId`.
+
+Replaces the deprecated `assignJiraFixVersion`.
+
+## Usage
+
+```groovy
+jiraAssignFixVersionToIssues(
+  version: '1.1.0-b42',
+  projectKey: 'DEVOPS',
+  statusName: 'In Progress'
+)
+```
+
+The issues are selected with
+`project = <projectKey> and fixVersion is EMPTY and status = '<statusName>'`.
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `version` | required | Existing version in the project, for example `1.1.0-b42` |
+| `projectKey` | required | Jira project key, for example `DEVOPS` |
+| `statusName` | required | Status the issues have to be in, for example `In Progress` |
+
+## Returns
+
+No return value.

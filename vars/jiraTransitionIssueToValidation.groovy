@@ -10,16 +10,19 @@
  * @return New assignee display name
  */
 String call(Map arg = [:]) {
-  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
+  reportUsage(
+    path: getClass().protectionDomain.codeSource.location.path,
+    deprecated: 'jiraTransitionIssue'
+  )
 
   def issue = null
   try {
     issue = arg.issueKey
-      ? getJiraIssueInfo(
-          issueId: arg.issueKey,
+      ? jiraGetIssueInfo(
+          issueKey: arg.issueKey,
           credentialsId: arg.credentialsId ?: null
         )
-      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null)
+      : jiraGuessIssueInfo(credentialsId: arg.credentialsId ?: null)
   } catch (Exception e) {
     throw new Exception("jiraTransitionIssueToValidation(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }

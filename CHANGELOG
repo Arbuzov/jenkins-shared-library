@@ -3,6 +3,28 @@
 ## Unreleased
 
 ### Added
+- Map-notation Jira steps, all named with the `jira` prefix, replacing the legacy positional ones:
+  - `jiraGetIssueInfo(issueKey:, credentialsId:)` — replaces `getJiraIssueInfo`.
+  - `jiraGuessIssueInfo(credentialsId:)` — replaces `guessJiraIssueInfo`.
+  - `jiraAddRemoteIssueLink(url:, issueKey:, title:, credentialsId:)` — replaces `addJiraIssueLink`; resolves the issue from the MR title when `issueKey` is omitted, builds the request body with `JsonOutput` and posts to the remote-link endpoint directly, without the extra issue lookup.
+  - `jiraCreateVersion(version:, projectKey:)` — replaces `createNewJiraVersion`.
+  - `jiraAssignFixVersionToIssues(version:, projectKey:, statusName:)` — replaces `assignJiraFixVersion`, named apart from the single-issue `jiraAddFixVersion`.
+  - Step documentation for each of them in `vars/jira*.txt`.
+- Unit tests for remote-link creation in `src/test/groovy/vars/JiraAddRemoteIssueLinkTest.groovy`.
+- Unit tests pinning the signatures of the deprecated wrappers in `src/test/groovy/vars/DeprecatedJiraStepsTest.groovy`.
+
+### Changed
+- `reportUsage` logs `WARNING: <step>() is deprecated` in the build log when it is called with a truthy `deprecated` argument; a String value names the replacement step in the warning and becomes the value of the `deprecated` tag.
+- The Jira steps and the build steps of the library call the new `jira*` steps, so they no longer emit deprecation warnings.
+- `jiraTransitionIssueToValidation`, documented as deprecated since it was added, now warns in the build log of every pipeline that still calls it.
+- `jiraAssignFixVersionToIssues` escapes the status name in the JQL it builds, so a status such as `Client's review` no longer breaks the query.
+- A title made of whitespace falls back to the last segment of the URL in `jiraAddRemoteIssueLink` (`addJiraIssueLink` did it for an empty title only).
+- `addJiraIssueLink` posts the link to `/rest/api/2/issue/<issueKey>/remotelink` through the new step instead of to the `self` URL of the fetched issue. Both address the same issue, one Jira call less; a Jira whose configured base URL differs from `jira.spacebridge.com` would be reached at the latter now.
+- `README.md` also lists `jiraKeyFromTitle` and `jiraTransitionIssue`, which were missing from the Jira section.
+
+### Deprecated
+- `addJiraIssueLink`, `assignJiraFixVersion`, `createNewJiraVersion`, `getJiraIssueInfo` and `guessJiraIssueInfo` are kept as thin wrappers over the new steps for backward compatibility. They report `deprecated` to the usage statistics and warn in the build log.
+- `jiraTransitionIssueToValidation`, already documented as deprecated, now reports it too.
 - New shared-library step `jiraGetRemoteIssueLinks` in `vars/jiraGetRemoteIssueLinks.groovy`.
   - Lists the remote links of a Jira issue via `GET /rest/api/2/issue/:key/remotelink` — the links created by `addJiraIssueLink`.
   - Resolves the issue key from the MR title via `guessJiraIssueInfo` when `issueKey` is omitted.

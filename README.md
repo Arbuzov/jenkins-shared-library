@@ -49,15 +49,26 @@ CI for GitLab projects.
 - [gitlabUpdateFile](vars/gitlabUpdateFile.groovy) — update a single repo file via the GitLab API ([docs](vars/gitlabUpdateFile.txt))
 
 ### Jira
-- [addJiraIssueLink](vars/addJiraIssueLink.groovy) — attach a remote link (e.g. build URL) to an issue
-- [assignJiraFixVersion](vars/assignJiraFixVersion.groovy) — assign a fix version to matching issues ([docs](vars/assignJiraFixVersion.txt))
-- [createNewJiraVersion](vars/createNewJiraVersion.groovy) — create a version in a project ([docs](vars/createNewJiraVersion.txt))
-- [getJiraIssueInfo](vars/getJiraIssueInfo.groovy) — fetch an issue as a map ([docs](vars/getJiraIssueInfo.txt))
-- [guessJiraIssueInfo](vars/guessJiraIssueInfo.groovy) — extract an issue key from branch/commit/MR context
 - [jiraAddComment](vars/jiraAddComment.groovy) — post a comment ([docs](vars/jiraAddComment.txt))
-- [jiraAddFixVersion](vars/jiraAddFixVersion.groovy) — bulk-assign fix versions ([docs](vars/jiraAddFixVersion.txt))
+- [jiraAddFixVersion](vars/jiraAddFixVersion.groovy) — add a fix version to a single issue ([docs](vars/jiraAddFixVersion.txt))
+- [jiraAddRemoteIssueLink](vars/jiraAddRemoteIssueLink.groovy) — attach a remote link (e.g. build URL) to an issue ([docs](vars/jiraAddRemoteIssueLink.txt))
+- [jiraCreateVersion](vars/jiraCreateVersion.groovy) — create a version in a project ([docs](vars/jiraCreateVersion.txt))
+- [jiraGetIssueInfo](vars/jiraGetIssueInfo.groovy) — fetch an issue as a map ([docs](vars/jiraGetIssueInfo.txt))
 - [jiraGetRemoteIssueLinks](vars/jiraGetRemoteIssueLinks.groovy) — list the remote links of an issue, e.g. to skip a duplicate ([docs](vars/jiraGetRemoteIssueLinks.txt))
-- [jiraTransitionIssueToValidation](vars/jiraTransitionIssueToValidation.groovy) — drive workflow transitions via the API ([docs](vars/jiraTransitionIssueToValidation.txt))
+- [jiraGuessIssueInfo](vars/jiraGuessIssueInfo.groovy) — resolve the issue of the current build from the MR title ([docs](vars/jiraGuessIssueInfo.txt))
+- [jiraKeyFromTitle](vars/jiraKeyFromTitle.groovy) — extract an issue key from an MR title ([docs](vars/jiraKeyFromTitle.txt))
+- [jiraAssignFixVersionToIssues](vars/jiraAssignFixVersionToIssues.groovy) — bulk-assign a fix version to matching issues ([docs](vars/jiraAssignFixVersionToIssues.txt))
+- [jiraTransitionIssue](vars/jiraTransitionIssue.groovy) — transition an issue and optionally reassign it ([docs](vars/jiraTransitionIssue.txt))
+
+Deprecated steps, kept as thin wrappers — they log a deprecation warning and are
+reported as deprecated in the usage statistics:
+
+- [addJiraIssueLink](vars/addJiraIssueLink.groovy) → `jiraAddRemoteIssueLink` ([docs](vars/addJiraIssueLink.txt))
+- [assignJiraFixVersion](vars/assignJiraFixVersion.groovy) → `jiraAssignFixVersionToIssues` ([docs](vars/assignJiraFixVersion.txt))
+- [createNewJiraVersion](vars/createNewJiraVersion.groovy) → `jiraCreateVersion` ([docs](vars/createNewJiraVersion.txt))
+- [getJiraIssueInfo](vars/getJiraIssueInfo.groovy) → `jiraGetIssueInfo` ([docs](vars/getJiraIssueInfo.txt))
+- [guessJiraIssueInfo](vars/guessJiraIssueInfo.groovy) → `jiraGuessIssueInfo` ([docs](vars/guessJiraIssueInfo.txt))
+- [jiraTransitionIssueToValidation](vars/jiraTransitionIssueToValidation.groovy) → `jiraTransitionIssue` ([docs](vars/jiraTransitionIssueToValidation.txt))
 
 ### NetBox (DCIM / IPAM)
 - [getNetboxDevices](vars/getNetboxDevices.groovy) — list devices with role/tenant filters ([docs](vars/getNetboxDevices.txt))
@@ -163,7 +174,7 @@ use the corresponding functions from `vars/`:
 
 * [Git plugin](https://plugins.jenkins.io/git/) — repository checkout and SCM triggers
 * [Job DSL plugin](https://plugins.jenkins.io/job-dsl/) — used by some job-generation helpers
-* [Jira plugin](https://plugins.jenkins.io/jira/) — Jira integration and version builders (used by `createNewJiraVersion` / `assignJiraFixVersion`)
+* [Jira plugin](https://plugins.jenkins.io/jira/) — Jira integration and version builders (used by `jiraCreateVersion` / `jiraAssignFixVersionToIssues`)
 * [HTTP Request Plugin](https://plugins.jenkins.io/http_request/) — `httpRequest` is used widely for API calls (GitLab, Confluence, Jira, NetBox, etc.)
 * [Pipeline Utility Steps plugin](https://plugins.jenkins.io/pipeline-utility-steps/) — utilities used by several helpers (file/zip helpers, `findFiles`, `readYaml`, etc.)
 * [HTML Publisher Plugin](https://plugins.jenkins.io/htmlpublisher/) — `publishHTML` is used to publish generated site reports

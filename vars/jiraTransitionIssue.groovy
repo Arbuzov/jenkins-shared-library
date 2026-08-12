@@ -36,7 +36,7 @@ def findTransitionTo(String issueKey, String targetStatus, credentialsId, debug 
  * that require an assignee are satisfied even on unassigned issues.
  *
  * @param arg.targetStatus Target status name, e.g. 'To Do' (required)
- * @param arg.issueKey Jira issue key (default: resolved from the MR title via guessJiraIssueInfo)
+ * @param arg.issueKey Jira issue key (default: resolved from the MR title via jiraGuessIssueInfo)
  * @param arg.unassign Remove the assignee (default: false)
  * @param arg.assignee Username to assign the issue to (ignored when unassign is true)
  * @param arg.credentialsId Jira credentials ID (default: 'jira-username-password')
@@ -56,11 +56,11 @@ def call(Map arg = [:]) {
   def issue = null
   try {
     issue = arg.issueKey
-      ? getJiraIssueInfo(
-          issueId: arg.issueKey,
+      ? jiraGetIssueInfo(
+          issueKey: arg.issueKey,
           credentialsId: arg.credentialsId ?: null
         )
-      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null)
+      : jiraGuessIssueInfo(credentialsId: arg.credentialsId ?: null)
   } catch (Exception e) {
     throw new Exception("jiraTransitionIssue(): Failed to get Jira issue info: ${e?.message ?: UNKNOWN_ERROR}")
   }

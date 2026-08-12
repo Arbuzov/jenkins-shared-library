@@ -35,7 +35,7 @@ class JiraGetRemoteIssueLinksTest extends BasePipelineTest {
             assert args.returnPojo == true
             new JsonSlurper().parseText(args.text as String)
         })
-        helper.registerAllowedMethod('guessJiraIssueInfo', [Map], { Map args -> guessedIssue })
+        helper.registerAllowedMethod('jiraGuessIssueInfo', [Map], { Map args -> guessedIssue })
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args
             return [status: 200, content: httpResponseContent]

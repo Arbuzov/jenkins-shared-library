@@ -342,7 +342,7 @@ def call(Map arg = [:]) {
           }
         }
         steps {
-          createNewJiraVersion("${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}", arg.JIRA_PROJECT)
+          jiraCreateVersion(version: "${PACKAGE_NAME}-${BASE_VERSION}-b${BUILD_NUMBER}", projectKey: arg.JIRA_PROJECT)
         }
       }
       stage ('Create Confluence description') {

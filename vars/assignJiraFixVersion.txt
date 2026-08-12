@@ -1,1 +1,6 @@
-## Assigns a version to all tickets in the project with the specific state and without the fix version
+# assignJiraFixVersion
+
+**Deprecated** — use `jiraAssignFixVersionToIssues(version: ..., projectKey: ..., statusName: ...)` instead.
+
+Kept as a thin wrapper for existing pipelines. It logs a deprecation warning in the
+build log and is reported as deprecated in the usage statistics.

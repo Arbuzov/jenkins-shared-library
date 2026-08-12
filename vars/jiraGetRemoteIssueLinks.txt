@@ -1,11 +1,11 @@
 # jiraGetRemoteIssueLinks
 
 Returns the remote issue links (web links) of a Jira issue — the links created by
-`addJiraIssueLink`. Not to be confused with Jira issue links (`fields.issuelinks`),
+`jiraAddRemoteIssueLink`. Not to be confused with Jira issue links (`fields.issuelinks`),
 which describe relations between issues.
 
 - The issue key may be omitted inside an MR build: it is then resolved from the MR
-  title via `guessJiraIssueInfo`.
+  title via `jiraGuessIssueInfo`.
 - `titleContains` and `url` narrow the result, which makes a duplicate check a
   one-liner. Both are optional and are applied together when both are given.
 - Returns an empty list when Jira answers with `[]` for an issue without remote links,
@@ -22,12 +22,12 @@ the check and the creation.
 // Add a link only when this test case is not linked to the issue yet
 def testCaseId = 'TC-NMSNG-042'
 if (!jiraGetRemoteIssueLinks(issueKey: 'NMSNG-1234', titleContains: testCaseId)) {
-  addJiraIssueLink('NMSNG-1234', reportUrl, "Report ${testCaseId} (build ${env.BUILD_NUMBER})")
+  jiraAddRemoteIssueLink(issueKey: 'NMSNG-1234', url: reportUrl, title: "Report ${testCaseId} (build ${env.BUILD_NUMBER})")
 }
 
 // Duplicate check by the exact URL
 if (!jiraGetRemoteIssueLinks(issueKey: 'NMSNG-1234', url: env.BUILD_URL)) {
-  addJiraIssueLink('NMSNG-1234', env.BUILD_URL, 'Build')
+  jiraAddRemoteIssueLink(issueKey: 'NMSNG-1234', url: env.BUILD_URL, title: 'Build')
 }
 
 // All links of the issue resolved from the MR title

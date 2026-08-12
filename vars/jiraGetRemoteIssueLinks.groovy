@@ -1,12 +1,12 @@
 /**
- * List the remote issue links of a Jira issue — the links created by addJiraIssueLink().
+ * List the remote issue links of a Jira issue — the links created by jiraAddRemoteIssueLink().
  * Not to be confused with Jira issue links, which describe relations between issues.
  *
  * Typical use is a duplicate check before adding a link: read the links of an issue and
  * add a new one only when it is not there yet. The check is best effort — a concurrent
  * build can add the same link between the check and the creation.
  *
- * @param arg.issueKey Jira issue key (default: resolved from the MR title via guessJiraIssueInfo)
+ * @param arg.issueKey Jira issue key (default: resolved from the MR title via jiraGuessIssueInfo)
  * @param arg.titleContains Return only the links whose title contains this substring (case sensitive)
  * @param arg.url Return only the links pointing to this exact URL
  * @param arg.credentialsId Jira credentials ID (default: 'jira-username-password')
@@ -23,7 +23,7 @@ def call(Map arg = [:]) {
   try {
     issueKey = arg.issueKey
       ? arg.issueKey.toString().trim()
-      : guessJiraIssueInfo(credentialsId: credentialsId)?.key
+      : jiraGuessIssueInfo(credentialsId: credentialsId)?.key
   } catch (Exception exception) {
     throw new Exception("jiraGetRemoteIssueLinks(): Failed to get Jira issue info: ${exception?.message ?: 'unknown error'}")
   }

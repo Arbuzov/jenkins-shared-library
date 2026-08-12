@@ -330,7 +330,7 @@ def call(Map arg = [:]) {
         steps {
           script {
             def APPLICATION_DATA = readJSON(file: 'package.json')
-            createNewJiraVersion("${env.PACKAGE_NAME}-${VERSION}", APPLICATION_DATA.spacebridge.jira.project)
+            jiraCreateVersion(version: "${env.PACKAGE_NAME}-${VERSION}", projectKey: APPLICATION_DATA.spacebridge.jira.project)
             if (APPLICATION_DATA.spacebridge?.confluence?.notes && APPLICATION_DATA.spacebridge?.confluence?.space && APPLICATION_DATA.spacebridge?.jira?.project) {
               def CONFLUENCE_SPACE = APPLICATION_DATA.spacebridge.confluence.space
               def ROOT_PAGE = APPLICATION_DATA.spacebridge.confluence.notes

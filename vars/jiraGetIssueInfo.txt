@@ -1,0 +1,25 @@
+# jiraGetIssueInfo
+
+Fetches Jira issue details via the Jira REST API and returns the parsed JSON.
+
+Replaces the deprecated `getJiraIssueInfo`.
+
+## Usage
+
+```groovy
+def issue = jiraGetIssueInfo(issueKey: 'PROJ-123')
+echo "Summary: ${issue.fields.summary}"
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `issueKey` | required | Jira issue key or numeric id (for example, `PROJ-123`) |
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
+
+## Returns
+
+Map - Jira issue JSON as a Groovy map.

@@ -9,7 +9,7 @@ def call(Map arg = [:]) {
   try {
     issueKey = arg.issueKey
       ? arg.issueKey
-      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null).key;
+      : jiraGuessIssueInfo(credentialsId: arg.credentialsId ?: null).key;
   } catch (Exception e) {
     throw new Exception("jiraAddComment(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }

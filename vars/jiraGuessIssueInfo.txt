@@ -1,0 +1,29 @@
+# jiraGuessIssueInfo
+
+Guesses and returns the Jira issue of the current build: finds the MR, extracts the
+issue key from its title (see `jiraKeyFromTitle`) and fetches the issue with
+`jiraGetIssueInfo`.
+
+Replaces the deprecated `guessJiraIssueInfo`.
+
+## Usage
+
+```groovy
+def issue = jiraGuessIssueInfo()
+if (issue) {
+  echo "Issue: ${issue.key}"
+}
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
+
+## Returns
+
+Map - Jira issue JSON as a Groovy map, `null` when the build has no MR, the MR title
+holds no issue key, or the issue cannot be fetched.

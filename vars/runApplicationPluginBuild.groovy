@@ -431,7 +431,7 @@ def call(Map arg) {
           }
         }
         steps {
-          createNewJiraVersion("${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}", arg.JIRA_PROJECT)
+          jiraCreateVersion(version: "${ARTIFACT_ID}-${BASE_VERSION}-b${BUILD_ID}", projectKey: arg.JIRA_PROJECT)
         }
       }
       stage ('Create Release notes') {

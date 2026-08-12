@@ -8,12 +8,15 @@ class ReportUsageTest extends BasePipelineTest {
 
     def script
     List<Map> influxPoints
+    List<String> echoMessages
 
     @Before
     void setUp() {
         super.setUp()
         influxPoints = []
+        echoMessages = []
         helper.registerAllowedMethod('sendToInfluxDB', [Map], { Map args -> influxPoints << args })
+        helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         binding.setVariable('env', [
             JOB_NAME      : 'devops/jenkins-shared-library',
             getEnvironment: { -> [JOB_NAME: 'devops/jenkins-shared-library', BUILD_ID: '42'] }
@@ -40,6 +43,29 @@ class ReportUsageTest extends BasePipelineTest {
         assert influxPoints[0].tags.deprecated == true
         assert influxPoints[0].tags.function == 'addLinkToBuild'
         assert !influxPoints[0].tags.containsKey('path')
+    }
+
+    @Test
+    void deprecatedStepsWarnInTheBuildLog() {
+        script.call(path: '/vars/addLinkToBuild.groovy', deprecated: true)
+
+        assert echoMessages == ['WARNING: addLinkToBuild() is deprecated']
+        assert influxPoints[0].tags.deprecated == true
+    }
+
+    @Test
+    void theDeprecationWarningNamesTheReplacementStep() {
+        script.call(path: '/vars/addLinkToBuild.groovy', deprecated: 'addBuildLink')
+
+        assert echoMessages == ['WARNING: addLinkToBuild() is deprecated, use addBuildLink() instead']
+        assert influxPoints[0].tags.deprecated == 'addBuildLink'
+    }
+
+    @Test
+    void stepsThatAreNotDeprecatedDoNotWarn() {
+        script.call(path: '/vars/addLinkToBuild.groovy')
+
+        assert echoMessages.isEmpty()
     }
 
     @Test

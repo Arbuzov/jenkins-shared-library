@@ -19,10 +19,10 @@ def call(Map arg = [:]) {
   def issue = null
   try {
     issue = arg.issueKey
-      ? getJiraIssueInfo(
-          issueId: arg.issueKey,
+      ? jiraGetIssueInfo(
+          issueKey: arg.issueKey,
           credentialsId: arg.credentialsId ?: null)
-      : guessJiraIssueInfo(credentialsId: arg.credentialsId ?: null);
+      : jiraGuessIssueInfo(credentialsId: arg.credentialsId ?: null);
   } catch (Exception e) {
     throw new Exception("jiraAddFixVersion(): Failed to get Jira issue info: ${e?.message ?: 'unknown error'}")
   }

@@ -1,19 +1,6 @@
 # guessJiraIssueInfo
 
-Guess and return Jira issue for the current build.
+**Deprecated** — use `jiraGuessIssueInfo()` instead.
 
-Try to guess (from MR title) and return the Jira issue for the current build.
-
-The function does it by finding the MR number, extracting Jira issue key from the MR title and then using
-the Jira API to get the issue details.
-
-
-## Usage
-
-```groovy
-guessJiraIssueInfo()
-```
-
-## Returns
-
-@return Jira issue object (null if no issue found).
+Kept as a thin wrapper for existing pipelines. It logs a deprecation warning in the
+build log and is reported as deprecated in the usage statistics.

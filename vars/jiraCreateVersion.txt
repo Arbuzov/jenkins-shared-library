@@ -1,0 +1,26 @@
+# jiraCreateVersion
+
+Creates a version in a Jira project through the Jenkins Jira plugin
+(`JiraVersionCreatorBuilder`), so the Jira site of the job configuration is used, not
+`credentialsId`.
+
+Replaces the deprecated `createNewJiraVersion`.
+
+## Usage
+
+```groovy
+jiraCreateVersion(version: '1.1.0-b42', projectKey: 'DEVOPS')
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `version` | required | Version name, for example `1.1.0-b42` |
+| `projectKey` | required | Jira project key, for example `DEVOPS` |
+
+## Returns
+
+No return value.

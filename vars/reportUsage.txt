@@ -12,10 +12,15 @@ def call(Map arg = [:]) {
 }
 ```
 
-Mark a step that is on its way out, so the statistics show who still calls it:
+Mark a step that is on its way out, so the statistics show who still calls it. The
+build log then gets a `WARNING: <step>() is deprecated` line, and `deprecated` becomes
+a tag of the point. Pass the replacement step name to have it named in the warning:
 
 ```groovy
-reportUsage(path: getClass().protectionDomain.codeSource.location.path, deprecated: true)
+reportUsage(
+  path: getClass().protectionDomain.codeSource.location.path,
+  deprecated: 'jiraGetIssueInfo'
+)
 ```
 
 ## Parameters
@@ -25,6 +30,7 @@ All parameters are passed through a Map:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `path` | `''` | Source path of the calling step; its base name becomes the `function` tag. Nothing is sent when it is empty. |
+| `deprecated` | — | Truthy marks the step as deprecated: logs a warning and adds the `deprecated` tag. A String is used as the name of the replacement step in the warning, so keep it to a step name — every distinct value is a new Influx series. |
 | *any other key* | — | Added as an extra InfluxDB tag (`null` values are dropped, `function` and `project` cannot be overridden). Keep the values low-cardinality — every distinct value is a new Influx series. |
 
 ## Measurement

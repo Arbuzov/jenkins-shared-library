@@ -156,9 +156,9 @@ pipeline {
         print(getNPMPackageVersion())
         print(makeYMD())
         print(makeYMD('-'))
-        createNewJiraVersion("1.1.0", 'DEVOPS')
+        jiraCreateVersion(version: '1.1.0', projectKey: 'DEVOPS')
 
-        // assignJiraFixVersion("1.1.0", 'DEVOPS', "In Progress")
+        // jiraAssignFixVersionToIssues(version: '1.1.0', projectKey: 'DEVOPS', statusName: 'In Progress')
 
         // iterateBuilds()
 
@@ -703,7 +703,7 @@ pipeline {
           // fetch/transition-lookup/idempotency paths without changing the ticket
           if (env.TEST_JIRA_ISSUE) {
             echo "Testing jiraTransitionIssue() (no-op transition on ${env.TEST_JIRA_ISSUE})..."
-            def currentStatus = getJiraIssueInfo(env.TEST_JIRA_ISSUE).fields.status.name
+            def currentStatus = jiraGetIssueInfo(issueKey: env.TEST_JIRA_ISSUE).fields.status.name
             def result = jiraTransitionIssue(
               issueKey: env.TEST_JIRA_ISSUE,
               targetStatus: currentStatus,
@@ -786,11 +786,11 @@ pipeline {
         }
 
         script {
-          def jiraIssue = guessJiraIssueInfo()
+          def jiraIssue = jiraGuessIssueInfo()
           if (jiraIssue) {
-            echo "guessJiraIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
+            echo "jiraGuessIssueInfo(): Jira issue found, key: ${jiraIssue.key}, summary: ${jiraIssue.fields.summary}"
           } else {
-            echo "guessJiraIssueInfo(): Jira issue not found"
+            echo "jiraGuessIssueInfo(): Jira issue not found"
           }
         }
 

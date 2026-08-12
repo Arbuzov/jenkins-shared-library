@@ -1,29 +1,25 @@
+/**
+ * @deprecated Use jiraGetIssueInfo(issueKey: 'PROJ-123') instead.
+ *   Kept as a thin wrapper for existing pipelines.
+ */
 def call(issueId, credentialsId = 'jira-username-password') {
-  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
-
-  def issueUrl = "https://jira.spacebridge.com/rest/api/2/issue/${issueId}"
-  def issueResponce = httpRequest(
-    url: issueUrl,
-    httpMode: 'GET',
-    contentType: 'APPLICATION_JSON',
-    acceptType: 'APPLICATION_JSON',
-    authentication: credentialsId,
-    consoleLogResponseBody: false,
-    quiet: true
+  reportUsage(
+    path: getClass().protectionDomain.codeSource.location.path,
+    deprecated: 'jiraGetIssueInfo'
   )
-  return readJSON(text: issueResponce.getContent())
+  return jiraGetIssueInfo(issueKey: issueId, credentialsId: credentialsId)
 }
 
-/*
- * Overloaded method to accept parameters as a map
- * Function call with named parameters is deprecated but still 
- * supported for backward compatibility
+/**
+ * @deprecated Use jiraGetIssueInfo(issueKey: 'PROJ-123') instead.
  */
 def call(Map arg) {
-  def issueId = arg.issueId
-  def credentialsId = arg.credentialsId ?: 'jira-username-password'
-  if (!issueId) {
-    error("Parameter 'issueId' is required but not provided.")
-  }
-  return this.call(issueId, credentialsId)
+  reportUsage(
+    path: getClass().protectionDomain.codeSource.location.path,
+    deprecated: 'jiraGetIssueInfo'
+  )
+  return jiraGetIssueInfo(
+    issueKey: arg.issueId ?: arg.issueKey,
+    credentialsId: arg.credentialsId ?: 'jira-username-password'
+  )
 }

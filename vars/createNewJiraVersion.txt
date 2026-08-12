@@ -1,1 +1,6 @@
-## Creates a new version at the specified project
+# createNewJiraVersion
+
+**Deprecated** — use `jiraCreateVersion(version: ..., projectKey: ...)` instead.
+
+Kept as a thin wrapper for existing pipelines. It logs a deprecation warning in the
+build log and is reported as deprecated in the usage statistics.
