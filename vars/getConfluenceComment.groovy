@@ -14,7 +14,7 @@
  * @return Comment body by default (String or null), raw JSON (Map) when RAW=true, or null when not found and ALLOW_NOT_FOUND=true
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'

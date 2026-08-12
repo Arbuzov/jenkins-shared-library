@@ -1,5 +1,5 @@
 def call() {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	String result = "";
 	String uriStr = "";
 	if (env.getAt('gitlabSourceRepoURL')!=null && !env.getAt('gitlabSourceRepoURL').equals("")) {

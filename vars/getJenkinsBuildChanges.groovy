@@ -3,7 +3,7 @@
  * HTML changelog for release notes
  */
 def call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   def build = arg.BUILD
   def HEADER = arg.HEADER ?: '2'
   Boolean DEBUG = arg.DEBUG ?: false

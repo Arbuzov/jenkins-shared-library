@@ -1,5 +1,5 @@
 ArrayList call(String artifactsPattern, String repoPath, Boolean flattern = false, String credentialsId = 'jira-username-password') {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   def fileList = findFiles(glob: artifactsPattern).toList()
   ArrayList selectedFiles = []
   findFiles(glob: artifactsPattern).toList().each{

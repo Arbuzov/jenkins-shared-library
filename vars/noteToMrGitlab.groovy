@@ -1,7 +1,7 @@
 import groovy.json.JsonOutput;
 
 def call (String gitUrl, String mrIid, String body = '', Boolean skipIfExist = true, String apiSecretId = gitLabAPISecret, Boolean debug = false) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   if (gitLabAPISecret == null) throw new Exception("Variable 'gitLabAPISecret' is undefined. You must set this variable before function call.");
   
   println "======== Comment to GitLab: " + body.toString() + " ========"
@@ -88,7 +88,7 @@ def deleteNotes(String notesUrl, List notes, List headers, Boolean debug) {
  * in place, or null when nothing was posted.
  */
 def call (Map args) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   String comment = args.comment ?: ''
   if (!comment) {

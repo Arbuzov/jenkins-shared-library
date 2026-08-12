@@ -1,5 +1,5 @@
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   String repository = arg.repository
   String packageName = arg.packageName
   String nexusURL = arg.nexusURL ?: 'http://deb.repo.asatnet.net/debian'

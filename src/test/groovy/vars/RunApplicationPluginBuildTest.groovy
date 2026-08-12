@@ -15,7 +15,7 @@ class RunApplicationPluginBuildTest extends BasePipelineTest {
         super.setUp()
         files = [:]
         written = [:]
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('fileExists', [String], { String f -> files.containsKey(f) })
         helper.registerAllowedMethod('readYaml', [Map], { Map args -> files[args.file] })
         helper.registerAllowedMethod('readJSON', [Map], { Map args -> files[args.file] })

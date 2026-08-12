@@ -9,7 +9,7 @@ def getApplicationData() {
 
 
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   pipeline {
     agent {
       label 'farmer-docker-ubuntu'

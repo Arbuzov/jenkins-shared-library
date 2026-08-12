@@ -44,7 +44,7 @@ def findTransitionTo(String issueKey, String targetStatus, credentialsId, debug 
  * @return Map [issueKey, transitioned, previousAssigneeName, previousAssigneeDisplayName]
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def DEBUG = arg.DEBUG ?: false
   def credentialsId = arg.credentialsId ?: 'jira-username-password'

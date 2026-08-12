@@ -10,7 +10,7 @@
 //       instead. That function removes all files right before the SCM checkout.
 
 def call() {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	echo "Deleting all workspace contents before stage, in stage ${env.STAGE_NAME} ..."
 
 	def cleanWorkspaceFilesPatterns = [

@@ -1,5 +1,5 @@
 String call(ArrayList stringList, ArrayList rowBrace = ["", ""], ArrayList listBrace = ["",""], boolean sort = true) {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	String result = "";
 
   if (sort) {

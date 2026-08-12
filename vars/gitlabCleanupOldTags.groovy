@@ -22,7 +22,7 @@
  *  - skipped: List<String> tag names skipped (dryRun or delete failure)
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   int keep = (args.keep != null ? args.keep : 3) as Integer
   if (keep < 0) {

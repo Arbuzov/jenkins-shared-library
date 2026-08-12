@@ -86,7 +86,7 @@ def applyNotice(Map arg, Boolean debug, String username, String password) {
  * @return Boolean true on success
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def debug = arg.debug ?: false
 

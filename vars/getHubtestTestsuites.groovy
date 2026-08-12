@@ -10,7 +10,7 @@ import net.sf.json.JSONNull
  * @return List of file names matching the criteria.
  */
 def call (Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def baseUrl     = arg.baseUrl     ?: "https://nexus.asatnet.net/service/rest/v1/search/assets"
   def repository  = arg.repository  ?: "store"

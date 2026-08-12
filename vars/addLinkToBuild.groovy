@@ -1,5 +1,5 @@
 def call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   String link = arg.LINK ?: ''
   String text = arg.TEXT ?: link
   Boolean blank = arg.BLANK ?: true

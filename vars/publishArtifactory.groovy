@@ -2,7 +2,7 @@ import static groovy.io.FileType.*;
 import static groovy.io.FileVisitResult.*;
 
 ArrayList call(String repoPath, String serverName = 'artifactory', String artifactsRegexp = '.*', String artifactVersion = '', Boolean flat = true) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   def server = Artifactory.server(serverName);
   
   ArrayList selectedFiles = []

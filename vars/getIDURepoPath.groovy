@@ -28,7 +28,7 @@
 //
 
 String call(Map args) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     String repoTopPath = getIDURepoTopPath(args)
     String repoVersPath = getIDURepoVersionPath(args)

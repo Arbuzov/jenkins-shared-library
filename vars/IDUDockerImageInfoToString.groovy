@@ -9,7 +9,7 @@
 def call(Map iminfo) {
     String str = ""
     String dbgComment = ""
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     if (!iminfo) {
         return "NONE"

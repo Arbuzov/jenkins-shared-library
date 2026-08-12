@@ -30,7 +30,7 @@
  *  or null if no foreign UpstreamCause is present anywhere in the tree.
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def wantRoot = args.root ?: false
   def debug = args.containsKey('debug') ? args.debug : true

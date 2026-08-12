@@ -16,7 +16,7 @@ class AddConfluenceCommentTest extends BasePipelineTest {
         super.setUp()
         httpResponseContent = '{"id":"555","type":"comment","body":{"storage":{"value":"<p>Hello</p>"}}}'
 
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> })
         helper.registerAllowedMethod('error', [String], { String message ->
             throw new RuntimeException(message)

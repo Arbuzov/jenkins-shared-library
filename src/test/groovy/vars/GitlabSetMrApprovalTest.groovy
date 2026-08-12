@@ -17,7 +17,7 @@ class GitlabSetMrApprovalTest extends BasePipelineTest {
     @Before
     void setUp() {
         super.setUp()
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args
             return new HttpResponseMock(content: '{"ok":true}')

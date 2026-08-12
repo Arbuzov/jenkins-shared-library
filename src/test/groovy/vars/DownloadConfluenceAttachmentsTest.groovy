@@ -26,7 +26,7 @@ class DownloadConfluenceAttachmentsTest extends BasePipelineTest {
             _links: [:]
         ])
 
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> })
         helper.registerAllowedMethod('error', [String], { String message ->
             throw new RuntimeException(message)

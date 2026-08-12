@@ -146,7 +146,7 @@ def updateManifest(buildVersion) {
 }
 
 def call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   pipeline {
     agent {

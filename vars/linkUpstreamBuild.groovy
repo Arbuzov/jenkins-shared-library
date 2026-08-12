@@ -48,7 +48,7 @@ import jenkins.model.Jenkins
  * treat linking as best-effort.
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   boolean debug = args.containsKey('debug') ? args.debug : true
   Map outcome = injectUpstream(args)

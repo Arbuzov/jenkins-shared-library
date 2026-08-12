@@ -15,7 +15,7 @@ class RunAngularDebBuildTest extends BasePipelineTest {
         super.setUp()
         found = []
         raised = null
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('findFiles', [Map], { Map args -> found })
         helper.registerAllowedMethod('error', [String], { String message ->
             raised = message

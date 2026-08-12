@@ -1,7 +1,7 @@
 import java.net.URLEncoder
 
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   // Default parameters
   def sonarQubeEnvName = arg.sonarQubeEnvName ?: 'SonarQube Server'
   def gitlabUrl = arg.gitlabUrl ?: 'https://gitlab.asatnet.net/'

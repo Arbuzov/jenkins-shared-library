@@ -36,7 +36,7 @@ import groovy.json.JsonOutput
  * @return List of created chatMessage IDs (one per CHAT_ID), or null if CHAT_ID was empty.
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def chatIds = arg.CHAT_ID instanceof List ? arg.CHAT_ID : (arg.CHAT_ID ? [arg.CHAT_ID] : [])
   String message = arg.MESSAGE ?: ''

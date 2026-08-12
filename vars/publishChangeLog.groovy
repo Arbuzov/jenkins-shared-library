@@ -1,6 +1,6 @@
 import org.apache.commons.io.FilenameUtils;
 def call(ArrayList<String> paths, String version = '') {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	def destFile = 'changelog.txt';
 	def fullLog = 'full.log'
 	sh 'install -d logs'

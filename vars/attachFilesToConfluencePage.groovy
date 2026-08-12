@@ -7,7 +7,7 @@ def call(Map arg) {
     String CREDENTIALS_ID  = arg.CREDENTIALS_ID ?: 'jira-username-password'
     Boolean DEBUG          = arg.DEBUG          ?: false
 
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     if (DEBUG) {
         echo "attachFilesToConfluencePage: DEBUG mode enabled"

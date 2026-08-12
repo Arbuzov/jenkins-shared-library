@@ -1,7 +1,7 @@
 // doCleanGitWorkTree(): Clean Git repository work tree (including submodules)
 
 def call() {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     sh label: 'Cleaning Git repository work tree',
         script: '''#!/bin/sh

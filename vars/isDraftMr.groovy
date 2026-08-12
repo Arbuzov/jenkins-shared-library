@@ -1,5 +1,5 @@
 def call() {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   if (!(env.CHANGE_ID?.trim())) {
     return false
   }

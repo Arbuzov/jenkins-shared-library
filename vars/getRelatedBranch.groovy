@@ -1,7 +1,7 @@
 // getRelatedBranch(): Get target project fork and branch from source project URL and branch
 
 def call (String relatedProjectOriginUrl, String apiSecretId = '') {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   int pageNum = 0;
   int itemsOnPageCount = 0;     // items on page
   int forksCount = 0;

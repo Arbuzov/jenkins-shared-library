@@ -9,7 +9,7 @@
  * @return Jira issue key, uppercased (null if no key found).
  */
 def call(String title, String projectKey = null) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   title = (title ?: '').trim()
   if (title.startsWith('Draft: ')) {

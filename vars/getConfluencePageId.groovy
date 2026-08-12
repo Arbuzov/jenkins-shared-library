@@ -108,7 +108,7 @@ private String resolvePageIdByDisplayPath(Map arg, URI uri, String input, String
 }
 
 def call(Map arg = [:]) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     
     String input = (arg.url ?: arg.URL ?: arg.path ?: arg.PATH ?: '').toString()
     if (!input) return null

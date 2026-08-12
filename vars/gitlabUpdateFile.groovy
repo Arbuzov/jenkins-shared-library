@@ -27,7 +27,7 @@ import groovy.json.JsonOutput
  * Returns Map - GitLab API response, e.g. [file_path: ..., branch: ...].
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   String filePath = args.filePath
   if (!filePath) {

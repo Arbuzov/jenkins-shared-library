@@ -12,7 +12,7 @@ import net.sf.json.JSONNull
  * @return Map where key is artifact version (without .sit) and value is full Nexus path.
  */
 def call (Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def baseUrl     = arg.baseUrl     ?: "https://nexus.asatnet.net/service/rest/v1/search/assets"
   def repository  = arg.repository  ?: "store"

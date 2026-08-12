@@ -21,7 +21,7 @@ class TagToGitlabTest extends BasePipelineTest {
         super.setUp()
         requests = []
 
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('withCredentials', [List, Closure], { creds, body ->
             binding.setVariable('gitLabAPISecret', 'fake-token')
             body()

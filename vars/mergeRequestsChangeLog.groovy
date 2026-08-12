@@ -11,7 +11,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.commons.io.IOUtils;
 
 def call(String apiSecretId = '') {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   if (apiSecretId == '') throw new Exception("Attribute apiSecretId must be set.");
   collectMRChangsets(apiSecretId)
 

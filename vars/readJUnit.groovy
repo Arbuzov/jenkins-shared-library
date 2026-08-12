@@ -52,7 +52,7 @@ def processTestSuite(suite) {
 }
 
 def call(Map arg) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     String fileName = arg.get("file")
     if (!fileName) {
         error("File name is required but not provided.")

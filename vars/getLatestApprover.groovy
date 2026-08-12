@@ -2,7 +2,7 @@
  * Get information about the person approved last build dialog
  */
 String call() {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     def latestId = null;
     def latestName = null;
     def acts = currentBuild.rawBuild.getAllActions()

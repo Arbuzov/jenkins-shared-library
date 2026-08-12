@@ -18,7 +18,7 @@ def call(Map argm) {
     String lastCommitMsgBody = ''
     String lastCommitInfo = ''
 
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     if (argm) {
         if (argm.containsKey('commitId')) {

@@ -33,7 +33,7 @@
 //
 
 String call(Map args) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     // NOTE: store IDU namespace artifacts under "idu/" by default
     String namespace = ((args && args.containsKey('namespace')) ? args.namespace : 'idu')
     String project = ((args && args.containsKey('project')) ? args.project : 'UNKNOWN_PROJECT')

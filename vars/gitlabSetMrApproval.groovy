@@ -10,7 +10,7 @@
  *  - gitlabCredentialsId: Jenkins credentials ID with GitLab token (default: 'gitlab-text-secret')
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def approveArg = args.containsKey('approve') ? args.approve : null
   def action = args.action ?: (approveArg == false ? 'unapprove' : 'approve')

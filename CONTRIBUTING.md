@@ -19,7 +19,7 @@ Contributions primarily target:
 ## Coding Patterns for `vars/` Functions
 - Use a single entry point:
   - `def call(Map arg = [:])` for named arguments.
-- Keep `reportUsage(...)` at the beginning of `call(...)` when the function is part of shared step telemetry.
+- Keep `reportUsage(path: getClass().protectionDomain.codeSource.location.path)` at the beginning of `call(...)` when the function is part of shared step telemetry. Extra map keys (for example `deprecated: true`) are reported as InfluxDB tags — see `vars/reportUsage.txt`.
 - Prefer explicit defaults from `arg` values.
 - For public step parameters, use `UPPER_SNAKE_CASE` keys in the map (for example `CREDENTIALS_ID`, `DEBUG`, `PAGE_ID`).
 - Validate inputs early and fail fast using `error(...)` with actionable messages.

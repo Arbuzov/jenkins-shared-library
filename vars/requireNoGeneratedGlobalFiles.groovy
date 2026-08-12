@@ -10,7 +10,7 @@
 //
 
 def call() {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	sh '''#!/bin/sh
 # Require that no generated global files are present in build environment
 

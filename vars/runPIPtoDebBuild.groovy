@@ -1,5 +1,5 @@
 def call (Map args) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     DIST_REPO = [
         'stretch': [
             'repo': 'scpc',

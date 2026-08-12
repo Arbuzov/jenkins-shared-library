@@ -1,0 +1,38 @@
+# reportUsage
+
+Emits one `shared_call` point to InfluxDB for a shared library step. Internal to this
+library — every `vars/*.groovy` step calls it as the first line of `call(...)`.
+
+## Usage
+
+```groovy
+def call(Map arg = [:]) {
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
+  ...
+}
+```
+
+Mark a step that is on its way out, so the statistics show who still calls it:
+
+```groovy
+reportUsage(path: getClass().protectionDomain.codeSource.location.path, deprecated: true)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `path` | `''` | Source path of the calling step; its base name becomes the `function` tag. Nothing is sent when it is empty. |
+| *any other key* | — | Added as an extra InfluxDB tag (`null` values are dropped, `function` and `project` cannot be overridden). Keep the values low-cardinality — every distinct value is a new Influx series. |
+
+## Measurement
+
+- measurement: `shared_call`
+- tags: `function`, `project` (`env.JOB_NAME`) plus any extra attributes
+- fields: `value=1` plus every environment variable of the build
+
+## Returns
+
+No return value. Delivery failures are swallowed by `sendToInfluxDB`.

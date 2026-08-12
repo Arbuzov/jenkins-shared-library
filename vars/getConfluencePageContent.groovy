@@ -13,7 +13,7 @@
  * @return A map with the title and content of the page
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'

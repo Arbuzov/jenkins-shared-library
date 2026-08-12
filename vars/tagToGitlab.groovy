@@ -1,5 +1,5 @@
 def call (String gitUrl, String tagName, String ref, String message = '', String release = '',Boolean skipIfExist = true, String apiSecretId = 'gitlab-text-secret') {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   withCredentials([string(credentialsId: apiSecretId, variable: 'gitLabAPISecret')]) {
     if (gitLabAPISecret == null) throw new Exception("Variable 'gitLabAPISecret' is undefined. You must set this variable before function call.");
 

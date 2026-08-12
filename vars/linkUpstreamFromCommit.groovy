@@ -43,7 +43,7 @@
  * null when the message carried no recognisable upstream coordinates.
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   boolean debug = args.containsKey('debug') ? args.debug : true
 

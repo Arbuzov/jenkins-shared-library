@@ -1,5 +1,5 @@
 String call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
   String TITLE = arg.TITLE ?: 'New page'

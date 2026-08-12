@@ -1,5 +1,5 @@
 def call(rootDir = pwd()) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   result = ''
   try {
     result = readJSON(file: rootDir+'/package.json').version

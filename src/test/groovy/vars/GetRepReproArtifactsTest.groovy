@@ -18,7 +18,7 @@ class GetRepReproArtifactsTest extends BasePipelineTest {
     @Before
     void setUp() {
         super.setUp()
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args

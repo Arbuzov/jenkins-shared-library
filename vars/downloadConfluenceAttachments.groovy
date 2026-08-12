@@ -115,7 +115,7 @@ def listPageAttachments(String confluenceApi, String pageId, String credentialsI
 }
 
 def call(Map arg = [:]) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     String confluenceApi = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
     String credentialsId = arg.CREDENTIALS_ID ?: 'jira-username-password'

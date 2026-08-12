@@ -14,7 +14,7 @@
  * @return List of remote link Maps, each with id, self and object [url, title], empty when nothing matches
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def DEBUG = arg.DEBUG ?: false
   def credentialsId = arg.credentialsId ?: 'jira-username-password'

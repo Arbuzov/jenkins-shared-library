@@ -12,7 +12,7 @@ class CreateConfluencePageChainTest extends BasePipelineTest {
     @Before
     void setUp() {
         super.setUp()
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> })
         helper.registerAllowedMethod('error', [String], { String message -> 
             throw new RuntimeException(message) 

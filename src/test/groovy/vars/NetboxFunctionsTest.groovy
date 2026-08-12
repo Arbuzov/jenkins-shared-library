@@ -20,7 +20,7 @@ class NetboxFunctionsTest extends BasePipelineTest {
             body()
         })
         helper.registerAllowedMethod('getConfluencePageId', [String], { String path -> })
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
     }
 
     @Test

@@ -31,7 +31,7 @@
  *  - debug: log request/response details to the build console (default: false)
  */
 def call(Map args = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   def state = args.state
   if (!state) {

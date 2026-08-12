@@ -1,4 +1,4 @@
 def call(String name = 'human') {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     echo "Hello, ${name}."
 }

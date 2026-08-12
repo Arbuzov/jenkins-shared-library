@@ -1,5 +1,5 @@
 String call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   def nexusUrl = arg.nexusUrl ?: 'http://nexus.asatnet.net'
   def repository = arg.repository ?: 'maven-snapshots'
   def extension = arg.extension ?: 'deb'

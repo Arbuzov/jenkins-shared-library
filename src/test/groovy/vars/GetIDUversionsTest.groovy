@@ -16,7 +16,7 @@ class GetIDUversionsTest extends BasePipelineTest {
     void setUp() {
         super.setUp()
         lastHttpRequestUrls = []
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('readJSON', [Map], { Map args ->
             new JsonSlurper().parseText(args.text as String)
         })

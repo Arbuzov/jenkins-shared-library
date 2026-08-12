@@ -1,5 +1,5 @@
 String call() {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     def result = ''
     if (env.CHANGE_ID) {
         result = "mr${env.CHANGE_ID}"

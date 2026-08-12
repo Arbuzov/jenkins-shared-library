@@ -1,7 +1,7 @@
 // requireCleanGitWorkTree(): Require that Git repository work tree is clean (including submodules)
 
 def call() {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     sh label: 'Ensuring that Git repository work tree is clean',
         script: '''#!/bin/sh

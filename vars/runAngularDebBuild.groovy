@@ -7,7 +7,7 @@ String resolveDebPackage() {
 }
 
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   if (!arg.PROJECT_NAME) {
     error('runAngularDebBuild: PROJECT_NAME is required')

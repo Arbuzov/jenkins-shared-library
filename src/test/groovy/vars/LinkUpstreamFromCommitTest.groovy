@@ -24,7 +24,7 @@ class LinkUpstreamFromCommitTest extends BasePipelineTest {
         shCalled = false
         shThrow = null
 
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('linkUpstreamBuild', [Map], { Map args ->
             linkArgs << args

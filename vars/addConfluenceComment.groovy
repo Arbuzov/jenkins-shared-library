@@ -16,7 +16,7 @@ import groovy.json.JsonOutput
  * @return By default: [id, type, body], RAW=true: full comment JSON
  */
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
   String CONFLUENCE_API = arg.CONFLUENCE_API ?: 'https://confluence.spacebridge.com/rest/api'
   String CREDENTIALS_ID = arg.CREDENTIALS_ID ?: 'jira-username-password'

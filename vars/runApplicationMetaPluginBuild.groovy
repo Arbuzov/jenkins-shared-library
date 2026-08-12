@@ -140,7 +140,7 @@ def writeManifest(dir, manifest) {
 }
 
 def call(Map arg) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   MANIFEST = [:]
   IMAGES = new HashSet<String>()
 

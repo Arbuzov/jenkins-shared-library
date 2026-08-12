@@ -31,7 +31,7 @@ String getKeyComponentsInfo(PACKAGE_NAME, VERSION, KEY_COMPONENTS = [:]) {
 }
 
 def call(Map arg = [:]) {
-  reportUsage(getClass().protectionDomain.codeSource.location.path)
+  reportUsage(path: getClass().protectionDomain.codeSource.location.path)
   String PACKAGE_NAME = arg.PACKAGE_NAME
   String NAMESPACE = arg.NAMESPACE ?: 'spacebridge'
   String BASE_VERSION = arg.BASE_VERSION ?: '1.0.0'

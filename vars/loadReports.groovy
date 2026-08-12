@@ -1,5 +1,5 @@
 def call(Map args) {
-    reportUsage(getClass().protectionDomain.codeSource.location.path)
+    reportUsage(path: getClass().protectionDomain.codeSource.location.path)
     def mask = args.mask
     def filesContent = ''
     def fileList = findFiles(glob: mask)

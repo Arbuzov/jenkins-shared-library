@@ -28,7 +28,7 @@ class JiraGetRemoteIssueLinksTest extends BasePipelineTest {
            "object":{"url":"https://confluence.spacebridge.com/display/X"}}
         ]'''
 
-        helper.registerAllowedMethod('reportUsage', [String], { String path -> })
+        helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('readJSON', [Map], { Map args ->
             // Jenkins readJSON gives json-lib objects unless returnPojo is set

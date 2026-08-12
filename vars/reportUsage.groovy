@@ -1,16 +1,21 @@
 import org.apache.commons.io.FilenameUtils
 
-def call(String callerFilePath = "") {
-    def callerFunctionName = FilenameUtils.getBaseName(callerFilePath)
-    if (callerFunctionName) {
-        def envFields = env.getEnvironment().collectEntries { key, value ->
-        [(key): "\"${value.replaceAll('"','')}\""] }
-        sendToInfluxDB(
+def call(Map args = [:]) {
+    String path = args.path ?: ''
+    String function = FilenameUtils.getBaseName(path)
+    if (!function) {
+        return
+    }
+    Map extraTags = args.findAll { it.key != 'path' && it.value != null }
+    Map envFields = env.getEnvironment().collectEntries { key, value ->
+        [(key): "\"${value.replaceAll('"','')}\""]
+    }
+    sendToInfluxDB(
         measurement: "shared_call",
-        tags: [
-            function: callerFunctionName,
+        tags: extraTags + [
+            function: function,
             project : env.JOB_NAME
         ],
-        fields: [value: 1] + envFields)
-    }      
+        fields: [value: 1] + envFields
+    )
 }

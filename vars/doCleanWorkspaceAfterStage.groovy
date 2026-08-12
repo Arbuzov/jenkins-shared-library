@@ -15,7 +15,7 @@
 //       do not fail due to missing Dockerfile file in workspace.
 
 def call(boolean isLastStage = false, boolean keepWhenFailure = false) {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	def cleanWorkspaceFilesPatterns = [
 		[pattern: 'Dockerfile*', type: 'EXCLUDE'],
 	]

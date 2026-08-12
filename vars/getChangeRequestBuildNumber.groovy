@@ -9,7 +9,7 @@
 //
 
 def call() {
-	reportUsage(getClass().protectionDomain.codeSource.location.path)
+	reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 	String changeReqBuildNumber = '123456789'
 
 	if (env.getAt('BUILD_NUMBER') == null) {
