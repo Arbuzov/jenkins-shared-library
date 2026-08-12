@@ -56,6 +56,7 @@ CI for GitLab projects.
 - [guessJiraIssueInfo](vars/guessJiraIssueInfo.groovy) — extract an issue key from branch/commit/MR context
 - [jiraAddComment](vars/jiraAddComment.groovy) — post a comment ([docs](vars/jiraAddComment.txt))
 - [jiraAddFixVersion](vars/jiraAddFixVersion.groovy) — bulk-assign fix versions ([docs](vars/jiraAddFixVersion.txt))
+- [jiraGetRemoteIssueLinks](vars/jiraGetRemoteIssueLinks.groovy) — list the remote links of an issue, e.g. to skip a duplicate ([docs](vars/jiraGetRemoteIssueLinks.txt))
 - [jiraTransitionIssueToValidation](vars/jiraTransitionIssueToValidation.groovy) — drive workflow transitions via the API ([docs](vars/jiraTransitionIssueToValidation.txt))
 
 ### NetBox (DCIM / IPAM)

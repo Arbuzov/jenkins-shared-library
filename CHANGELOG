@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- New shared-library step `jiraGetRemoteIssueLinks` in `vars/jiraGetRemoteIssueLinks.groovy`.
+  - Lists the remote links of a Jira issue via `GET /rest/api/2/issue/:key/remotelink` — the links created by `addJiraIssueLink`.
+  - Resolves the issue key from the MR title via `guessJiraIssueInfo` when `issueKey` is omitted.
+  - Supports `titleContains` and `url` filtering, so a duplicate check before adding a link is a single call, plus `credentialsId` and `DEBUG`.
+- Step documentation for `jiraGetRemoteIssueLinks` in `vars/jiraGetRemoteIssueLinks.txt`.
+- Unit tests for remote-link listing behavior in `src/test/groovy/vars/JiraGetRemoteIssueLinksTest.groovy`.
 - New shared-library step `gitlabUpdateFile` in `vars/gitlabUpdateFile.groovy`.
   - Updates a single existing repository file via `PUT /repository/files/:path`, creating one commit on the target branch.
   - Derives project/base URL from `gitUrl` or accepts an explicit `projectId`; sends content as a JSON body with `PRIVATE-TOKEN` auth.

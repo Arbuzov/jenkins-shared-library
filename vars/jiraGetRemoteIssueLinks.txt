@@ -1,0 +1,50 @@
+# jiraGetRemoteIssueLinks
+
+Returns the remote issue links (web links) of a Jira issue — the links created by
+`addJiraIssueLink`. Not to be confused with Jira issue links (`fields.issuelinks`),
+which describe relations between issues.
+
+- The issue key may be omitted inside an MR build: it is then resolved from the MR
+  title via `guessJiraIssueInfo`.
+- `titleContains` and `url` narrow the result, which makes a duplicate check a
+  one-liner. Both are optional and are applied together when both are given.
+- Returns an empty list when Jira answers with `[]` for an issue without remote links,
+  or when nothing matches the filters.
+- Throws when the issue key cannot be resolved, the Jira API call fails, or the answer
+  has an empty body.
+
+The duplicate check is best effort: a concurrent build can add the same link between
+the check and the creation.
+
+## Usage
+
+```groovy
+// Add a link only when this test case is not linked to the issue yet
+def testCaseId = 'TC-NMSNG-042'
+if (!jiraGetRemoteIssueLinks(issueKey: 'NMSNG-1234', titleContains: testCaseId)) {
+  addJiraIssueLink('NMSNG-1234', reportUrl, "Report ${testCaseId} (build ${env.BUILD_NUMBER})")
+}
+
+// Duplicate check by the exact URL
+if (!jiraGetRemoteIssueLinks(issueKey: 'NMSNG-1234', url: env.BUILD_URL)) {
+  addJiraIssueLink('NMSNG-1234', env.BUILD_URL, 'Build')
+}
+
+// All links of the issue resolved from the MR title
+jiraGetRemoteIssueLinks().each { echo "${it.object.title}: ${it.object.url}" }
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `issueKey` | resolved from the MR title | Jira issue key (for example, `NMSNG-1234`) |
+| `titleContains` | no filter | Keep only the links whose title contains this substring (case sensitive) |
+| `url` | no filter | Keep only the links pointing to this exact URL |
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
+| `DEBUG` | `false` | Log the request, the response body and the number of links |
+
+## Returns
+
+List of remote link Maps as returned by Jira, each with `id`, `self` and
+`object` (`url`, `title`, ...).
