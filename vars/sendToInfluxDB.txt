@@ -21,8 +21,8 @@ All parameters are optional and passed through a Map:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `measurement` | `'jenkins_default_metric'` | Measurement name |
-| `tags` | `[project: env.JOB_NAME ?: 'unknown']` | Tag map |
-| `fields` | `[value: 1]` | Field map |
+| `tags` | `[project: env.JOB_NAME ?: 'unknown']` | Tag map. Keys and values are escaped for the line protocol (`,`, `=`, space), so a job name with spaces no longer produces a point InfluxDB rejects. |
+| `fields` | `[value: 1]` | Field map. Keys are escaped the same way; values are written as given, so quote string values yourself. |
 
 ## Returns
 

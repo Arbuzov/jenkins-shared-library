@@ -3,8 +3,12 @@ def call(Map args = [:]){
     String measurement = args.measurement ?: "jenkins_default_metric"
     Map tags = args.tags ?: [project: env.JOB_NAME ?: 'unknown']
     Map fields = args.fields ?: [value: 1]
-    def tagSet = tags.collect { k,v -> "${k}=${v}" }.join(',')
-    def fieldSet = fields.collect { k,v -> "${k}=${v}" }.join(',')
+    def escape = { value ->
+        String text = "${value}"
+        text.replace(',', '\\,').replace('=', '\\=').replace(' ', '\\ ')
+    }
+    def tagSet = tags.collect { k,v -> "${escape(k)}=${escape(v)}" }.join(',')
+    def fieldSet = fields.collect { k,v -> "${escape(k)}=${v}" }.join(',')
     def line = tagSet ? "${measurement},${tagSet} ${fieldSet}" : "${measurement} ${fieldSet}"
     try{
         httpRequest(
