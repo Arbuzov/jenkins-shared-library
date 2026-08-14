@@ -4,11 +4,23 @@ Fetches Jira issue details via the Jira REST API and returns the parsed JSON.
 
 Replaces the deprecated `getJiraIssueInfo`.
 
+With `withComments: true` the step also reads the comments of the issue through
+`jiraGetIssueComments` and puts them into `fields.comment`. The issue endpoint alone
+returns a single page of comments, so this is what makes `fields.comment.comments`
+hold the whole thread of a long-running ticket. It costs at least one extra Jira call.
+Use `jiraGetIssueComments` directly when only the comments are needed, or when the
+`orderBy`, `expand`, `limit` or `pageSize` options matter.
+
 ## Usage
 
 ```groovy
 def issue = jiraGetIssueInfo(issueKey: 'PROJ-123')
 echo "Summary: ${issue.fields.summary}"
+
+// The same issue with its complete comment thread
+def full = jiraGetIssueInfo(issueKey: 'PROJ-123', withComments: true)
+echo "Summary: ${full.fields.summary}, ${full.fields.comment.total} comment(s)"
+full.fields.comment.comments.each { echo "${it.author.displayName}: ${it.body}" }
 ```
 
 ## Parameters
@@ -18,8 +30,13 @@ All parameters are passed through a Map:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `issueKey` | required | Jira issue key or numeric id (for example, `PROJ-123`) |
+| `withComments` | `false` | Replace `fields.comment` with every comment of the issue |
 | `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
 
 ## Returns
 
 Map - Jira issue JSON as a Groovy map.
+
+With `withComments: true`, `fields.comment` holds `comments` (the full list),
+`total`, `startAt` and `maxResults`, so a consumer written against the Jira shape
+keeps working.
