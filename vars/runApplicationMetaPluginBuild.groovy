@@ -122,11 +122,14 @@ def saveImages(images, dest ) {
 
 // Manifest (YAML) is the new company-wide passport format; manifest.json is the
 // deprecated fallback. Prefer YAML, fall back to JSON. NMSNG-1284
+// returnPojo keeps json-lib types (JSONObject, JSONNull) out of the value:
+// writeManifest below dumps it back as YAML, and snakeyaml only takes plain
+// maps, collections and primitives.
 def readManifest() {
   if (fileExists('Manifest')) {
     return readYaml(file: 'Manifest')
   }
-  return readJSON(file: 'manifest.json')
+  return readJSON(file: 'manifest.json', returnPojo: true)
 }
 
 // Persist the stamped version into the manifest(s) that ship in ${dir} so the

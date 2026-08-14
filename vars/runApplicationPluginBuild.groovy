@@ -82,11 +82,14 @@ Set<String> getImageListOld() {
 
 // Manifest (YAML) is the new company-wide passport format; manifest.json is the
 // deprecated fallback. Prefer YAML, fall back to JSON. NMSNG-1284
+// returnPojo keeps json-lib types (JSONObject, JSONNull) out of the value: it is
+// what seeds a generated Manifest, and snakeyaml only dumps plain maps,
+// collections and primitives.
 def readManifest() {
   if (fileExists('Manifest')) {
     return readYaml(file: 'Manifest')
   }
-  return readJSON(file: 'manifest.json')
+  return readJSON(file: 'manifest.json', returnPojo: true)
 }
 
 def getManifestData() {
@@ -131,17 +134,19 @@ def inspectImages(images) {
 }
 
 // Stamp the build version into every manifest that ships so the deployed plugin
-// reports it (the backend reads Manifest YAML first, manifest.json as fallback). NMSNG-1284
+// reports it. The backend reads Manifest (YAML) first, so the archive always gets
+// a stamped one - generated from manifest.json on repos that still ship only the
+// deprecated JSON. manifest.json keeps its own content and just follows the
+// version while it exists. .toString() keeps snakeyaml from tagging a GString.
+// NMSNG-1284
 def updateManifest(buildVersion) {
-  if (fileExists('Manifest')) {
-    def manifest = readYaml(file: 'Manifest')
-    manifest.version = buildVersion
-    writeYaml(file: 'Manifest', data: manifest, overwrite: true)
-  }
+  def manifest = readManifest()
+  manifest.version = buildVersion.toString()
+  writeYaml(file: 'Manifest', data: manifest, overwrite: true)
   if (fileExists('manifest.json')) {
-    def manifest = readJSON(file: 'manifest.json')
-    manifest.version = buildVersion
-    writeJSON(file: 'manifest.json', json: manifest, pretty: 2)
+    def json = readJSON(file: 'manifest.json')
+    json.version = buildVersion.toString()
+    writeJSON(file: 'manifest.json', json: json, pretty: 2)
   }
 }
 
