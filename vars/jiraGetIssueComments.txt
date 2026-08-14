@@ -1,0 +1,58 @@
+# jiraGetIssueComments
+
+Returns the comments of a Jira issue, in Jira's own order (oldest first) unless
+`orderBy` says otherwise.
+
+The Jira comment endpoint is paginated. The step walks all the pages, so the whole
+discussion of a long-running ticket comes back rather than the first page only.
+
+- The issue key may be omitted inside an MR build: it is then resolved from the MR
+  title via `jiraGuessIssueInfo`.
+- `limit` caps the result and also shrinks the requested page size, so reading the
+  last few comments of a busy ticket costs a single Jira call.
+- Returns an empty list for an issue without comments.
+- Throws when the issue key cannot be resolved, the Jira API call fails, or a page
+  comes back with an empty body — an issue without comments still answers with a
+  page carrying `comments: []`, so an empty body is an anomaly.
+
+To read an issue and its comments in one step, use
+`jiraGetIssueInfo(issueKey: ..., withComments: true)`, which calls this step and
+puts the result into `fields.comment`.
+
+## Usage
+
+```groovy
+// Whole discussion of an explicit issue
+jiraGetIssueComments(issueKey: 'NMSNG-1234').each {
+  echo "${it.author.displayName}: ${it.body}"
+}
+
+// Latest three comments of the issue resolved from the MR title
+def latest = jiraGetIssueComments(orderBy: '-created', limit: 3)
+
+// Comments rendered as HTML instead of Jira wiki markup
+def rendered = jiraGetIssueComments(issueKey: 'NMSNG-1234', expand: 'renderedBody')
+
+// Has anyone already reported this build on the ticket?
+def buildUrl = env.BUILD_URL
+if (!jiraGetIssueComments(issueKey: 'NMSNG-1234').any { it.body?.contains(buildUrl) }) {
+  jiraAddComment(issueKey: 'NMSNG-1234', comment: "Build ${buildUrl}")
+}
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `issueKey` | resolved from the MR title | Jira issue key (for example, `NMSNG-1234`) |
+| `orderBy` | Jira's own order | `created` for oldest first, `-created` for newest first |
+| `expand` | no expand | Jira comment expand parameter, for example `renderedBody` |
+| `limit` | `0` (no limit) | Stop after this many comments |
+| `pageSize` | `100` | Comments requested per Jira call |
+| `credentialsId` | `'jira-username-password'` | Jenkins credentials ID for Jira authentication |
+| `DEBUG` | `false` | Log the request, the response body and the number of comments |
+
+## Returns
+
+List of comment Maps as returned by Jira, each with `id`, `self`, `author`, `body`,
+`created`, `updated` and `updateAuthor`.
