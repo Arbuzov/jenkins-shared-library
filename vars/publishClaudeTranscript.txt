@@ -1,0 +1,75 @@
+# publishClaudeTranscript
+
+Renders the transcript of a Claude Code run as an HTML report and publishes it on
+the build page. One card per assistant message and per tool call, with the tool
+input and output side by side, plus run totals (turns, duration, cost, tokens,
+failed tool calls).
+
+This is what makes an AI pipeline reviewable: without it, the only record of how
+the model reached its verdict is a 20 MB NDJSON artifact nobody opens.
+
+Combines `parseClaudeStream` with the `com/spacebridge/claude/transcript.html.gtpl`
+library resource, so a pipeline needs a single call.
+
+## Usage
+
+```groovy
+post {
+  always {
+    publishClaudeTranscript(
+      TITLE: 'Test evidence transcript',
+      CONTEXT_LABEL: 'VV-861',
+      CONTEXT_URL: 'https://jira.spacebridge.com/browse/VV-861'
+    )
+  }
+}
+```
+
+Producing the stream file is the caller's job:
+
+```groovy
+sh "claude --print --verbose --output-format=stream-json --include-partial-messages '/some-skill' | tee debug.jsonp"
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `STREAM_FILE` | `'debug.jsonp'` | Path to the stream-json file |
+| `TITLE` | `'Claude Code transcript'` | Report heading |
+| `REPORT_NAME` | value of `TITLE` | `publishHTML` report name and build-page link text |
+| `CONTEXT_LABEL` | `''` | What the run was about, e.g. an issue key or a page title |
+| `CONTEXT_URL` | `''` | Link target for `CONTEXT_LABEL` |
+| `OUTPUT_FILE` | `'claude-transcript.html'` | Rendered HTML file |
+| `PREVIEW_LIMIT` | `4000` | Max characters per tool input/output preview |
+| `FAILURE_MARKER` | `'PUBLISH FAILED:'` | Assistant line prefix rendered as a banner; `''` disables it |
+| `ALLOW_MISSING` | `true` | Skip instead of failing when the stream file is absent |
+| `DEBUG` | `false` | Log parsing details |
+
+## Returns
+
+The Map from `parseClaudeStream`, or `null` when the stream file was missing and
+`ALLOW_MISSING` is true.
+
+Since the return carries `stats.toolErrors` and `stats.isError`, a pipeline can
+act on a run that finished but failed on the way:
+
+```groovy
+def data = publishClaudeTranscript(TITLE: 'Code review transcript')
+if (data?.stats?.toolErrors) {
+  unstable("${data.stats.toolErrors} tool call(s) failed - the review may be incomplete")
+}
+```
+
+## Failure behavior
+
+With `ALLOW_MISSING: true` (the default) a missing stream file is logged and the
+step returns `null` — it is called from `post { always { ... } }`, where failing
+would mask the real reason the stage failed. Pass `ALLOW_MISSING: false` when a
+missing transcript should itself be an error.
+
+## Requirements
+
+- HTML Publisher plugin (`publishHTML`)
+- The report renders Markdown client-side through marked.js from a CDN. Without
+  network access it degrades to preformatted text rather than breaking.
