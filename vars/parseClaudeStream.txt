@@ -1,0 +1,50 @@
+# parseClaudeStream
+
+Parses the NDJSON stream written by `claude --output-format=stream-json` into a
+structured Map: what the model said, which tools it called, what those calls
+returned, and the run totals. Rendering is a separate concern — see
+`publishClaudeTranscript`.
+
+Only the assembled `assistant`, `user`, `result` and `system` records are read;
+the partial `stream_event` deltas that dominate the file are skipped.
+
+## Usage
+
+```groovy
+def data = parseClaudeStream(STREAM_FILE: 'debug.jsonp')
+echo "${data.events.size()} events, ${data.stats.toolErrors} failed tool calls"
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `STREAM_FILE` | `'debug.jsonp'` | Path to the stream-json file |
+| `TEXT` | none | Raw stream-json text; when given, `STREAM_FILE` is ignored |
+| `PREVIEW_LIMIT` | `4000` | Max characters kept per tool input/output preview |
+| `FAILURE_MARKER` | `'PUBLISH FAILED:'` | Assistant line prefix surfaced as `failureLine`; pass `''` to disable |
+| `DEBUG` | `false` | Log event and tool-call counts |
+
+## Returns
+
+Map:
+
+| Key | Description |
+|-----|-------------|
+| `events` | List of `assistant_text`, `tool_invocation`, `tool_result` (orphans only), `final_result` |
+| `stats` | `turns`, `durationMs`, `costUsd`, `toolCalls`, `toolErrors`, `outputTokens`, `isError` |
+| `sessionId` | Claude session id |
+| `failureLine` | First line matching `FAILURE_MARKER`, or `''` |
+| `generatedAt` | ISO-8601 UTC timestamp of the parse |
+
+A `tool_invocation` pairs a `tool_use` with its `tool_result`, so one card in the
+report equals one tool action. A tool result is marked as an error when the
+stream sets `is_error`, or when the body carries `"success": false` — some MCP
+servers report failures that way with a 200-shaped result.
+
+## Failure behavior
+
+Fails with `error(...)` when `STREAM_FILE` does not exist and no `TEXT` was
+given. Lines that are not valid JSON are skipped silently: a truncated last line
+is normal when the CLI is interrupted, and it must not hide the events that were
+parsed successfully.
