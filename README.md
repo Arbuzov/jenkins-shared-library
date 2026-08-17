@@ -75,6 +75,14 @@ reported as deprecated in the usage statistics:
 - [getNetboxRacks](vars/getNetboxRacks.groovy) — list racks ([docs](vars/getNetboxRacks.txt))
 - [getNetboxTenants](vars/getNetboxTenants.groovy) — list tenants ([docs](vars/getNetboxTenants.txt))
 
+### AI pipelines (Claude Code)
+Steps for pipelines that delegate work to the Claude Code CLI. The CLI writes an
+NDJSON stream (`--output-format=stream-json`); these turn it into a reviewable
+record of what the model did.
+
+- [parseClaudeStream](vars/parseClaudeStream.groovy) — parse the stream-json into events, tool calls and run totals ([docs](vars/parseClaudeStream.txt))
+- [publishClaudeTranscript](vars/publishClaudeTranscript.groovy) — render the transcript as HTML and publish it on the build page ([docs](vars/publishClaudeTranscript.txt))
+
 ### Quality and telemetry
 - [launchSonarQube](vars/launchSonarQube.groovy) — run analysis and poll the Quality Gate with configurable violation/severity thresholds ([docs](vars/launchSonarQube.txt))
 - [readJUnit](vars/readJUnit.groovy) — parse JUnit XML into a structured map for downstream publishing ([docs](vars/readJUnit.txt))
