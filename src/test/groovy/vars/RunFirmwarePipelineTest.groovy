@@ -10,6 +10,13 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     Map<String, String> files
     List echoMessages
     List buildChangesCalls
+    List readTrustedCalls
+    List repArtifactCalls
+    String readYamlText
+    List declaredProperties
+    boolean pipelineDefined
+
+    static final String YAML_TEXT = 'project: estella-hd\n'
 
     /** A config with everything runFirmwarePipeline requires. */
     static Map validConfig() {
@@ -36,6 +43,11 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         files = [:]
         echoMessages = []
         buildChangesCalls = []
+        readTrustedCalls = []
+        repArtifactCalls = []
+        readYamlText = null
+        declaredProperties = null
+        pipelineDefined = false
         helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('print', [Object], { Object o -> })
@@ -51,7 +63,32 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
             buildChangesCalls << args
             return "<p>changes for ${args.PROJECT_ID} #${args.BUILD_NUMBER}</p>"
         })
+        helper.registerAllowedMethod('readTrusted', [String], { String f ->
+            readTrustedCalls << f
+            return YAML_TEXT
+        })
+        helper.registerAllowedMethod('readYaml', [Map], { Map args ->
+            readYamlText = args.text
+            return validConfig()
+        })
+        helper.registerAllowedMethod('getRepReproArtifacts', [Map], { Map args ->
+            repArtifactCalls << args
+            return ['1.0.0-b1', '1.0.1-b2']
+        })
+        ['choice', 'separator', 'string', 'booleanParam'].each { name ->
+            helper.registerAllowedMethod(name, [Map], { Map args -> args + [_kind: name] })
+        }
+        helper.registerAllowedMethod('parameters', [List], { List entries -> entries })
+        helper.registerAllowedMethod('properties', [List], { List entries -> declaredProperties = entries })
+        // stop call() at the pipeline block - Pipeline Unit cannot evaluate declarative gating
+        helper.registerAllowedMethod('pipeline', [Closure], { Closure body -> pipelineDefined = true })
         script = loadScript('vars/runFirmwarePipeline.groovy')
+    }
+
+    /** The parameter entries call() handed to properties(), in render order. */
+    List renderedParameters() {
+        assert declaredProperties != null: 'properties() was never called'
+        return declaredProperties[0]
     }
 
     // ---------- config validation ----------
@@ -109,6 +146,108 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
             assert e.message.contains('broken')
             assert e.message.contains('project and buildMask')
         }
+    }
+
+    // ---------- call(): config loading and generated parameters ----------
+
+    @Test
+    void callReadsTheConfigThroughReadTrustedAndParsesThatVeryText() {
+        script.call()
+
+        assert readTrustedCalls == ['jenkins.yml']
+        assert readYamlText == YAML_TEXT
+        assert pipelineDefined
+    }
+
+    @Test
+    void callHonoursTheConfigOverride() {
+        script.call(CONFIG: 'ci/firmware.yml')
+        assert readTrustedCalls == ['ci/firmware.yml']
+    }
+
+    @Test
+    void callAsksTheDebianRepositoryForEveryPinnedComponentOnly() {
+        script.call()
+
+        assert repArtifactCalls*.packageName == ['dataplane-phs-ng', 'ncc']
+        assert repArtifactCalls*.repository == ['bullseye', 'bullseye']
+    }
+
+    @Test
+    void callHonoursTheRepositoryOverride() {
+        script.call(REPOSITORY: 'bookworm')
+        assert repArtifactCalls*.repository == ['bookworm', 'bookworm']
+    }
+
+    @Test
+    void callRendersTheParametersInOrderWithBothSections() {
+        script.call()
+
+        def rendered = renderedParameters()
+        assert rendered*.name == [
+            'separator-0',
+            'DATAPLANE_PHS_NG_VERSION',
+            'NCC_VERSION',
+            'separator-1',
+            'FIRMWARE_VERSION',
+            'CREATE_GIT_TAG'
+        ]
+        assert rendered*._kind == [
+            'separator', 'choice', 'choice', 'separator', 'string', 'booleanParam'
+        ]
+        assert rendered[0].sectionHeader == 'Software Versions'
+        assert rendered[3].sectionHeader == 'Release Options'
+    }
+
+    @Test
+    void aComponentChoiceLeadsWithAnEmptyOptionMeaningKeepTheManifestVersion() {
+        script.call()
+
+        def choice = renderedParameters().find { it.name == 'NCC_VERSION' }
+        assert choice.choices == ['', '1.0.0-b1', '1.0.1-b2']
+        assert choice.description.contains('Manifest')
+    }
+
+    @Test
+    void releaseOptionsKeepTheirDefaults() {
+        script.call()
+
+        def rendered = renderedParameters()
+        assert rendered.find { it.name == 'FIRMWARE_VERSION' }.defaultValue == ''
+        assert rendered.find { it.name == 'CREATE_GIT_TAG' }.defaultValue == false
+    }
+
+    @Test
+    void nothingPinnedRendersNoSoftwareVersionsSection() {
+        helper.registerAllowedMethod('readYaml', [Map], { Map args ->
+            def config = validConfig()
+            config.keyComponents.each { name, component -> component.pinned = false }
+            return config
+        })
+
+        script.call()
+
+        assert repArtifactCalls.isEmpty()
+        assert renderedParameters()*.name == ['separator-1', 'FIRMWARE_VERSION', 'CREATE_GIT_TAG']
+        assert !renderedParameters().any { it.sectionHeader == 'Software Versions' }
+    }
+
+    @Test
+    void callRejectsAnInvalidConfigBeforeRenderingAnyParameter() {
+        helper.registerAllowedMethod('readYaml', [Map], { Map args ->
+            def config = validConfig()
+            config.remove('mavenGroup')
+            return config
+        })
+
+        try {
+            script.call()
+            assert false: 'expected an error'
+        } catch (RuntimeException e) {
+            assert e.message.contains('mavenGroup')
+        }
+        assert declaredProperties == null
+        assert !pipelineDefined
     }
 
     // ---------- parameter names ----------
