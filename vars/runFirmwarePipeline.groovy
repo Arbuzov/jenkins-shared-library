@@ -604,7 +604,7 @@ def call(Map arg = [:]) {
                                 parsePackageListFromUrl(previousArtifactUrl),
                                 parsePackageListFromFile(artifactRelativePath)
                             )
-                            ['updated', 'added', 'removed'].each { kind ->
+                            for (kind in ['updated', 'added', 'removed']) {
                                 if (differences[kind].size() > 0) {
                                     publishSummary(
                                         arrayToString(
