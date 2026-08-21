@@ -4,4 +4,6 @@ package org.jenkinsci.plugins.workflow.steps
 // `new` this Jenkins-internal class. Not exercised by the tests.
 class FlowInterruptedException extends RuntimeException {
     FlowInterruptedException(Object result) { super("aborted") }
+    // the two-arg form carries a CauseOfInterruption alongside the result
+    FlowInterruptedException(Object result, Object cause) { super("aborted") }
 }

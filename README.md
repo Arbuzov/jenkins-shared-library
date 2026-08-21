@@ -148,6 +148,7 @@ teams. Use these as templates loaded straight from a Jenkinsfile.
 - [runApplicationPluginBuild](vars/runApplicationPluginBuild.groovy) — application plugin build and publish ([docs](vars/runApplicationPluginBuild.txt))
 - [runApplicationMetaPluginBuild](vars/runApplicationMetaPluginBuild.groovy) — meta-plugin (bundle of plugins) build and publish ([docs](vars/runApplicationMetaPluginBuild.txt))
 - [runPIPtoDebBuild](vars/runPIPtoDebBuild.groovy) — convert a PyPI package to a Debian package and publish ([docs](vars/runPIPtoDebBuild.txt))
+- [runFirmwarePipeline](vars/runFirmwarePipeline.groovy) — SBC firmware build, publish, deploy, tag and release notes, driven by a per-branch `jenkins.yml` ([docs](vars/runFirmwarePipeline.txt))
 
 ### Spacebridge product helpers
 Domain-specific steps used by Spacebridge product pipelines. Not expected to be
