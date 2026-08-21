@@ -51,6 +51,23 @@ class GetRepReproArtifactsTest extends BasePipelineTest {
     }
 
     @Test
+    void ignoresPackagesWhoseNameMerelyStartsWithTheRequestedOne() {
+        helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
+            lastHttpRequestArgs = args
+            return new HttpResponseMock(content: (
+                "Package: ncc\nVersion: 5.2.20\n\n" +
+                "Package: ncc-tools\nVersion: 1.1.1\n\n" +
+                "Package: nccdev\nVersion: 2.2.2\n\n" +
+                "Package: libncc\nVersion: 3.3.3\n"
+            ))
+        })
+
+        def result = script.call([repository: 'stable', packageName: 'ncc'])
+
+        assert result == ['5.2.20']
+    }
+
+    @Test
     void returnsEmptyListWhenHttpRequestFails() {
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args

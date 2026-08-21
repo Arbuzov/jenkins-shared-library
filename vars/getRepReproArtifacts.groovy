@@ -15,8 +15,10 @@ def call(Map arg = [:]) {
     ).getContent().split("\n\n")
 
     entries.each { entry ->
-      if (entry.contains("Package: ${packageName}")) {
-        def versionLine = entry.readLines().find { it.startsWith("Version: ") }
+      def lines = entry.readLines()
+      // whole field, not a substring: "Package: ncc" must not match ncc-tools
+      if (lines.any { it.trim() == "Package: ${packageName}" }) {
+        def versionLine = lines.find { it.startsWith("Version: ") }
         if (versionLine) {
           def version = versionLine.split(":", 2)[1].trim()
           versions << version
