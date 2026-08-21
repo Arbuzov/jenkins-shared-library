@@ -68,6 +68,39 @@ class GetRepReproArtifactsTest extends BasePipelineTest {
     }
 
     @Test
+    void batchReturnsAVersionListPerPackageFromASingleFetch() {
+        def fetches = 0
+        helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
+            fetches++
+            lastHttpRequestArgs = args
+            return new HttpResponseMock(content: (
+                "Package: ncc\nVersion: 5.2.20\n\n" +
+                "Package: ncc-tools\nVersion: 1.1.1\n\n" +
+                "Package: ulpc\nVersion: 5.2.11\n\n" +
+                "Package: ulpc\nVersion: 5.2.10\n\n" +
+                "Package: unwanted\nVersion: 9.9.9\n"
+            ))
+        })
+
+        def result = script.call([repository: 'stable', packageNames: ['ncc', 'ulpc', 'absent']])
+
+        assert fetches == 1
+        assert result == [ncc: ['5.2.20'], ulpc: ['5.2.10', '5.2.11'], absent: []]
+    }
+
+    @Test
+    void batchReturnsEmptyListsWhenHttpRequestFails() {
+        helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
+            throw new RuntimeException('boom')
+        })
+
+        def result = script.call([repository: 'stable', packageNames: ['ncc', 'ulpc']])
+
+        assert result == [ncc: [], ulpc: []]
+        assert echoMessages[0].contains('ncc, ulpc')
+    }
+
+    @Test
     void returnsEmptyListWhenHttpRequestFails() {
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             lastHttpRequestArgs = args

@@ -1,19 +1,28 @@
 # getRepReproArtifacts
 
-Returns a list of available Debian package versions from a `reprepro`-style APT repository.
+Returns the available Debian package versions from a `reprepro`-style APT repository.
 
-The step downloads the `Packages` index for the specified repository distribution and extracts all `Version:` values for the requested package. On errors (network, parsing, missing repository, etc.) it prints a warning and returns an empty list.
+The step downloads the `Packages` index for the requested distribution and collects the `Version:`
+values of every stanza whose `Package:` field matches exactly — `ncc` does not match `ncc-tools`.
+On any error (network, parsing, missing repository) it prints a warning and returns empty results.
+
+Ask for several packages at once with `packageNames`: the index is around 7 MB, and one call
+fetches it once for all of them.
 
 ## Parameters
 
 - `arg` (Map) - Configuration map with the following keys:
-  - `repository` (String) - APT distribution name under `dists/` (for example: `stable`, `testing`, `bookworm`, etc.)
-  - `packageName` (String) - Debian package name to search for in the `Packages` index
-  - `nexusURL` (String) - Base repository URL (defaults to `http://nexus.example.com/repository/debian/`)
+  - `repository` (String) - APT distribution name under `dists/` (for example: `stable`, `testing`, `bookworm`)
+  - `packageName` (String) - a single Debian package name to look up
+  - `packageNames` (List&lt;String&gt;) - several package names to look up in one fetch; takes precedence over `packageName`
+  - `nexusURL` (String) - Base repository URL (defaults to `http://deb.repo.asatnet.net/debian`)
 
 ## Returns
 
-List&lt;String&gt; - Unique package versions, sorted ascending. Returns `[]` if nothing is found or the index could not be fetched.
+With `packageName`: List&lt;String&gt; - unique versions, sorted ascending, `[]` if nothing is found.
+
+With `packageNames`: Map&lt;String, List&lt;String&gt;&gt; - one entry per requested name, in the order asked
+for, each holding its unique sorted versions. A name that is not in the index maps to `[]`.
 
 ## Example
 
@@ -23,4 +32,10 @@ def versions = getRepReproArtifacts(
   packageName: 'my-package'
 )
 echo "Available versions: ${versions.join(', ')}"
+
+def available = getRepReproArtifacts(
+  repository: 'bullseye',
+  packageNames: ['ncc', 'ulpc']
+)
+echo "ncc: ${available.ncc.join(', ')}"
 ```

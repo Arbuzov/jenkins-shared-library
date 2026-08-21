@@ -73,7 +73,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         })
         helper.registerAllowedMethod('getRepReproArtifacts', [Map], { Map args ->
             repArtifactCalls << args
-            return ['1.0.0-b1', '1.0.1-b2']
+            return args.packageNames.collectEntries { [(it): ['1.0.0-b1', '1.0.1-b2']] }
         })
         ['choice', 'separator', 'string', 'booleanParam'].each { name ->
             helper.registerAllowedMethod(name, [Map], { Map args -> args + [_kind: name] })
@@ -166,17 +166,19 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     }
 
     @Test
-    void callAsksTheDebianRepositoryForEveryPinnedComponentOnly() {
+    void callFetchesThePackageIndexOnceForEveryPinnedComponent() {
         script.call()
 
-        assert repArtifactCalls*.packageName == ['dataplane-phs-ng', 'ncc']
-        assert repArtifactCalls*.repository == ['bullseye', 'bullseye']
+        // one fetch, not one per component: the index is ~7 MB
+        assert repArtifactCalls.size() == 1
+        assert repArtifactCalls[0].packageNames == ['dataplane-phs-ng', 'ncc']
+        assert repArtifactCalls[0].repository == 'bullseye'
     }
 
     @Test
     void callHonoursTheRepositoryOverride() {
         script.call(REPOSITORY: 'bookworm')
-        assert repArtifactCalls*.repository == ['bookworm', 'bookworm']
+        assert repArtifactCalls[0].repository == 'bookworm'
     }
 
     @Test

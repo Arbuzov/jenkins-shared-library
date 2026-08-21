@@ -34,7 +34,7 @@ All parameters are optional and passed through a Map:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `CONFIG` | `jenkins.yml` | Path of the config file, resolved with `readTrusted` |
-| `REPOSITORY` | `bullseye` | Debian repository the component version choices are read from |
+| `REPOSITORY` | `bullseye` | Debian repository the pinned components' version choices are read from, in a single index fetch |
 | `BUILD_IMAGE` | `registry.nexus.asatnet.net/spacebridge/firmware-build:bullseye-b1` | Docker image the build runs in |
 | `BUILD_ARGS` | `--privileged -v /srv/docker/dual-image:/home/dual-image/` | Docker arguments for that image |
 | `AGENT_LABEL` | `farmer-docker-ubuntu` | Node label the pipeline runs on |

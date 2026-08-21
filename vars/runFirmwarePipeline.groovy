@@ -185,10 +185,13 @@ def call(Map arg = [:]) {
     GROUP_PATH = CFG.mavenGroup.replace('.', '/')
 
     COMPONENT_PARAMS = []
-    for (key in pinnedComponents().keySet()) {
+    def pinned = pinnedComponents().keySet() as List
+    // one fetch of the ~7 MB package index for all of them, and nothing kept afterwards
+    def available = pinned ? getRepReproArtifacts(repository: repository, packageNames: pinned) : [:]
+    for (key in pinned) {
         COMPONENT_PARAMS << choice(
             name: paramName(key),
-            choices: [''] + getRepReproArtifacts(repository: repository, packageName: key),
+            choices: [''] + available[key],
             description: "Version of ${key} (use Manifest version if empty)"
         )
     }
