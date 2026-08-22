@@ -150,7 +150,8 @@ def call (String gitUrl, String tagName, String ref, String message = '', String
           Integer currentTagStatus = responseStatus(currentTagResponse)
           if (currentTagStatus == 200) {
             def currentTagInfo = readJSON(text: responseContent(currentTagResponse))
-            String currentTarget = currentTagInfo?.target?.toString()
+            // an annotated tag's target is the tag object, not the commit it points at
+            String currentTarget = (currentTagInfo?.commit?.id ?: currentTagInfo?.target)?.toString()
             if (currentTarget == ref?.toString()) {
               // Tag already points to the desired ref: treat as idempotent success.
               created = true
