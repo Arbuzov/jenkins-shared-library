@@ -49,6 +49,7 @@ def call(Map arg = [:]) {
     }
     triggers {
         GenericTrigger(
+            token: 'docker-image',
             genericVariables: [
                 [key: 'ACTION', value: '$.action', expressionType: 'JSONPath'],
                 [key: 'REPOSITORY_NAME', value: '$.repositoryName', expressionType: 'JSONPath'],
