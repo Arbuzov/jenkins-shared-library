@@ -2,6 +2,8 @@
  * Fetch a Jira issue via the Jira REST API.
  *
  * @param arg.issueKey Jira issue key or numeric id, e.g. 'NMSNG-1234' (required)
+ * @param arg.expand Jira 'expand' query parameter, e.g. 'changelog' or
+ *   'changelog,renderedFields' (default: none)
  * @param arg.withComments Replace fields.comment with every comment of the issue,
  *   read through jiraGetIssueComments (default: false)
  * @param arg.credentialsId Jira credentials ID (default: 'jira-username-password')
@@ -15,9 +17,10 @@ def call(Map arg = [:]) {
     throw new Exception("jiraGetIssueInfo(): 'issueKey' is required but not provided.")
   }
   def credentialsId = arg.credentialsId ?: 'jira-username-password'
+  def expandQuery = arg.expand ? "?expand=${arg.expand}" : ''
 
   def response = httpRequest(
-    url: "https://jira.spacebridge.com/rest/api/2/issue/${issueKey}",
+    url: "https://jira.spacebridge.com/rest/api/2/issue/${issueKey}${expandQuery}",
     httpMode: 'GET',
     contentType: 'APPLICATION_JSON',
     acceptType: 'APPLICATION_JSON',

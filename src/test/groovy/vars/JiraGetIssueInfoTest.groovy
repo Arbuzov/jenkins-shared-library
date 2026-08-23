@@ -50,6 +50,21 @@ class JiraGetIssueInfoTest extends BasePipelineTest {
     }
 
     @Test
+    void appendsTheExpandQueryWhenAsked() {
+        script.call([issueKey: 'NMSNG-1234', expand: 'changelog'])
+
+        assert lastHttpRequestArgs.url == 'https://jira.spacebridge.com/rest/api/2/issue/NMSNG-1234?expand=changelog'
+    }
+
+    @Test
+    void combinesExpandWithTheCommentThread() {
+        script.call([issueKey: 'NMSNG-1234', expand: 'changelog,renderedFields', withComments: true])
+
+        assert lastHttpRequestArgs.url == 'https://jira.spacebridge.com/rest/api/2/issue/NMSNG-1234?expand=changelog,renderedFields'
+        assert commentCalls[0].issueKey == 'NMSNG-1234'
+    }
+
+    @Test
     void leavesTheCommentPageAloneByDefault() {
         def issue = script.call([issueKey: 'NMSNG-1234'])
 
