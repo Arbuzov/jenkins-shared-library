@@ -38,6 +38,25 @@ All parameters are optional and passed through a Map:
 | `BUILD_IMAGE` | `registry.nexus.asatnet.net/spacebridge/firmware-build:bullseye-b1` | Docker image the build runs in |
 | `BUILD_ARGS` | `--privileged -v /srv/docker/dual-image:/home/dual-image/` | Docker arguments for that image |
 | `AGENT_LABEL` | `farmer-docker-ubuntu` | Node label the pipeline runs on |
+| `NEXUS_CREDENTIALS_ID` | `nexus-publisher` | Jenkins credential the deploy stages publish to Nexus with |
+
+`nexus-publisher` has to exist in Jenkins, scoped to publishing to Nexus and nothing else.
+Both deploy stages fail without it — it replaces `jira-username-password`, which carried far
+more access than uploading an artifact needs.
+
+## Build retention
+
+`buildDiscarder` is set per branch, because the ISO and the firmware image are large and
+every non-MR build is published to Nexus anyway:
+
+| Build | Builds kept | Artifacts kept |
+|-------|-------------|----------------|
+| Merge request | 3 | 3 |
+| Any other branch | 30 | 10 |
+
+Artifacts are kept for fewer builds than the builds themselves: the ISO and the firmware
+image dominate the disk, and the iso/fw/syft set of every non-MR build also lives in Nexus
+under `maven-releases`.
 
 ## Config file
 

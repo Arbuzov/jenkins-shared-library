@@ -48,6 +48,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         readYamlText = null
         declaredProperties = null
         pipelineDefined = false
+        binding.setVariable('env', [:])
         helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('print', [Object], { Object o -> })
@@ -286,6 +287,20 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         config.keyComponents.each { name, component -> component.pinned = false }
         script.@CFG = config
         assert script.pinnedComponents().isEmpty()
+    }
+
+    // ---------- build retention ----------
+
+    @Test
+    void aBranchBuildKeepsAnAuditableHistoryAndFewerArtifacts() {
+        // SNG-538: three builds discarded the release history before it could be audited
+        assert script.buildRetention() == [builds: '30', artifacts: '10']
+    }
+
+    @Test
+    void aMergeRequestBuildKeepsTheShallowHistory() {
+        binding.setVariable('env', [CHANGE_ID: '87'])
+        assert script.buildRetention() == [builds: '3', artifacts: '3']
     }
 
     // ---------- nexus coordinates ----------

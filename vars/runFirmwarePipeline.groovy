@@ -66,6 +66,14 @@ String paramName(String key) { key.toUpperCase().replace('-', '_') + '_VERSION' 
  */
 Map pinnedComponents() { CFG.keyComponents.findAll { key, component -> component.pinned } }
 
+/**
+ * Build records are cheap and are what a release audit reads; ISOs are not, and every
+ * release build is published to Nexus anyway. Merge request builds keep neither.
+ */
+Map buildRetention() {
+    return env.CHANGE_ID ? [builds: '3', artifacts: '3'] : [builds: '30', artifacts: '10']
+}
+
 def parsePackageListFromUrl(url) {
     def packages = [:]
     try {
@@ -180,6 +188,8 @@ def call(Map arg = [:]) {
     String buildImage = arg.BUILD_IMAGE ?: 'registry.nexus.asatnet.net/spacebridge/firmware-build:bullseye-b1'
     String buildArgs = arg.BUILD_ARGS ?: '--privileged -v /srv/docker/dual-image:/home/dual-image/'
     String agentLabel = arg.AGENT_LABEL ?: 'farmer-docker-ubuntu'
+    String nexusCredentialsId = arg.NEXUS_CREDENTIALS_ID ?: 'nexus-publisher'
+    Map retention = buildRetention()
 
     CFG = validateConfig(readYaml(text: readTrusted(configFile)))
     GROUP_PATH = CFG.mavenGroup.replace('.', '/')
@@ -241,7 +251,7 @@ def call(Map arg = [:]) {
 
         options {
             timestamps()
-            buildDiscarder(logRotator(numToKeepStr: '3', artifactNumToKeepStr: '3'))
+            buildDiscarder(logRotator(numToKeepStr: retention.builds, artifactNumToKeepStr: retention.artifacts))
             disableConcurrentBuilds(abortPrevious: true)
             newContainerPerStage()
             ansiColor('xterm')
@@ -518,7 +528,7 @@ def call(Map arg = [:]) {
                         version: artifactVersion(),
                         groupId: CFG.mavenGroup,
                         repository: 'maven-releases',
-                        credentialsId: 'jira-username-password',
+                        credentialsId: nexusCredentialsId,
                         artifacts: firmwareArtifacts()
                     )
                     publishSummary(
@@ -561,7 +571,7 @@ def call(Map arg = [:]) {
                         version: "${artifactVersion()}-SNAPSHOT",
                         groupId: CFG.mavenGroup,
                         repository: 'maven-snapshots',
-                        credentialsId: 'jira-username-password',
+                        credentialsId: nexusCredentialsId,
                         artifacts: firmwareArtifacts()
                     )
                     publishSummary(
