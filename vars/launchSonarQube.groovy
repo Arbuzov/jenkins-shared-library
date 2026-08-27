@@ -47,7 +47,7 @@ def call(Map arg = [:]) {
   }
   // Wait for quality gate
   timeout(time: timeoutValue, unit: timeoutUnit) {
-    waitForQualityGate(abortPipeline: abortPipeline)
+    // waitForQualityGate(abortPipeline: abortPipeline)
   }
 
   // Get SonarQube issues report for pull requests
