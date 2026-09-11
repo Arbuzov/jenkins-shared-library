@@ -23,9 +23,19 @@ class ParseClaudeStreamTest extends BasePipelineTest {
         '{"type":"user","message":{"content":[' +
         '{"type":"tool_result","tool_use_id":"toolu_1","content":[{"type":"text","text":"file body"}]}]}}'
 
+    // CLI 2.1.197 and earlier: `type` first, no spaces. Kept verbatim as the
+    // backward-compatibility fixture — every other test reads through it.
     static final String RESULT =
         '{"type":"result","subtype":"success","is_error":false,"num_turns":7,"duration_ms":42000,' +
         '"total_cost_usd":0.123456,"usage":{"output_tokens":1234},"session_id":"sess-1","result":"done"}'
+
+    // CLI 2.1.268: same record, `type` no longer the first key. Observed on
+    // basic-traffic-triage MR-10 #2, where the line began `{"duration_api_ms":285667,`.
+    static final String RESULT_TYPE_NOT_FIRST =
+        '{"duration_api_ms":285667,"stop_reason":"end_turn","subtype":"success",' +
+        '"is_error":false,"num_turns":7,"duration_ms":42000,"total_cost_usd":0.123456,' +
+        '"usage":{"output_tokens":1234},"session_id":"sess-1","result":"done",' +
+        '"terminal_reason":"completed","type":"result"}'
 
     @Before
     void setUp() {
@@ -141,6 +151,63 @@ class ParseClaudeStreamTest extends BasePipelineTest {
 
         assert data.events.size() == 1
         assert data.events[0].kind == 'assistant_text'
+    }
+
+    // The record is recognised by its type wherever it sits. A filter anchored on the
+    // first key dropped the whole result event once the CLI reordered its output, and
+    // that record is the only carrier of the run totals and the verdict text — so a
+    // finished run read as zero turns, zero cost and no result, which a caller guarding
+    // on `!stats.turns` then reported as a failed run.
+    @Test
+    void readsAResultEventWhoseTypeIsNotTheFirstKey() {
+        def data = script.call([TEXT: [ASSISTANT_TOOL_USE, USER_TOOL_RESULT, RESULT_TYPE_NOT_FIRST].join('\n')])
+
+        assert data.stats.turns == 7
+        assert data.stats.durationMs == 42000
+        assert data.stats.costUsd == 0.1235
+        assert data.stats.outputTokens == 1234
+        assert data.stats.isError == false
+        assert data.sessionId == 'sess-1'
+        assert data.events.last().kind == 'final_result'
+        assert data.events.last().resultText == 'done'
+    }
+
+    // Both key orders must produce the same parse, so the fix cannot be read as "the new
+    // shape works now" without also pinning that the old one is untouched.
+    @Test
+    void parsesBothKeyOrdersIdentically() {
+        def first = script.call([TEXT: [ASSISTANT_TOOL_USE, USER_TOOL_RESULT, RESULT].join('\n')])
+        def second = script.call([TEXT: [ASSISTANT_TOOL_USE, USER_TOOL_RESULT, RESULT_TYPE_NOT_FIRST].join('\n')])
+
+        assert first.stats == second.stats
+        assert first.events == second.events
+        assert first.sessionId == second.sessionId
+    }
+
+    @Test
+    void readsTypeKeysWrittenWithWhitespace() {
+        String spaced = '{"type": "assistant", "message": {"model": "m", "content": [' +
+            '{"type": "text", "text": "spaced out"}]}}'
+
+        def data = script.call([TEXT: spaced])
+
+        assert data.events.size() == 1
+        assert data.events[0].text == 'spaced out'
+    }
+
+    // A type named inside assistant text is escaped in the JSON, so it cannot be
+    // mistaken for a record of that type — and even if a line did slip through, the
+    // dispatch switches on the parsed type, so it contributes nothing.
+    @Test
+    void doesNotMistakeATypeQuotedInsideTextForARecord() {
+        String delta = '{"type":"stream_event","event":{"type":"content_block_delta",' +
+            '"delta":{"type":"text_delta","text":"the line began {\\"type\\":\\"result\\",\\"subtype\\""}}}'
+
+        def data = script.call([TEXT: [delta, ASSISTANT_TEXT].join('\n')])
+
+        assert data.events.size() == 1
+        assert data.events[0].kind == 'assistant_text'
+        assert data.stats.turns == 0
     }
 
     @Test

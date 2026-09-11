@@ -64,19 +64,31 @@ def call(Map arg = [:]) {
   String sessionId = ''
   String failureLine = ''
 
-  // Pre-filter: stream_event deltas dominate the file; only assembled
-  // assistant/user/result/system records carry the data we render.
-  def keepPrefixes = ['{"type":"assistant"', '{"type":"user"', '{"type":"result"', '{"type":"system"']
+  // Pre-filter: stream_event deltas dominate the file — 2 485 of 2 716 lines on a real
+  // run — and only the assembled assistant/user/result/system records carry anything
+  // rendered, so a cheap string test before readJSON is worth keeping. What it must not
+  // do is assume WHERE in the line the type sits. This was `startsWith('{"type":"…"')`
+  // until CLI 2.1.268 stopped emitting `type` as the first key of the result event
+  // (`{"duration_api_ms":285667,"stop_reason":"end_turn",…`). That one dropped record is
+  // the only carrier of num_turns, duration_ms, total_cost_usd and the result text, so
+  // every consumer began reading a completed run as zero turns, zero cost and no
+  // verdict — and a caller guarding on `!stats.turns` reported healthy runs as failures.
+  // Key order and whitespace are not part of the CLI's contract; the type is matched
+  // anywhere in the line instead, in either spelling.
+  //
+  // Deliberately safe in both directions. A false positive costs one readJSON and
+  // nothing else, because the dispatch below switches on the PARSED type: a line that
+  // merely mentions another record's type falls through every branch. And a type
+  // appearing inside a JSON string cannot match at all — it is escaped there
+  // (`\"type\":\"assistant\"`), so the closing quote the pattern needs is a backslash.
+  java.util.regex.Pattern keepType =
+    java.util.regex.Pattern.compile('"type"\\s*:\\s*"(assistant|user|result|system)"')
 
   String[] lines = text.split('\n')
   for (int li = 0; li < lines.length; li++) {
     String line = lines[li].trim()
     if (!line) continue
-    boolean keep = false
-    for (int pi = 0; pi < keepPrefixes.size(); pi++) {
-      if (line.startsWith(keepPrefixes[pi])) { keep = true; break }
-    }
-    if (!keep) continue
+    if (!keepType.matcher(line).find()) continue
     def obj
     try { obj = readJSON(text: line, returnPojo: true) } catch (Exception ignored) { continue }
     def t = obj.type

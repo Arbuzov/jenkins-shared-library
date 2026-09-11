@@ -6,7 +6,10 @@ returned, and the run totals. Rendering is a separate concern — see
 `publishClaudeTranscript`.
 
 Only the assembled `assistant`, `user`, `result` and `system` records are read;
-the partial `stream_event` deltas that dominate the file are skipped.
+the partial `stream_event` deltas that dominate the file are skipped. A record is
+recognised by its `type` **wherever it sits in the line** — neither key order nor
+whitespace is part of the CLI's output contract, and both have already changed
+(2.1.268 emits the `result` event with `type` no longer first).
 
 ## Usage
 

@@ -63,6 +63,12 @@
 - Unit tests for GitLab tag/release behavior in `src/test/groovy/vars/TagToGitlabTest.groovy`.
 
 ### Fixed
+- `parseClaudeStream` no longer loses the `result` record when the Claude CLI reorders the keys of its output.
+  - The pre-filter that skips `stream_event` deltas matched `'{"type":"<record>"'` at the start of the line. CLI 2.1.268 emits the result event with `type` no longer first (`{"duration_api_ms":285667,"stop_reason":"end_turn",…`), so that one record was dropped — and it is the only carrier of `num_turns`, `duration_ms`, `total_cost_usd` and the result text.
+  - Consequence for every consumer: a run that finished cleanly reported `stats.turns` / `durationMs` / `costUsd` of `0` and emitted no `final_result` event, so `publishClaudeTranscript` rendered no verdict and a caller guarding on `!stats.turns` (`basic-traffic-triage`) marked healthy builds UNSTABLE and sent "No diagnosis" to Teams in place of the diagnosis.
+  - The type is now matched anywhere in the line and tolerates whitespace around the colon, so neither key order nor formatting — neither of which the CLI documents as stable — can hide a record again. A type named inside assistant text cannot be mistaken for a record: it is escaped there (`\"type\":\"assistant\"`), and a line that did slip through costs one `readJSON` and nothing else, because the dispatch switches on the parsed type.
+  - Backward compatible, measured rather than asserted: over the 80 triage streams published by `basic-traffic-triage` before the CLI change, the old and new filters produce identical `events`, `stats` and `sessionId` in 80 of 80, including the three genuinely-killed runs that legitimately have `turns == 0`.
+  - Regression tests in `src/test/groovy/vars/ParseClaudeStreamTest.groovy` pin both key orders, assert the two parse identically, cover a whitespace-formatted `type`, and cover a `stream_event` whose text quotes another record's type.
 - Fixed `tagToGitlab` GitLab API flow in `vars/tagToGitlab.groovy` to prevent `400 Bad Request` when recreating tags with release notes.
   - Switched from query-string `private_token` to `PRIVATE-TOKEN` request header.
   - Added safe fallback: if `POST /repository/tags` with `release_description` returns `400`, retry tag creation without `release_description`.
