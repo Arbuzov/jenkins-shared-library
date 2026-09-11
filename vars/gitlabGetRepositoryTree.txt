@@ -1,0 +1,76 @@
+# gitlabGetRepositoryTree
+
+Lists the files and directories of a GitLab repository through
+`GET /projects/:id/repository/tree`.
+
+The step walks every page of the endpoint, so the tree of a large repository is
+returned whole instead of being cut at the API page size. The project is derived
+from `env.GIT_URL` by default, which makes the step a one-liner inside a build
+of the repository it inspects.
+
+## Usage
+
+```groovy
+// The root of the current project, on its default branch
+def root = gitlabGetRepositoryTree()
+root.each { entry -> echo "${entry.type} ${entry.path}" }
+
+// One directory of a tag, files only
+def charts = gitlabGetRepositoryTree(path: 'deploy/charts', ref: 'v1.4.0')
+echo "Charts: ${charts.findAll { it.type == 'blob' }*.name.join(', ')}"
+
+// The whole tree of another project, addressed by ID
+def tree = gitlabGetRepositoryTree(
+  projectId: 412,
+  gitlabBaseUrl: 'https://gitlab.example.com',
+  ref: 'master',
+  recursive: true,
+)
+echo "Tracked files: ${tree.count { it.type == 'blob' }}"
+
+// Blob SHAs, to compare a fork with its upstream without cloning either
+def blobIds = gitlabGetRepositoryTree(recursive: true)
+  .findAll { it.type == 'blob' }
+  .collectEntries { [(it.path): it.id] }
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `path` | repository root | Subdirectory to list, repo-relative |
+| `ref` | project default branch | Branch, tag or commit SHA |
+| `recursive` | `false` | Descend into subdirectories |
+| `gitUrl` | `env.GIT_URL` | SSH or HTTPS repository URL, used to derive the project and the host |
+| `projectId` | derived from `gitUrl` | Numeric project ID or URL-encoded project path |
+| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4` |
+| `credentialsId` | `'gitlab-text-secret'` | Jenkins credentials ID holding the GitLab token |
+| `pageSize` | `100` | Entries requested per API call, 1..100 |
+| `maxPages` | `100` | Page walk limit, guards against an endless loop |
+| `debug` | `false` | Log the request URLs and the response bodies |
+
+## Returns
+
+`List<Map>` — every tree entry in GitLab's own order and shape:
+
+```groovy
+[id: '0a1b2c…', name: 'Jenkinsfile', type: 'blob', path: 'Jenkinsfile', mode: '100644']
+```
+
+`type` is `blob` for a file and `tree` for a directory. An empty directory, or a
+`path` that holds nothing, answers with an empty list.
+
+## Failure behaviour
+
+The step calls `error(...)`, failing the build, when:
+
+- neither `gitUrl` nor `projectId` is available;
+- `projectId` is given without `gitUrl` and without `gitlabBaseUrl`;
+- `pageSize` is outside 1..100, or `maxPages` is below 1;
+- the credentials hold no token;
+- the API answers with a status of 400 or above — a missing project, ref or
+  path answers `404`, an unauthorised token `401`;
+- the listing is longer than `pageSize * maxPages` entries. The step refuses to
+  return a silently truncated tree; narrow it with `path` or raise `maxPages`.

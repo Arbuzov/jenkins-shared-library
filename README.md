@@ -47,6 +47,7 @@ CI for GitLab projects.
 - [mergeRequestsChangeLog](vars/mergeRequestsChangeLog.groovy) — assemble a changelog from merged MRs
 - [tagToGitlab](vars/tagToGitlab.groovy) — create/delete tags via the GitLab API
 - [gitlabUpdateFile](vars/gitlabUpdateFile.groovy) — update a single repo file via the GitLab API ([docs](vars/gitlabUpdateFile.txt))
+- [gitlabGetRepositoryTree](vars/gitlabGetRepositoryTree.groovy) — list the files and directories of a repository via the GitLab API ([docs](vars/gitlabGetRepositoryTree.txt))
 
 ### Jira
 - [jiraAddComment](vars/jiraAddComment.groovy) — post a comment ([docs](vars/jiraAddComment.txt))
