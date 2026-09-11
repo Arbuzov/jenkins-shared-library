@@ -8,7 +8,8 @@
   - Derives the project and the host from `env.GIT_URL` by default, so a build of the repository it inspects calls it without arguments; `projectId` plus `gitlabBaseUrl` address any other project.
   - Supports `path`, `ref` and `recursive`, plus `credentialsId`, `pageSize`, `maxPages` and `debug`.
   - Walks every page of the endpoint instead of returning the first one, and fails rather than returning a silently truncated tree once `pageSize * maxPages` entries are exceeded.
-  - Reports a status of 400 or above through `error(...)` with the URL and the credentials ID, so a missing ref or an unauthorised token names itself.
+  - Reports a status of 400 or above through `error(...)` with the URL and the credentials ID, so a missing ref, an unauthorised token or a faulting GitLab names itself.
+  - Derives the API host from `gitUrl` keeping its scheme and a non-default port, and building it from the host and the port alone, so user info such as `https://oauth2:<token>@host/...` never reaches a request URL or the build log.
 - Step documentation in `vars/gitlabGetRepositoryTree.txt` and unit tests in `src/test/groovy/vars/GitlabGetRepositoryTreeTest.groovy`.
 - Map-notation Jira steps, all named with the `jira` prefix, replacing the legacy positional ones:
   - `jiraGetIssueInfo(issueKey:, credentialsId:)` — replaces `getJiraIssueInfo`.

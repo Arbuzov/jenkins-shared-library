@@ -11,13 +11,16 @@
  *  - ref:            branch, tag or commit SHA (default: the project's default branch)
  *  - recursive:      descend into subdirectories (default: false)
  *  - gitUrl:         SSH or HTTPS repo URL (default: env.GIT_URL)
- *  - projectId:      GitLab numeric project ID or URL-encoded path
- *                    (default: derived from gitUrl)
+ *  - projectId:      GitLab numeric project ID, or the project path in either
+ *                    form - 'group/project' is encoded here, 'group%2Fproject'
+ *                    is passed through (default: derived from gitUrl)
  *  - gitlabBaseUrl:  GitLab base URL without /api/v4 (default: derived from gitUrl)
  *  - credentialsId:  Jenkins credentials ID with GitLab token
  *                    (default: 'gitlab-text-secret')
  *  - pageSize:       entries requested per API call, 1..100 (default: 100)
- *  - maxPages:       page walk limit, guards against an endless loop (default: 100)
+ *  - maxPages:       page walk limit: at most pageSize * maxPages entries are
+ *                    returned, which also bounds the walk at maxPages + 1
+ *                    requests (default: 100)
  *  - debug:          log request URLs and response bodies (default: false)
  *
  * Returns List<Map> - every tree entry, in GitLab's order.
@@ -25,6 +28,16 @@
  * Fails through error(...) when the API answers >= 400 (a missing ref or path
  * answers 404) and when the tree is longer than pageSize * maxPages entries.
  */
+/**
+ * Render a project reference for the /projects/:id path segment. A numeric ID and
+ * an already-encoded path are passed through; a plain 'group/project' is encoded,
+ * so both spellings address the same project.
+ */
+def encodeProjectReference(Object projectId) {
+  String reference = projectId.toString()
+  return reference.contains('/') ? URLEncoder.encode(reference, 'UTF-8') : reference
+}
+
 def call(Map args = [:]) {
   reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
@@ -49,10 +62,25 @@ def call(Map args = [:]) {
   String base
   String projectRef
   if (gitUrl) {
-    URL url = new URL(gitUrl.replaceFirst(/:(?=[A-Za-z0-9_])/, '/').replace('git@', 'https://'))
-    base = args.gitlabBaseUrl ?: ("https://" + url.getHost())
+    // The scp-style form 'git@host:group/repo.git' has no scheme, so it is the one
+    // that needs rewriting. Matching ':' by what follows it would also rewrite the
+    // ':' of a port.
+    String normalized = gitUrl.trim()
+    if (normalized.startsWith('ssh://')) {
+      normalized = 'https://' + normalized.substring(6)
+    } else if (!normalized.contains('://')) {
+      normalized = 'https://' + normalized.replaceFirst(/:/, '/')
+    }
+    URL url = new URL(normalized)
+    // Host and port explicitly, never getAuthority(): the user info of
+    // 'git@host' or of an https URL carrying a token would otherwise end up in
+    // every request URL, and in the build log whenever debug is on.
+    String origin = url.getPort() > 0 ?
+      "${url.getProtocol()}://${url.getHost()}:${url.getPort()}" :
+      "${url.getProtocol()}://${url.getHost()}"
+    base = args.gitlabBaseUrl ?: origin
     if (args.projectId) {
-      projectRef = args.projectId.toString()
+      projectRef = encodeProjectReference(args.projectId)
     } else {
       String projectPath = url.getPath().substring(1).replaceAll(/\.git$/, '')
       projectRef = URLEncoder.encode(projectPath, 'UTF-8')
@@ -62,7 +90,7 @@ def call(Map args = [:]) {
       error("gitlabGetRepositoryTree(): 'gitlabBaseUrl' is required when 'projectId' is given without 'gitUrl'.")
     }
     base = args.gitlabBaseUrl
-    projectRef = args.projectId.toString()
+    projectRef = encodeProjectReference(args.projectId)
   }
 
   String query = "per_page=${pageSize}&recursive=${recursive}"
@@ -81,7 +109,8 @@ def call(Map args = [:]) {
     }
     int page = 1
     boolean lastPageSeen = false
-    while (page <= maxPages && !lastPageSeen) {
+    int entryLimit = pageSize * maxPages
+    while (!lastPageSeen) {
       String pageUrl = "${apiBase}?${query}&page=${page}"
       if (debug) {
         echo "[gitlabGetRepositoryTree] GET ${pageUrl}"
@@ -92,7 +121,7 @@ def call(Map args = [:]) {
         contentType: 'APPLICATION_JSON',
         acceptType: 'APPLICATION_JSON',
         customHeaders: [[name: 'PRIVATE-TOKEN', value: gitLabToken]],
-        validResponseCodes: '100:499',
+        validResponseCodes: '100:599',
         consoleLogResponseBody: debug,
         quiet: !debug,
       )
@@ -106,13 +135,13 @@ def call(Map args = [:]) {
         lastPageSeen = true
       }
       if (batch) {
+        if (entries.size() + batch.size() > entryLimit) {
+          error("gitlabGetRepositoryTree(): more than ${entryLimit} entries at " +
+                "'${args.path ?: '/'}'. Narrow it with 'path', or raise 'maxPages'.")
+        }
         entries.addAll(batch)
       }
       page++
-    }
-    if (!lastPageSeen) {
-      error("gitlabGetRepositoryTree(): more than ${pageSize * maxPages} entries at " +
-            "'${args.path ?: '/'}'. Narrow it with 'path', or raise 'maxPages'.")
     }
   }
   return entries

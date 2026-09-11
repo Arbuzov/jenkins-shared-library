@@ -44,11 +44,11 @@ All parameters are optional and passed through a Map:
 | `ref` | project default branch | Branch, tag or commit SHA |
 | `recursive` | `false` | Descend into subdirectories |
 | `gitUrl` | `env.GIT_URL` | SSH or HTTPS repository URL, used to derive the project and the host |
-| `projectId` | derived from `gitUrl` | Numeric project ID or URL-encoded project path |
-| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4` |
+| `projectId` | derived from `gitUrl` | Numeric project ID, or the project path in either spelling — `group/project` is encoded by the step, `group%2Fproject` is passed through |
+| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4`. When derived, the scheme and a non-default port of `gitUrl` are kept |
 | `credentialsId` | `'gitlab-text-secret'` | Jenkins credentials ID holding the GitLab token |
 | `pageSize` | `100` | Entries requested per API call, 1..100 |
-| `maxPages` | `100` | Page walk limit, guards against an endless loop |
+| `maxPages` | `100` | Caps the listing at `pageSize * maxPages` entries, which also bounds the walk at `maxPages + 1` requests |
 | `debug` | `false` | Log the request URLs and the response bodies |
 
 ## Returns
@@ -59,8 +59,10 @@ All parameters are optional and passed through a Map:
 [id: '0a1b2c…', name: 'Jenkinsfile', type: 'blob', path: 'Jenkinsfile', mode: '100644']
 ```
 
-`type` is `blob` for a file and `tree` for a directory. An empty directory, or a
-`path` that holds nothing, answers with an empty list.
+`type` is `blob` for a file and `tree` for a directory. A listing with no entries
+comes back as an empty list. A `path` or a `ref` that does not exist in the project
+is a different case: GitLab answers `404` and the step fails the build, so an empty
+list never stands for "not found".
 
 ## Failure behaviour
 
@@ -71,6 +73,8 @@ The step calls `error(...)`, failing the build, when:
 - `pageSize` is outside 1..100, or `maxPages` is below 1;
 - the credentials hold no token;
 - the API answers with a status of 400 or above — a missing project, ref or
-  path answers `404`, an unauthorised token `401`;
+  path answers `404`, an unauthorised token `401`, and a faulting GitLab `5xx`.
+  The message names the request URL and the credentials ID;
 - the listing is longer than `pageSize * maxPages` entries. The step refuses to
   return a silently truncated tree; narrow it with `path` or raise `maxPages`.
+  A listing of exactly `pageSize * maxPages` entries is returned, not rejected.

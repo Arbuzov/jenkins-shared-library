@@ -8,11 +8,10 @@ import org.junit.Test
 
 class GitlabGetRepositoryTreeTest extends BasePipelineTest {
 
-    static class HttpResponseMock {
-        int status = 200
-        String content
-        int getStatus() { return status }
-        String getContent() { return content }
+    private static Map httpResponse(String content, int status = 200) {
+        // A plain Map, deliberately: it has no getContent(), so this pins the house
+        // contract that the step reads the body as response?.content.
+        return [status: status, content: content]
     }
 
     def script
@@ -33,7 +32,7 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
         binding.setVariable('env', [:])
         requestedUrls = []
         echoed = []
-        responses = [new HttpResponseMock(content: '[]')]
+        responses = [httpResponse('[]')]
 
         helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoed << message })
@@ -49,7 +48,7 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
             assert args.customHeaders[0].name == 'PRIVATE-TOKEN'
             assert args.customHeaders[0].value == 'fake-token'
             assert args.httpMode == 'GET'
-            assert args.validResponseCodes == '100:499'
+            assert args.validResponseCodes == '100:599'
             return responses.size() > 1 ? responses.remove(0) : responses[0]
         })
         helper.registerAllowedMethod('readJSON', [Map], { Map args ->
@@ -61,7 +60,7 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
 
     @Test
     void listsTheRootOfTheProjectDerivedFromGitUrl() {
-        responses = [new HttpResponseMock(content:
+        responses = [httpResponse(
             '[{"id":"a1","name":"vars","type":"tree","path":"vars","mode":"040000"}]')]
 
         def tree = script.call([gitUrl: 'git@gitlab.asatnet.net:devops/jenkins-shared-library.git'])
@@ -97,10 +96,46 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
     }
 
     @Test
+    void encodesAProjectPathPassedAsProjectId() {
+        script.call([projectId: 'devops/sub/jenkins-shared-library',
+                     gitlabBaseUrl: 'https://gitlab.example.com'])
+
+        assert requestedUrls[0] == 'https://gitlab.example.com/api/v4/projects/' +
+            'devops%2Fsub%2Fjenkins-shared-library/repository/tree' +
+            '?per_page=100&recursive=false&page=1'
+    }
+
+    @Test
+    void passesAnAlreadyEncodedProjectPathThrough() {
+        script.call([projectId: 'devops%2Fjenkins-shared-library',
+                     gitlabBaseUrl: 'https://gitlab.example.com'])
+
+        assert requestedUrls[0].startsWith('https://gitlab.example.com/api/v4/projects/' +
+            'devops%2Fjenkins-shared-library/repository/tree')
+    }
+
+    @Test
     void derivesTheProjectFromAnHttpsGitUrl() {
         script.call([gitUrl: 'https://gitlab.asatnet.net/devops/jenkins-shared-library.git'])
 
         assert requestedUrls[0].startsWith('https://gitlab.asatnet.net/api/v4/projects/' +
+            'devops%2Fjenkins-shared-library/repository/tree')
+    }
+
+    @Test
+    void derivesTheProjectFromAnSshSchemeUrlWithAPort() {
+        script.call([gitUrl: 'ssh://git@gitlab.example.com:2222/devops/jenkins-shared-library.git'])
+
+        assert requestedUrls[0].startsWith('https://gitlab.example.com:2222/api/v4/projects/' +
+            'devops%2Fjenkins-shared-library/repository/tree')
+    }
+
+    @Test
+    void keepsTheUserInfoOfTheGitUrlOutOfTheRequestUrl() {
+        script.call([gitUrl: 'https://oauth2:s3cr3t@gitlab.example.com/devops/jenkins-shared-library.git'])
+
+        assert !requestedUrls[0].contains('s3cr3t')
+        assert requestedUrls[0].startsWith('https://gitlab.example.com/api/v4/projects/' +
             'devops%2Fjenkins-shared-library/repository/tree')
     }
 
@@ -117,8 +152,8 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
     @Test
     void walksEveryPageUntilAShortOneArrives() {
         responses = [
-            new HttpResponseMock(content: entriesJson(2, 'a')),
-            new HttpResponseMock(content: entriesJson(1, 'b')),
+            httpResponse(entriesJson(2, 'a')),
+            httpResponse(entriesJson(1, 'b')),
         ]
 
         def tree = script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com', pageSize: 2])
@@ -133,8 +168,8 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
     @Test
     void stopsOnAnEmptyPageWithoutAnExtraRequest() {
         responses = [
-            new HttpResponseMock(content: entriesJson(2, 'a')),
-            new HttpResponseMock(content: '[]'),
+            httpResponse(entriesJson(2, 'a')),
+            httpResponse('[]'),
         ]
 
         def tree = script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com', pageSize: 2])
@@ -152,8 +187,8 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
     }
 
     @Test
-    void failsRatherThanTruncatingWhenThePageWalkLimitIsReached() {
-        responses = [new HttpResponseMock(content: entriesJson(2, 'a'))]
+    void failsRatherThanTruncatingWhenThePageWalkLimitIsExceeded() {
+        responses = [httpResponse(entriesJson(2, 'a'))]
 
         try {
             script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com',
@@ -162,12 +197,66 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
         } catch (RuntimeException exception) {
             assert exception.message.contains('more than 6 entries')
         }
-        assert requestedUrls.size() == 3
+        assert requestedUrls.size() == 4
+    }
+
+    @Test
+    void returnsATreeOfExactlyTheEntryLimit() {
+        responses = [
+            httpResponse(entriesJson(2, 'a')),
+            httpResponse(entriesJson(2, 'b')),
+            httpResponse(entriesJson(2, 'c')),
+            httpResponse('[]'),
+        ]
+
+        def tree = script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com',
+                                pageSize: 2, maxPages: 3])
+
+        assert tree.size() == 6
+        assert requestedUrls.size() == 4
+    }
+
+    @Test
+    void failsOnTheFirstEntryBeyondTheLimit() {
+        responses = [
+            httpResponse(entriesJson(2, 'a')),
+            httpResponse(entriesJson(2, 'b')),
+            httpResponse(entriesJson(2, 'c')),
+            httpResponse(entriesJson(1, 'd')),
+        ]
+
+        try {
+            script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com',
+                         pageSize: 2, maxPages: 3])
+            assert false, 'Should have thrown an error'
+        } catch (RuntimeException exception) {
+            assert exception.message.contains('more than 6 entries')
+        }
+    }
+
+    @Test
+    void failsOnAServerErrorRatherThanLettingTheHttpPluginThrow() {
+        responses = [httpResponse('{"message":"500 Internal Server Error"}', 500)]
+
+        try {
+            script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com'])
+            assert false, 'Should have thrown an error'
+        } catch (RuntimeException exception) {
+            assert exception.message.contains('answered 500')
+        }
+    }
+
+    @Test
+    void keepsANonDefaultPortAndTheSchemeOfTheGitUrl() {
+        script.call([gitUrl: 'https://gitlab.example.com:8443/devops/jenkins-shared-library.git'])
+
+        assert requestedUrls[0].startsWith('https://gitlab.example.com:8443/api/v4/projects/' +
+            'devops%2Fjenkins-shared-library/repository/tree')
     }
 
     @Test
     void failsOnAnErrorStatusFromTheApi() {
-        responses = [new HttpResponseMock(status: 404, content: '{"message":"404 Tree Not Found"}')]
+        responses = [httpResponse('{"message":"404 Tree Not Found"}', 404)]
 
         try {
             script.call([projectId: 412, gitlabBaseUrl: 'https://gitlab.example.com', ref: 'nope'])
