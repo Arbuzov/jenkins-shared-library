@@ -66,7 +66,12 @@ def call(Map args = [:]) {
     // that needs rewriting. Matching ':' by what follows it would also rewrite the
     // ':' of a port.
     String normalized = gitUrl.trim()
-    if (normalized.startsWith('ssh://')) {
+    String lowerCased = normalized.toLowerCase()
+    // Only an http(s) clone URL carries the port the API answers on. The port of
+    // an ssh:// URL belongs to the SSH daemon, so it is dropped rather than
+    // carried into an https request.
+    boolean portIsTheApiPort = lowerCased.startsWith('http://') || lowerCased.startsWith('https://')
+    if (lowerCased.startsWith('ssh://')) {
       normalized = 'https://' + normalized.substring(6)
     } else if (!normalized.contains('://')) {
       normalized = 'https://' + normalized.replaceFirst(/:/, '/')
@@ -75,7 +80,7 @@ def call(Map args = [:]) {
     // Host and port explicitly, never getAuthority(): the user info of
     // 'git@host' or of an https URL carrying a token would otherwise end up in
     // every request URL, and in the build log whenever debug is on.
-    String origin = url.getPort() > 0 ?
+    String origin = (portIsTheApiPort && url.getPort() > 0) ?
       "${url.getProtocol()}://${url.getHost()}:${url.getPort()}" :
       "${url.getProtocol()}://${url.getHost()}"
     base = args.gitlabBaseUrl ?: origin

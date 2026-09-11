@@ -123,10 +123,19 @@ class GitlabGetRepositoryTreeTest extends BasePipelineTest {
     }
 
     @Test
-    void derivesTheProjectFromAnSshSchemeUrlWithAPort() {
+    void dropsTheSshPortOfAnSshSchemeUrl() {
         script.call([gitUrl: 'ssh://git@gitlab.example.com:2222/devops/jenkins-shared-library.git'])
 
-        assert requestedUrls[0].startsWith('https://gitlab.example.com:2222/api/v4/projects/' +
+        assert !requestedUrls[0].contains(':2222')
+        assert requestedUrls[0].startsWith('https://gitlab.example.com/api/v4/projects/' +
+            'devops%2Fjenkins-shared-library/repository/tree')
+    }
+
+    @Test
+    void keepsThePortOfAnHttpCloneUrl() {
+        script.call([gitUrl: 'http://gitlab.example.com:8080/devops/jenkins-shared-library.git'])
+
+        assert requestedUrls[0].startsWith('http://gitlab.example.com:8080/api/v4/projects/' +
             'devops%2Fjenkins-shared-library/repository/tree')
     }
 

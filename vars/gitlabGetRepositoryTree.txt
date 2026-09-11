@@ -45,7 +45,7 @@ All parameters are optional and passed through a Map:
 | `recursive` | `false` | Descend into subdirectories |
 | `gitUrl` | `env.GIT_URL` | SSH or HTTPS repository URL, used to derive the project and the host |
 | `projectId` | derived from `gitUrl` | Numeric project ID, or the project path in either spelling — `group/project` is encoded by the step, `group%2Fproject` is passed through |
-| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4`. When derived, the scheme and a non-default port of `gitUrl` are kept |
+| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4`. When derived, the scheme and a non-default port of an `http(s)` `gitUrl` are kept; the port of an `ssh://` URL is the SSH daemon's and is dropped |
 | `credentialsId` | `'gitlab-text-secret'` | Jenkins credentials ID holding the GitLab token |
 | `pageSize` | `100` | Entries requested per API call, 1..100 |
 | `maxPages` | `100` | Caps the listing at `pageSize * maxPages` entries, which also bounds the walk at `maxPages + 1` requests |
