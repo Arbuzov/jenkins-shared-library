@@ -1,12 +1,12 @@
 def call(Map arg = [:]) {
-  def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
+  def netboxUrl = (arg.netboxUrl ?: 'https://netbox.sandbox.asatnet.net/netbox').replaceAll('/+$', '')
   def credentialsId = arg.credentialsId ?: 'netbox'
   def role = arg.role ?: false
   def tenant = arg.tenant ?: false
   def limit = arg.limit ?: 500
 
   withCredentials([string(credentialsId: credentialsId, variable: 'TOKEN')]) {
-    def url = "${netboxUrl}/api/dcim/devices"
+    def url = "${netboxUrl}/api/dcim/devices/"
     def search = []
     if (role) {
       search.add("role=${role}")
@@ -22,7 +22,8 @@ def call(Map arg = [:]) {
       url: url,
       httpMode: 'GET',
       customHeaders: [[name: "Authorization", value: "Token ${TOKEN}"]],
-      acceptType: 'APPLICATION_JSON'
+      acceptType: 'APPLICATION_JSON',
+      ignoreSslErrors: true
     )
     def jsonResponse = readJSON(text: response.content)
     return jsonResponse.results

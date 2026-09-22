@@ -1,5 +1,5 @@
 def call(Map arg = [:]) {
-  def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
+  def netboxUrl = (arg.netboxUrl ?: 'https://netbox.sandbox.asatnet.net/netbox').replaceAll('/+$', '')
   def credentialsId = arg.credentialsId ?: 'netbox'
   def limit = arg.limit ?: 500
 
@@ -9,7 +9,8 @@ def call(Map arg = [:]) {
       url: url,
       httpMode: 'GET',
       customHeaders: [[name: "Authorization", value: "Token ${TOKEN}"]],
-      acceptType: 'APPLICATION_JSON'
+      acceptType: 'APPLICATION_JSON',
+      ignoreSslErrors: true
     )
     def jsonResponse = readJSON(text: response.content)
     return jsonResponse.results

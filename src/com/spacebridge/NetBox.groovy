@@ -41,7 +41,7 @@ class NetBox {
         return []
       }
 
-      def url = "${baseUrl}${endpoint}"
+      def url = "${baseUrl.replaceAll('/+$', '')}${endpoint}"
       if (queryParams && queryParams.size() > 0) {
         def queryString = queryParams.collect { k, v -> "${k}=${v}" }.join('&')
         url += "?${queryString}"
@@ -58,21 +58,21 @@ class NetBox {
 
   // Public API methods
   static List<Map> getTenants(Map arg = [:]) {
-    def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
+    def netboxUrl = arg.netboxUrl ?: 'https://netbox.sandbox.asatnet.net/netbox'
     def credentialsId = arg.credentialsId ?: 'netbox'
 
     return makeNetboxRequest(netboxUrl, credentialsId, '/api/tenancy/tenants/', 'tenants')
   }
 
   static List<Map> getRacks(Map arg = [:]) {
-    def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
+    def netboxUrl = arg.netboxUrl ?: 'https://netbox.sandbox.asatnet.net/netbox'
     def credentialsId = arg.credentialsId ?: 'netbox'
 
     return makeNetboxRequest(netboxUrl, credentialsId, '/api/dcim/racks/', 'racks')
   }
 
   static List<Map> getDevices(Map arg = [:]) {
-    def netboxUrl = arg.netboxUrl ?: 'http://192.168.67.56/netbox/'
+    def netboxUrl = arg.netboxUrl ?: 'https://netbox.sandbox.asatnet.net/netbox'
     def credentialsId = arg.credentialsId ?: 'netbox'
     def role = arg.role
     def tenant = arg.tenant

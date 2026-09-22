@@ -15,9 +15,14 @@ All parameters are optional and passed through a Map:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `netboxUrl` | `'http://192.168.67.56/netbox/'` | NetBox base URL |
+| `netboxUrl` | `'https://netbox.sandbox.asatnet.net/netbox'` | NetBox base URL; trailing slashes are dropped before `/api/...` is appended |
 | `credentialsId` | `'netbox'` | Jenkins credentials ID containing the NetBox API token (Secret text) |
 | `limit` | `500` | Accepted but currently not used by the implementation |
+
+## TLS
+
+The request is sent with `ignoreSslErrors: true`: several agents do not trust the Sandbox CA that
+signs `*.sandbox.asatnet.net` yet, and the step may run on any of them inside a `node` block.
 
 ## Returns
 
