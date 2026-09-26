@@ -1,0 +1,94 @@
+# runSmbToNexusPipeline
+
+Declarative pipeline that publishes archives from an SMB share to a Maven repository in Nexus.
+It scans a share directory, analyzes every archive that is not in Nexus yet, and uploads the
+ones that pass.
+
+Everything that differs between repositories and branches lives in a per-branch config file
+(`jenkins.yml` by default), so each repository keeps a two-line `Jenkinsfile`. For example,
+`master` publishes releases and `develop` publishes snapshots, each branch with its own
+`jenkins.yml`.
+
+The config is read with `readTrusted`, so the step only works in **multibranch** jobs.
+
+## Usage
+
+```groovy
+@Library('asatnet@master')_
+runSmbToNexusPipeline()
+```
+
+With overrides:
+
+```groovy
+runSmbToNexusPipeline(
+  CONFIG: 'jenkins.yml',
+  SMB_CREDENTIALS_ID: 'smb-reader',
+  NEXUS_CREDENTIALS_ID: 'nexus-publisher'
+)
+```
+
+## Parameters
+
+All parameters are optional and passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `CONFIG` | `jenkins.yml` | Path of the config file, resolved with `readTrusted` |
+| `SMB_CREDENTIALS_ID` | `arbuzov-username-password` | Username/password credential for the share, domain `asatnet` |
+| `NEXUS_CREDENTIALS_ID` | `jira-username-password` | Credential for the Nexus search and the upload |
+
+## Config file
+
+```yaml
+smbDirectory: ADVSAT/MCD/MCD_Rel40/FPGA_Releases   # directory on the share
+nexusRepository: maven-releases                    # Maven repository in Nexus
+groupId: com.spacebridge.mcd.rel40.fpga            # Maven groupId of every archive
+requiredFiles:                                     # globs every archive must contain, [] for none
+  - '*.core.rbf'
+  - '*.periph.jic'
+  - '*_jic.map'
+  - top.sof
+  - top.sta.summary
+  - '*.stp'
+# optional
+smbShare: //asatvault.asatnet.net/SATNET_DATA_1    # the default
+versionSuffix: -SNAPSHOT                           # appended to every version, e.g. for maven-snapshots
+archivePattern: '(mcd|MCD).*\.zip'                 # picks archive names out of the share listing
+artifactIdPattern: '^\w*?(?=_20\d{2,2})'           # artifactId, from the archive name
+versionPattern: '\d{8}(_\d{6})?_([a-f]|\d){7,8}'   # version, from the archive name
+```
+
+Keep the patterns in single quotes, so that YAML keeps the backslashes. The default patterns
+follow the MCD FPGA naming, `<artifactId>_<yyyyMMdd>[_HHmmss]_<commit>.zip`. An archive whose
+name yields no artifactId or no version is skipped.
+
+## Stages
+
+1. **Scan SMB share** lists the directory and keeps the archives whose `artifactId` and
+   `version + versionSuffix` are not in `nexusRepository` yet.
+2. **Analyze archives** runs only if the scan found something. It downloads each archive and
+   publishes a summary on the build page: the verdict, the sha256 and the file list. An archive
+   is held back, and the build turns UNSTABLE, when:
+   - the zip is corrupt or incomplete, for example still being copied to the share;
+   - a file from `requiredFiles` is missing;
+   - `release_notes.txt` in the same directory has no numbered entry for the archive name.
+3. **Upload to Nexus** runs only if an archive passed, and never for merge requests. Each
+   archive is uploaded in its own parallel stage, so one failed upload does not stop the others.
+   Each upload adds a badge to the build history that links to the version in Nexus, and marks
+   the build "Keep forever" so that the build rotation does not discard it.
+
+The job runs every 5 minutes (no cron for merge requests) and keeps 10 builds. An archive that
+is held back is analyzed again on every run, until it is fixed on the share.
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+
+## Failure behavior
+
+- The config is validated before the pipeline starts. An empty or unparsable file, a missing
+  key or a `requiredFiles` that is not a list fails the build with `error(...)`, which names
+  everything that is wrong at once.
+- An archive that fails the analysis makes the build UNSTABLE and is not uploaded.
+- A failed download or upload makes the build FAILURE. The other archives are still processed.
