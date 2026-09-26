@@ -28,5 +28,5 @@ All parameters are passed through a Map:
 
 ## Returns
 
-No return value.
+The summary action created by `manager.createSummary`, so the caller can change or remove the entry later.
 

@@ -30,5 +30,5 @@ publishSummary(summaryText: '<p>Hello</p>', header: 'Info', icon: 'info.gif')
 
 ## Returns
 
-No return value.
+The summary action created by `manager.createSummary`, so the caller can change or remove the entry later.
 

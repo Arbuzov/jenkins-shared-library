@@ -10,4 +10,5 @@ def call(Map arg) {
     summary.appendText("<h2>${header}</h2>", false)
   }
   summary.appendText("<a href='${link}' ${blank ? 'target="_blank"' : ''}>${text}</a>", false)
+  return summary
 }
