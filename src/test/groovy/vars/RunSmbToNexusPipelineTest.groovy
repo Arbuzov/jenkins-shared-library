@@ -20,6 +20,15 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
     List summaries
     List unstableMessages
     boolean pipelineDefined
+    List events
+    Set publishedUrls
+    String inspectOutput
+    List caughtErrors
+    List uploads
+    List badges
+    Map shellScripts
+    List catchErrorArgs
+    List dirStack
 
     /** smbclient 'dir' output, trimmed from FPGA_Releases. */
     static final String LISTING = '''\
@@ -28,6 +37,7 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
   mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip      A 58451032  Thu Sep 24 20:55:29 2026
   mcd4_fpga1_lite_20240424_cf9ddd97 .zip      A 54667058  Wed Apr 24 12:00:00 2024
   mcdma_pcie_data_test_agilex_25Oct2022_07_46.zip      A 1048576  Tue Oct 25 07:46:00 2022
+  MCD4_FPGA1_20220610_2100_b0e94c6.zip      A 1048576  Fri Jun 10 21:00:00 2022
   release_notes.txt                   A   129565  Fri May 22 16:08:12 2026
 
 		1073741823 blocks of size 4096. 52428800 blocks available
@@ -51,6 +61,40 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         ]
     }
 
+    /** smbclient 'dir' output of FPGA_Test_Load, with the junk the scan must ignore. */
+    static final String MESH_LISTING = '''\
+  .                                   D        0  Fri Sep 25 22:18:48 2026
+  ..                                  D        0  Mon Jun 10 12:00:00 2024
+  fpga_mesh_a5_20260825_f565cc7e      D        0  Tue Aug 25 17:00:00 2026
+  fpga_mesh_a7_20260923_1             D        0  Wed Sep 23 20:58:10 2026
+  fpga_mesh_a7_20260924_x            DA        0  Thu Sep 24 20:58:10 2026
+  stp_test_20260818                   D        0  Tue Aug 18 12:00:00 2026
+  old_fpga_mesh_a5                    D        0  Tue Aug 18 12:00:00 2026
+  copy of fpga_mesh_a5                D        0  Tue Aug 18 12:00:00 2026
+  fpga_mesh_a5.bak                    D        0  Tue Aug 18 12:00:00 2026
+  fpga_mesh_notes.txt                 A      120  Tue Aug 18 12:00:00 2026
+  fpga_mesh_a7_20260926_1             A      120  Sat Sep 26 12:00:00 2026
+
+\t\t1073741823 blocks of size 4096. 52428800 blocks available
+'''
+
+    static final String MESH_DIR = 'https://nexus.asatnet.net/repository/store-DEV/mesh/mesh-demod-fpga/'
+
+    static Map meshConfig() {
+        return [
+            archiveType    : 'directory',
+            smbDirectory   : 'ADVSAT/Mesh/Demod/FPGA_Test_Load',
+            archivePattern : 'fpga_mesh_\\w+',
+            nexusRepository: 'store-DEV',
+            nexusPath      : 'mesh/mesh-demod-fpga',
+            requiredFiles  : ['*.core.rbf']
+        ]
+    }
+
+    static Map load(String name) {
+        return [file: name + '.zip', load: name, url: MESH_DIR + name + '.zip']
+    }
+
     static Map archive(String file) {
         return [file: file, artifactId: 'mcd4_fpga1_lite_4ch', version: '20260924_105947_955a6270']
     }
@@ -68,7 +112,17 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         summaries = []
         unstableMessages = []
         pipelineDefined = false
+        events = []
+        publishedUrls = [] as Set
+        inspectOutput = '62238574 5400'
+        caughtErrors = []
+        uploads = []
+        badges = []
+        shellScripts = [:]
+        catchErrorArgs = []
+        dirStack = []
         binding.setVariable('env', [:])
+        binding.setVariable('currentBuild', [:])
         helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
         helper.registerAllowedMethod('echo', [String], { String message -> echoMessages << message })
         helper.registerAllowedMethod('error', [String], { String message ->
@@ -79,9 +133,24 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
             return 'smbDirectory: x\n'
         })
         helper.registerAllowedMethod('readYaml', [Map], { Map args -> validConfig() })
-        helper.registerAllowedMethod('sh', [Map], { Map args -> args.returnStdout ? shareListing : null })
+        helper.registerAllowedMethod('sh', [Map], { Map args ->
+            events << args.label
+            shellScripts[args.label] = args.script
+            if (args.label.startsWith('Inspect ')) {
+                return inspectOutput
+            }
+            return args.returnStdout ? shareListing : null
+        })
         helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
             nexusQueries << args.url
+            assert args.authentication == script.@NEXUS_CREDENTIALS_ID
+            if (args.httpMode == 'HEAD') {
+                assert args.validResponseCodes == '200,404'
+                if (args.url.contains('broken')) {
+                    throw new RuntimeException('Fail: the returned code 500 is not in the accepted range')
+                }
+                return [status: publishedUrls.contains(args.url) ? 200 : 404]
+            }
             def version = (args.url =~ /maven\.baseVersion=([^&]+)/)[0][1]
             def items = uploadedVersions.contains(version) ? [[path: version]] : []
             return [content: JsonOutput.toJson([items: items])]
@@ -90,8 +159,14 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
             assert args.returnPojo == true
             return new JsonSlurper().parseText(args.text as String)
         })
-        helper.registerAllowedMethod('withEnv', [List, Closure], { List vars, Closure body -> body() })
-        helper.registerAllowedMethod('unzip', [Map], { Map args -> args.test ? zipIntact : null })
+        helper.registerAllowedMethod('withEnv', [List, Closure], { List vars, Closure body ->
+            events << "env ${vars.join(' ')}".toString()
+            body()
+        })
+        helper.registerAllowedMethod('unzip', [Map], { Map args ->
+            assert args.test || args.dir == 'content'
+            return args.test ? zipIntact : null
+        })
         helper.registerAllowedMethod('findFiles', [Map], { Map args ->
             if (args.glob == 'content/**') {
                 return zipContent
@@ -100,9 +175,28 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
             def regex = fileGlob.replace('.', '\\.').replace('*', '.*')
             return zipContent.findAll { (it.path as String).tokenize('/').last() ==~ regex }
         })
-        helper.registerAllowedMethod('dir', [String, Closure], { String path, Closure body -> body() })
-        helper.registerAllowedMethod('deleteDir', [], { })
-        helper.registerAllowedMethod('sha256', [Map], { Map args -> 'c0ffee' })
+        helper.registerAllowedMethod('dir', [String, Closure], { String path, Closure body ->
+            dirStack << path
+            try {
+                body()
+            } finally {
+                dirStack.remove(dirStack.size() - 1)
+            }
+        })
+        helper.registerAllowedMethod('deleteDir', [], { events << "deleteDir ${dirStack ? dirStack.last() : '.'}".toString() })
+        helper.registerAllowedMethod('zip', [Map], { Map args ->
+            events << "zip ${args.zipFile} ${args.dir} ${args.glob}".toString()
+            assert args.defaultExcludes == false
+        })
+        helper.registerAllowedMethod('publishNexus', [String, String, Boolean, String], { String glob, String repoPath, Boolean flatten, String credentialsId ->
+            uploads << [publishNexus: glob, to: repoPath, flatten: flatten, credentialsId: credentialsId]
+        })
+        helper.registerAllowedMethod('nexusArtifactUploader', [Map], { Map args -> uploads << args })
+        helper.registerAllowedMethod('addBadge', [Map], { Map args -> badges << args })
+        helper.registerAllowedMethod('sha256', [Map], { Map args ->
+            events << "sha256 ${args.file}".toString()
+            return 'c0ffee'
+        })
         helper.registerAllowedMethod('libraryResource', [String], { String path ->
             new File("resources/${path}").getText('UTF-8')
         })
@@ -111,9 +205,16 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         })
         helper.registerAllowedMethod('publishSummary', [String], { String text -> summaries << text })
         helper.registerAllowedMethod('readFile', [String], { String file -> RELEASE_NOTES })
-        helper.registerAllowedMethod('catchError', [Map, Closure], { Map args, Closure body -> body() })
+        helper.registerAllowedMethod('catchError', [Map, Closure], { Map args, Closure body ->
+            catchErrorArgs << args
+            try {
+                body()
+            } catch (RuntimeException exception) {
+                caughtErrors << exception.message
+            }
+        })
         helper.registerAllowedMethod('unstable', [String], { String message -> unstableMessages << message })
-        // stop call() at the pipeline block - Pipeline Unit cannot evaluate declarative gating
+        // stop call() at the pipeline block; RunSmbToNexusPipelineGateTest runs the declarative gating
         helper.registerAllowedMethod('pipeline', [Closure], { Closure body -> pipelineDefined = true })
         script = loadScript('vars/runSmbToNexusPipeline.groovy')
     }
@@ -181,7 +282,8 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         assert script.listArchives(LISTING, '(mcd|MCD).*\\.zip') == [
             'mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip',
             'mcd4_fpga1_lite_20240424_cf9ddd97 .zip',
-            'mcdma_pcie_data_test_agilex_25Oct2022_07_46.zip'
+            'mcdma_pcie_data_test_agilex_25Oct2022_07_46.zip',
+            'MCD4_FPGA1_20220610_2100_b0e94c6.zip'
         ]
     }
 
@@ -240,10 +342,10 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         assert script.@newArchives == [
             [file: 'mcd4_fpga1_lite_20240424_cf9ddd97 .zip', artifactId: 'mcd4_fpga1_lite', version: '20240424_cf9ddd97-SNAPSHOT']
         ]
-        // the unparsable name is never looked up
+        // a name without an artifactId or without a version is never looked up
         assert nexusQueries.size() == 2
         assert nexusQueries.every { it.contains('repository=maven-snapshots') }
-        assert echoMessages.contains('1 of 3 archives are not in maven-snapshots yet')
+        assert echoMessages.contains('1 of 4 archives are not in maven-snapshots yet')
     }
 
     @Test
@@ -358,5 +460,341 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
             assert exception.message.contains('nexusRepository')
         }
         assert !pipelineDefined
+    }
+
+    // ---------- MCD behaviour pinned before the generalization ----------
+
+    @Test
+    void theMcdConfigsOfBothBranchesValidateAsBefore() {
+        def master = [
+            smbDirectory   : 'ADVSAT/MCD/MCD_Rel40/FPGA_Releases',
+            nexusRepository: 'maven-releases',
+            groupId        : 'com.spacebridge.mcd.rel40.fpga',
+            requiredFiles  : ['*.core.rbf', '*.periph.jic', '*_jic.map', 'top.sof', 'top.sta.summary', '*.stp']
+        ]
+        def develop = master + [
+            smbDirectory   : 'ADVSAT/MCD/MCD_Rel40/FPGA-SNAPSHOTS',
+            nexusRepository: 'maven-snapshots',
+            versionSuffix  : '-SNAPSHOT'
+        ]
+        def defaults = [
+            smbShare         : '//asatvault.asatnet.net/SATNET_DATA_1',
+            versionSuffix    : '',
+            archivePattern   : '(mcd|MCD).*\\.zip',
+            artifactIdPattern: '^\\w*?(?=_20\\d{2,2})',
+            versionPattern   : '\\d{8}(_\\d{6})?_([a-f]|\\d){7,8}'
+        ]
+        assert script.validateConfig(master) == defaults + master + [archiveType: 'zip']
+        assert script.validateConfig(develop) == defaults + develop + [archiveType: 'zip']
+    }
+
+    @Test
+    void scanShareQueriesTheSameMavenSearch() {
+        script.@CFG = script.validateConfig(validConfig() + [nexusRepository: 'maven-snapshots', versionSuffix: '-SNAPSHOT'])
+
+        script.scanShare()
+
+        assert nexusQueries[0] == 'https://nexus.asatnet.net/service/rest/v1/search/assets?maven.artifactId=mcd4_fpga1_lite_4ch&maven.baseVersion=20260924_105947_955a6270-SNAPSHOT&repository=maven-snapshots&maven.extension=zip'
+    }
+
+    @Test
+    void uploadSendsAZipToMavenWithTheSameCoordinates() {
+        script.@CFG = script.validateConfig(validConfig())
+        script.@NEXUS_CREDENTIALS_ID = 'jira-username-password'
+
+        script.upload(archive('mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip'))
+
+        assert uploads == [[
+            nexusVersion : 'nexus3',
+            protocol     : 'http',
+            nexusUrl     : 'nexus.asatnet.net',
+            version      : '20260924_105947_955a6270',
+            groupId      : 'com.spacebridge.mcd.rel40.fpga',
+            repository   : 'maven-releases',
+            credentialsId: 'jira-username-password',
+            artifacts    : [[artifactId: 'mcd4_fpga1_lite_4ch', file: 'mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip', type: 'zip']]
+        ]]
+        assert badges*.text*.toString() == ['mcd4_fpga1_lite_4ch:20260924_105947_955a6270']
+        assert badges[0].link.toString() == 'https://nexus.asatnet.net/service/rest/repository/browse/maven-releases/com/spacebridge/mcd/rel40/fpga/mcd4_fpga1_lite_4ch/20260924_105947_955a6270/'
+        assert binding.getVariable('currentBuild').keepLog == true
+    }
+
+    @Test
+    void analyzeArchivesReadsTheReleaseNotesForZips() {
+        script.@CFG = script.validateConfig(validConfig())
+
+        script.analyzeArchives()
+
+        assert events == ['Download release_notes.txt']
+    }
+
+    @Test
+    void analyzeStartsEveryZipFromAnEmptyContentDirectory() {
+        script.@CFG = script.validateConfig(validConfig())
+
+        script.analyze(archive('mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip'), RELEASE_NOTES)
+
+        assert events == [
+            'deleteDir content',
+            'env ARCHIVE=mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip',
+            'Download mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip',
+            'sha256 mcd4_fpga1_lite_4ch_20260924_105947_955a6270.zip'
+        ]
+    }
+
+    // ---------- directory config ----------
+
+    @Test
+    void validateConfigNamesTheKeysADirectoryNeeds() {
+        try {
+            script.validateConfig([archiveType: 'directory'])
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            ['smbDirectory', 'nexusRepository', 'nexusPath', 'archivePattern', 'requiredFiles'].each {
+                assert exception.message.contains(it)
+            }
+            assert !exception.message.contains('groupId')
+        }
+    }
+
+    @Test
+    void validateConfigRejectsAnAnchoredDirectoryPattern() {
+        ['^fpga_mesh_\\w+', 'fpga_mesh_\\w+$'].each { pattern ->
+            try {
+                script.validateConfig(meshConfig() + [archivePattern: pattern])
+                assert false: "expected an error for ${pattern}"
+            } catch (RuntimeException exception) {
+                assert exception.message.contains('drop ^ and $')
+            }
+        }
+    }
+
+    @Test
+    void validateConfigRejectsANexusPathWithASlashAtEitherEnd() {
+        ['/mesh/mesh-demod-fpga', 'mesh/mesh-demod-fpga/'].each { path ->
+            try {
+                script.validateConfig(meshConfig() + [nexusPath: path])
+                assert false: "expected an error for ${path}"
+            } catch (RuntimeException exception) {
+                assert exception.message.contains('nexusPath must not start or end with /')
+            }
+        }
+    }
+
+    @Test
+    void validateConfigRejectsAnUnknownArchiveType() {
+        try {
+            script.validateConfig(meshConfig() + [archiveType: 'directories'])
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            assert exception.message.contains('archiveType must be zip or directory, not directories')
+        }
+    }
+
+    // ---------- directory scan ----------
+
+    @Test
+    void listDirectoriesTakesOnlyDirectoriesWhoseWholeNameMatches() {
+        assert script.listDirectories(MESH_LISTING, 'fpga_mesh_\\w+') == [
+            'fpga_mesh_a5_20260825_f565cc7e',
+            'fpga_mesh_a7_20260923_1',
+            'fpga_mesh_a7_20260924_x'
+        ]
+    }
+
+    @Test
+    void scanShareSkipsEveryLoadWhoseZipExists() {
+        script.@CFG = script.validateConfig(meshConfig())
+        publishedUrls << MESH_DIR + 'fpga_mesh_a5_20260825_f565cc7e.zip'
+        shareListing = MESH_LISTING
+
+        script.scanShare()
+
+        assert nexusQueries == [
+            MESH_DIR + 'fpga_mesh_a5_20260825_f565cc7e.zip',
+            MESH_DIR + 'fpga_mesh_a7_20260923_1.zip',
+            MESH_DIR + 'fpga_mesh_a7_20260924_x.zip'
+        ]
+        assert script.@newArchives == [load('fpga_mesh_a7_20260923_1'), load('fpga_mesh_a7_20260924_x')]
+        assert echoMessages.contains('2 of 3 archives are not in store-DEV yet')
+    }
+
+    @Test
+    void scanShareFailsWhenNexusAnswersNeither200Nor404() {
+        script.@CFG = script.validateConfig(meshConfig() + [nexusPath: 'broken'])
+        shareListing = MESH_LISTING
+        try {
+            script.scanShare()
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            assert exception.message.contains('500')
+        }
+        assert script.@newArchives == []
+    }
+
+    // ---------- directory analysis ----------
+
+    @Test
+    void analyzeWaitsUntilNothingChangedForThirtyMinutes() {
+        script.@CFG = script.validateConfig(meshConfig())
+        inspectOutput = '62238574 1799\n'
+
+        assert script.analyze(load('fpga_mesh_a7_20260923_1'), '') == null
+        assert !events.contains('Download fpga_mesh_a7_20260923_1')
+        assert summaries == []
+        assert echoMessages.contains('fpga_mesh_a7_20260923_1: empty or changed less than 30 min ago, skipped')
+    }
+
+    @Test
+    void analyzeWaitsForAnEmptyDirectory() {
+        script.@CFG = script.validateConfig(meshConfig())
+        inspectOutput = '0 99999\n'
+
+        assert script.analyze(load('fpga_mesh_a7_20260923_1'), '') == null
+        assert !events.contains('Download fpga_mesh_a7_20260923_1')
+    }
+
+    @Test
+    void analyzeZipsACompleteLoadAsLoadSlashFiles() {
+        script.@CFG = script.validateConfig(meshConfig())
+        inspectOutput = '62238574 1800\n'
+        zipContent = [
+            [path: 'content/fpga_mesh_a7_20260923_1/fpga_mesh_a7.core.rbf', length: 62238000],
+            [path: 'content/fpga_mesh_a7_20260923_1/stp1.stp', length: 574]
+        ]
+
+        def problems = script.analyze(load('fpga_mesh_a7_20260923_1'), '')
+
+        assert problems == []
+        assert events == [
+            'deleteDir content',
+            'env LOAD=fpga_mesh_a7_20260923_1',
+            'Inspect fpga_mesh_a7_20260923_1',
+            'env LOAD=fpga_mesh_a7_20260923_1 BYTES=62238574',
+            'Download fpga_mesh_a7_20260923_1',
+            'zip fpga_mesh_a7_20260923_1.zip content fpga_mesh_a7_20260923_1/**',
+            'sha256 fpga_mesh_a7_20260923_1.zip'
+        ]
+        assert summaries[0].contains('Ready to upload as ' + MESH_DIR + 'fpga_mesh_a7_20260923_1.zip')
+        assert summaries[0].contains('<td>fpga_mesh_a7_20260923_1/stp1.stp</td><td>574</td>')
+    }
+
+    @Test
+    void analyzeFailsALoadThatWasNotFullyDownloaded() {
+        script.@CFG = script.validateConfig(meshConfig())
+        helper.registerAllowedMethod('sh', [Map], { Map args ->
+            events << args.label
+            if (args.label.startsWith('Download ')) {
+                throw new RuntimeException('script returned exit code 1')
+            }
+            return inspectOutput
+        })
+        try {
+            script.analyze(load('fpga_mesh_a7_20260923_1'), '')
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            assert exception.message == 'script returned exit code 1'
+        }
+        assert !events.any { it.startsWith('zip ') }
+        assert summaries == []
+    }
+
+    @Test
+    void analyzeHoldsBackALoadWithoutACoreRbfAndIgnoresReleaseNotes() {
+        script.@CFG = script.validateConfig(meshConfig())
+        zipContent = [[path: 'content/fpga_mesh_a7_20260923_1/stp1.stp', length: 62238574]]
+
+        assert script.analyze(load('fpga_mesh_a7_20260923_1'), '') == ['no *.core.rbf']
+    }
+
+    @Test
+    void analyzeArchivesKeepsReadyLoadsSkipsBusyOnesAndIsolatesFailures() {
+        script.@CFG = script.validateConfig(meshConfig())
+        zipContent = [[path: 'content/fpga_mesh_a7_20260923_1/a.core.rbf', length: 62238574]]
+        script.@newArchives = [load('fpga_mesh_a7_20260923_1'), load('fpga_mesh_busy'), load('fpga_mesh_short')]
+        helper.registerAllowedMethod('sh', [Map], { Map args ->
+            events << args.label
+            if (args.label == 'Inspect fpga_mesh_busy') {
+                return '62238574 60\n'
+            }
+            if (args.label == 'Download fpga_mesh_short') {
+                throw new RuntimeException('script returned exit code 1')
+            }
+            return args.label.startsWith('Inspect ') ? '62238574 5400\n' : null
+        })
+
+        script.analyzeArchives()
+
+        assert script.@readyArchives == [load('fpga_mesh_a7_20260923_1')]
+        assert unstableMessages == []
+        assert caughtErrors == ['script returned exit code 1']
+        // an incomplete download fails the build, and Abort or a timeout still stops it
+        assert catchErrorArgs.every { it == [buildResult: 'FAILURE', stageResult: 'FAILURE', catchInterruptions: false] }
+        assert !events.contains('Download release_notes.txt')
+        // every load starts from an empty content/, so a failed one cannot pass its files to the next
+        assert events.findAll { it == 'deleteDir content' }.size() == 3
+    }
+
+    @Test
+    void analyzeArchivesHoldsBackALoadWithoutACoreRbf() {
+        script.@CFG = script.validateConfig(meshConfig())
+        zipContent = [[path: 'content/fpga_mesh_a7_20260923_1/stp1.stp', length: 62238574]]
+        script.@newArchives = [load('fpga_mesh_a7_20260923_1')]
+
+        script.analyzeArchives()
+
+        assert unstableMessages == ['fpga_mesh_a7_20260923_1.zip: no *.core.rbf']
+        assert script.@readyArchives == []
+    }
+
+    // ---------- directory upload ----------
+
+    @Test
+    void uploadPutsTheZipIntoTheRawDirectory() {
+        script.@CFG = script.validateConfig(meshConfig())
+        script.@NEXUS_CREDENTIALS_ID = 'nexus-publisher'
+
+        script.upload(load('fpga_mesh_a7_20260923_1'))
+
+        assert nexusQueries == [MESH_DIR + 'fpga_mesh_a7_20260923_1.zip']
+        assert uploads == [[publishNexus: 'fpga_mesh_a7_20260923_1.zip', to: MESH_DIR, flatten: false, credentialsId: 'nexus-publisher']]
+        assert badges*.text == ['fpga_mesh_a7_20260923_1.zip']
+        assert badges[0].link.toString() == 'https://nexus.asatnet.net/service/rest/repository/browse/store-DEV/mesh/mesh-demod-fpga/'
+        assert binding.getVariable('currentBuild').keepLog == true
+    }
+
+    @Test
+    void uploadRefusesAZipPublishedWhileTheBuildRan() {
+        script.@CFG = script.validateConfig(meshConfig())
+        script.@NEXUS_CREDENTIALS_ID = 'nexus-publisher'
+        publishedUrls << MESH_DIR + 'fpga_mesh_a7_20260923_1.zip'
+
+        try {
+            script.upload(load('fpga_mesh_a7_20260923_1'))
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            assert exception.message.contains('was published while this build ran, it is not replaced')
+        }
+        assert uploads == []
+        assert badges == []
+        assert binding.getVariable('currentBuild').keepLog != true
+    }
+
+    @Test
+    void uploadArchivesUploadsEveryReadyArchiveInItsOwnStage() {
+        script.@CFG = script.validateConfig(meshConfig())
+        script.@readyArchives = [load('fpga_mesh_a7_20260923_1'), load('fpga_mesh_a7_20260923_2')]
+        def stages = []
+        helper.registerAllowedMethod('stage', [String, Closure], { String name, Closure body ->
+            stages << name
+            body()
+        })
+        // Jenkins starts the branches after the map is built, so each one must keep its own archive
+        helper.registerAllowedMethod('parallel', [Map], { Map branches -> branches.values()*.call() })
+
+        script.uploadArchives()
+
+        assert stages == ['Upload fpga_mesh_a7_20260923_1.zip', 'Upload fpga_mesh_a7_20260923_2.zip']
+        assert uploads*.publishNexus == ['fpga_mesh_a7_20260923_1.zip', 'fpga_mesh_a7_20260923_2.zip']
     }
 }

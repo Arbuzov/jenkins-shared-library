@@ -2,12 +2,15 @@ import groovy.transform.Field
 import java.util.regex.Pattern
 
 /**
- * Publish archives from an SMB share to a Maven repository in Nexus.
+ * Publish archives from an SMB share to Nexus.
  *
  * Scans a share directory, analyzes every archive that is not in Nexus yet and
- * uploads the ones that pass, one parallel stage per archive. Everything that
- * differs between repositories and branches lives in a per-branch config file
- * (jenkins.yml by default), so the Jenkinsfile is a two-line stub:
+ * uploads the ones that pass, one parallel stage per archive. An archive is a
+ * zip, uploaded to a Maven repository (archiveType zip, the default), or a
+ * directory, zipped and uploaded to a raw repository (archiveType directory).
+ * Everything that differs between repositories and branches lives in a
+ * per-branch config file (jenkins.yml by default), so the Jenkinsfile is a
+ * two-line stub:
  *
  *     @Library('asatnet@master')_
  *     runSmbToNexusPipeline()
@@ -23,17 +26,24 @@ import java.util.regex.Pattern
 @Field List<Map> newArchives = []
 @Field List<Map> readyArchives = []
 
-/** Config keys every repository has to provide. */
-@Field List REQUIRED_CONFIG = ['smbDirectory', 'nexusRepository', 'groupId', 'requiredFiles']
+/** Config keys every repository has to provide, by archiveType. */
+@Field Map REQUIRED_CONFIG = [
+    zip      : ['smbDirectory', 'nexusRepository', 'groupId', 'requiredFiles'],
+    directory: ['smbDirectory', 'nexusRepository', 'nexusPath', 'archivePattern', 'requiredFiles']
+]
 
 /** Defaults for the optional keys. The patterns follow the MCD FPGA naming. */
 @Field Map DEFAULT_CONFIG = [
+    archiveType      : 'zip',
     smbShare         : '//asatvault.asatnet.net/SATNET_DATA_1',
     versionSuffix    : '',
     archivePattern   : '(mcd|MCD).*\\.zip',
     artifactIdPattern: '^\\w*?(?=_20\\d{2,2})',
     versionPattern   : '\\d{8}(_\\d{6})?_([a-f]|\\d){7,8}'
 ]
+
+/** A directory is taken once nothing in it changed for this long: engineers copy a load in several steps. */
+@Field int QUIET_MINUTES = 30
 
 /**
  * Validate the config and return it with the defaults filled in. Reports every
@@ -44,14 +54,28 @@ Map validateConfig(Map config) {
     if (!config) {
         error('runSmbToNexusPipeline: the config file is empty or could not be parsed.')
     }
-    def missing = REQUIRED_CONFIG.findAll { !config.containsKey(it) }
+    def merged = DEFAULT_CONFIG + config
+    def required = REQUIRED_CONFIG[merged.archiveType]
+    if (required == null) {
+        error("runSmbToNexusPipeline: archiveType must be zip or directory, not ${merged.archiveType}.")
+    }
+    def missing = required.findAll { !config.containsKey(it) }
     if (missing) {
         error("runSmbToNexusPipeline: the config is missing ${missing.join(', ')}.")
     }
     if (!(config.requiredFiles instanceof List)) {
         error('runSmbToNexusPipeline: requiredFiles must be a list of file name globs, [] for none.')
     }
-    return DEFAULT_CONFIG + config
+    if (merged.archiveType == 'directory') {
+        // listDirectories embeds the pattern in a line match, where ^ and $ can never match
+        if (config.archivePattern.startsWith('^') || config.archivePattern.endsWith('$')) {
+            error("runSmbToNexusPipeline: archivePattern is matched against the whole directory name, drop ^ and \$ from ${config.archivePattern}.")
+        }
+        if (config.nexusPath.startsWith('/') || config.nexusPath.endsWith('/')) {
+            error("runSmbToNexusPipeline: nexusPath must not start or end with /, for example mesh/mesh-demod-fpga, not ${config.nexusPath}.")
+        }
+    }
+    return merged
 }
 
 /** Every match of pattern in the share listing, one per archive. */
@@ -61,6 +85,18 @@ List<String> listArchives(String listing, String pattern) {
     def names = []
     while (matcher.find()) {
         names << matcher.group()
+    }
+    return names
+}
+
+/** Every directory in the share listing whose whole name matches pattern. */
+@NonCPS
+List<String> listDirectories(String listing, String pattern) {
+    // "  fpga_mesh_a7_20260923_1      D        0  Wed Sep 23 20:58:10 2026"
+    def matcher = listing =~ /(?m)^\s+(${pattern})\s+D\w*\s/
+    def names = []
+    while (matcher.find()) {
+        names << matcher.group(1)
     }
     return names
 }
@@ -94,62 +130,158 @@ Boolean checkIfUploaded(String artifactId, String version) {
     return found.items.size() > 0
 }
 
+/** Whether url exists in Nexus. Any answer but 200 or 404 fails the build. */
+Boolean isPublished(String url) {
+    def response = httpRequest(
+        url: url,
+        httpMode: 'HEAD',
+        authentication: NEXUS_CREDENTIALS_ID,
+        validResponseCodes: '200,404',
+        quiet: true
+    )
+    return response.status == 200
+}
+
+String rawDirectory() {
+    return "https://nexus.asatnet.net/repository/${CFG.nexusRepository}/${CFG.nexusPath}/"
+}
+
 void scanShare() {
     def listing = sh(
         label: "List ${CFG.smbDirectory}",
         script: 'smbclient $SMB_OPTS --directory "$SMB_DIR" "$SMB_SHARE" -c dir',
         returnStdout: true
     )
-    def fileNames = listArchives(listing, CFG.archivePattern)
+    def directories = CFG.archiveType == 'directory'
+    def fileNames = directories ? listDirectories(listing, CFG.archivePattern) : listArchives(listing, CFG.archivePattern)
     for (fileName in fileNames) {
-        def artifactId = firstMatch(fileName, CFG.artifactIdPattern)
-        def version = firstMatch(fileName, CFG.versionPattern)
-        def nexusVersion = version + (CFG.versionSuffix ?: '')
-        if (artifactId != '' && version != '' && !checkIfUploaded(artifactId, nexusVersion)) {
-            newArchives << [file: fileName, artifactId: artifactId, version: nexusVersion]
+        if (directories) {
+            // Consumers pin a zip by URL and sha256, so a published one is never replaced
+            def url = rawDirectory() + fileName + '.zip'
+            if (!isPublished(url)) {
+                newArchives << [file: fileName + '.zip', load: fileName, url: url]
+            }
+        } else {
+            def artifactId = firstMatch(fileName, CFG.artifactIdPattern)
+            def version = firstMatch(fileName, CFG.versionPattern)
+            def nexusVersion = version + (CFG.versionSuffix ?: '')
+            if (artifactId != '' && version != '' && !checkIfUploaded(artifactId, nexusVersion)) {
+                newArchives << [file: fileName, artifactId: artifactId, version: nexusVersion]
+            }
         }
     }
     echo("${newArchives.size()} of ${fileNames.size()} archives are not in ${CFG.nexusRepository} yet")
 }
 
-List<String> analyze(Map archive, String releaseNotes) {
+/** Download a zip and unpack it into content/. Returns the problems found. */
+List<String> fetchZip(Map archive) {
     withEnv(["ARCHIVE=${archive.file}"]) {
         sh(
             label: "Download ${archive.file}",
             script: 'smbclient $SMB_OPTS --directory "$SMB_DIR" "$SMB_SHARE" -c "get \\"$ARCHIVE\\""'
         )
     }
-    def problems = []
-    def content = []
     // A zip still being copied to the share fails this test
     def intact = unzip(
         zipFile: archive.file,
         test: true
     )
-    if (intact) {
-        unzip(
-            zipFile: archive.file,
-            dir: 'content',
-            quiet: true
+    if (!intact) {
+        return ['the zip is corrupt or incomplete']
+    }
+    unzip(
+        zipFile: archive.file,
+        dir: 'content',
+        quiet: true
+    )
+    return []
+}
+
+/**
+ * Download a directory into content/ and zip it as <name>/<files>. Returns null,
+ * having downloaded nothing, while the directory is empty or anything in it
+ * changed less than QUIET_MINUTES ago.
+ */
+List<String> fetchDirectory(Map archive) {
+    def share
+    withEnv(["LOAD=${archive.load}"]) {
+        // The copy to the share keeps each file's mtime, so a file that just landed shows
+        // only in the mtime of its directory, the "." entry; "..", the parent, does not count.
+        // The age is taken on the agent, in the timezone smbclient prints the mtimes in.
+        share = sh(
+            label: "Inspect ${archive.load}",
+            returnStdout: true,
+            script: '''
+                listing=$(smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "recurse ON; ls") || { echo "$LOAD: cannot list it on the share" >&2; exit 1; }
+                # size and mtime of every entry: "  top.sof      A 62238574  Wed Sep  2 10:00:00 2026"
+                entries=$(printf '%s\\n' "$listing" | grep -vE '^ +[.][.] ' \\
+                    | sed -nE 's/.* ([0-9]+)  ([A-Z][a-z]{2} [A-Z][a-z]{2} +[0-9]{1,2} [0-9:]{8} [0-9]{4})$/\\1 \\2/p')
+                [ -n "$entries" ] || { echo "$LOAD: no sizes and mtimes in its listing" >&2; exit 1; }
+                bytes=$(printf '%s\\n' "$entries" | awk '{ s += $1 } END { print s }')
+                newest=$(printf '%s\\n' "$entries" | while read -r size t; do date -d "$t" +%s; done | sort -n | tail -1)
+                echo "$bytes $(( $(date +%s) - newest ))"
+            '''
+        ).trim().tokenize(' ')
+    }
+    long bytes = share[0] as long
+    long age = share[1] as long
+    if (bytes == 0 || age < QUIET_MINUTES * 60) {
+        echo("${archive.load}: empty or changed less than ${QUIET_MINUTES} min ago, skipped")
+        return null
+    }
+    withEnv([
+        "LOAD=${archive.load}",
+        "BYTES=${bytes}"
+    ]) {
+        // mget exits 0 even when a file fails, so the downloaded bytes have to add up to the listed ones
+        sh(
+            label: "Download ${archive.load}",
+            script: '''
+                mkdir -p "content/$LOAD"
+                smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "lcd \\"content/$LOAD\\"; recurse ON; prompt OFF; mget *"
+                downloaded=$(find "content/$LOAD" -type f -printf '%s\\n' | awk '{ s += $1 } END { print s + 0 }')
+                echo "$LOAD: downloaded $downloaded of $BYTES bytes"
+                [ "$downloaded" -eq "$BYTES" ]
+            '''
         )
+    }
+    // The agent image has no zip binary. defaultExcludes would drop files such as .gitignore
+    // that the byte check counted, from a zip that is never replaced
+    zip(
+        zipFile: archive.file,
+        dir: 'content',
+        glob: "${archive.load}/**",
+        defaultExcludes: false
+    )
+    return []
+}
+
+/** Analyze an archive and publish its summary. Returns the problems found, or null for a directory that is not ready yet. */
+List<String> analyze(Map archive, String releaseNotes) {
+    // The archive before this one left its files here, passed or failed
+    dir('content') {
+        deleteDir()
+    }
+    def problems = CFG.archiveType == 'directory' ? fetchDirectory(archive) : fetchZip(archive)
+    if (problems == null) {
+        return null
+    }
+    def content = []
+    if (!problems) {
         content = findFiles(glob: 'content/**')
         for (pattern in CFG.requiredFiles) {
             if (!findFiles(glob: "content/**/${pattern}")) {
                 problems << "no ${pattern}"
             }
         }
-        dir('content') {
-            deleteDir()
-        }
-    } else {
-        problems << 'the zip is corrupt or incomplete'
     }
-    if (!hasReleaseNote(releaseNotes, archive.file)) {
+    if (CFG.archiveType == 'zip' && !hasReleaseNote(releaseNotes, archive.file)) {
         problems << 'no entry in release_notes.txt'
     }
     def summary = inflateTemplate(
         TEMPLATE: libraryResource('com/spacebridge/nexus/archive-summary.html.gtpl'),
         archive: archive,
+        target: CFG.archiveType == 'directory' ? archive.url : "${archive.artifactId}:${archive.version}",
         problems: problems,
         checksum: sha256(file: archive.file),
         content: content
@@ -159,7 +291,14 @@ List<String> analyze(Map archive, String releaseNotes) {
 }
 
 void analyzeArchives() {
-    def releaseNotes = readFile('release_notes.txt')
+    def releaseNotes = ''
+    if (CFG.archiveType == 'zip') {
+        sh(
+            label: 'Download release_notes.txt',
+            script: 'smbclient $SMB_OPTS --directory "$SMB_DIR" "$SMB_SHARE" -c "get release_notes.txt"'
+        )
+        releaseNotes = readFile('release_notes.txt')
+    }
     for (archive in newArchives) {
         catchError(
             buildResult: 'FAILURE',
@@ -169,7 +308,7 @@ void analyzeArchives() {
             def problems = analyze(archive, releaseNotes)
             if (problems) {
                 unstable("${archive.file}: ${problems.join(', ')}")
-            } else {
+            } else if (problems != null) {
                 readyArchives << archive
             }
         }
@@ -177,25 +316,43 @@ void analyzeArchives() {
 }
 
 void upload(Map archive) {
-    nexusArtifactUploader(
-        nexusVersion: 'nexus3',
-        protocol: 'http',
-        nexusUrl: 'nexus.asatnet.net',
-        version: archive.version,
-        groupId: CFG.groupId,
-        repository: CFG.nexusRepository,
-        credentialsId: NEXUS_CREDENTIALS_ID,
-        artifacts: [[
-            artifactId: archive.artifactId,
-            file: archive.file,
-            type: 'zip',
-        ]]
-    )
-    addBadge(
-        icon: 'symbol-cloud-upload-outline plugin-ionicons-api',
-        text: "${archive.artifactId}:${archive.version}",
-        link: "https://nexus.asatnet.net/service/rest/repository/browse/${CFG.nexusRepository}/${CFG.groupId.replace('.', '/')}/${archive.artifactId}/${archive.version}/"
-    )
+    if (CFG.archiveType == 'directory') {
+        // The scan looked before Analyze, and a published zip is never replaced
+        if (isPublished(archive.url)) {
+            error("runSmbToNexusPipeline: ${archive.url} was published while this build ran, it is not replaced.")
+        }
+        publishNexus(
+            archive.file,
+            rawDirectory(),
+            false,
+            NEXUS_CREDENTIALS_ID
+        )
+        addBadge(
+            icon: 'symbol-cloud-upload-outline plugin-ionicons-api',
+            text: archive.file,
+            link: "https://nexus.asatnet.net/service/rest/repository/browse/${CFG.nexusRepository}/${CFG.nexusPath}/"
+        )
+    } else {
+        nexusArtifactUploader(
+            nexusVersion: 'nexus3',
+            protocol: 'http',
+            nexusUrl: 'nexus.asatnet.net',
+            version: archive.version,
+            groupId: CFG.groupId,
+            repository: CFG.nexusRepository,
+            credentialsId: NEXUS_CREDENTIALS_ID,
+            artifacts: [[
+                artifactId: archive.artifactId,
+                file: archive.file,
+                type: 'zip',
+            ]]
+        )
+        addBadge(
+            icon: 'symbol-cloud-upload-outline plugin-ionicons-api',
+            text: "${archive.artifactId}:${archive.version}",
+            link: "https://nexus.asatnet.net/service/rest/repository/browse/${CFG.nexusRepository}/${CFG.groupId.replace('.', '/')}/${archive.artifactId}/${archive.version}/"
+        )
+    }
     // Rotation keeps 10 builds, a build every 5 min: keep the ones that uploaded
     currentBuild.keepLog = true
 }
@@ -275,10 +432,6 @@ def call(Map arg = [:]) {
                     expression { !newArchives.isEmpty() }
                 }
                 steps {
-                    sh(
-                        label: 'Download release_notes.txt',
-                        script: 'smbclient $SMB_OPTS --directory "$SMB_DIR" "$SMB_SHARE" -c "get release_notes.txt"'
-                    )
                     analyzeArchives()
                 }
             }

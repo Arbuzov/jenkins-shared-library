@@ -4,12 +4,13 @@
 
 ### Added
 - New pipeline step `runSmbToNexusPipeline` in `vars/runSmbToNexusPipeline.groovy`.
-  - Publishes archives from an SMB share to a Maven repository in Nexus. It has three stages, and each runs only when there is work for it: scan the share, analyze the archives that are not in Nexus yet, upload the ones that pass.
+  - Publishes archives from an SMB share to Nexus: zips to a Maven repository or, with `archiveType: directory`, directories zipped into a raw repository. It has three stages, and each runs only when there is work for it: scan the share, analyze the archives that are not in Nexus yet, upload the ones that pass.
   - The analysis publishes a summary on the build page: the verdict, the sha256 and the file list. It holds back a corrupt or incomplete zip, a zip missing a file from `requiredFiles` and a zip without a numbered entry in `release_notes.txt`. The build turns UNSTABLE for any of them.
   - Uploads run as parallel stages, one per archive. Each adds a badge that links to the version in Nexus and marks the build "Keep forever". Merge requests never upload.
   - Reads a per-branch `jenkins.yml` with `readTrusted`, so each repository keeps a two-line `Jenkinsfile` and `master`/`develop` differ only in their config (`smbDirectory`, `nexusRepository`, `versionSuffix`).
   - The archive-name patterns default to the MCD FPGA naming and can be set in the config.
-- Step documentation in `vars/runSmbToNexusPipeline.txt`, the summary template `resources/com/spacebridge/nexus/archive-summary.html.gtpl`, and unit tests in `src/test/groovy/vars/RunSmbToNexusPipelineTest.groovy`.
+  - `archiveType: directory` publishes directories instead, each zipped as `<name>/<files>` into `<nexusRepository>/<nexusPath>/<name>.zip` of a raw repository. A directory is taken once it is not empty and nothing in it changed for 30 minutes, its download must add up to the listed bytes, and a zip already in Nexus (HEAD 200, in the scan and again right before the upload) is never replaced.
+- Step documentation in `vars/runSmbToNexusPipeline.txt`, the summary template `resources/com/spacebridge/nexus/archive-summary.html.gtpl`, and unit tests in `src/test/groovy/vars/RunSmbToNexusPipelineTest.groovy`, `RunSmbToNexusPipelineShellTest.groovy` (runs the directory mode's shell scripts against a fake `smbclient`; skipped without a POSIX `sh`) and `RunSmbToNexusPipelineGateTest.groovy` (merge requests never upload).
 - New shared-library step `gitlabGetRepositoryTree` in `vars/gitlabGetRepositoryTree.groovy`.
   - Lists the files and directories of a GitLab repository via `GET /projects/:id/repository/tree`, returning GitLab's own entry shape (`id`, `name`, `type`, `path`, `mode`).
   - Derives the project and the host from `env.GIT_URL` by default, so a build of the repository it inspects calls it without arguments; `projectId` plus `gitlabBaseUrl` address any other project.

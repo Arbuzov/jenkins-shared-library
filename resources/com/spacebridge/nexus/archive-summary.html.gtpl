@@ -3,7 +3,7 @@
 <% if (problems) { %>
 <p>Not uploaded: ${escape(problems.join(', '))}</p>
 <% } else { %>
-<p>Ready to upload as ${escape(archive.artifactId)}:${escape(archive.version)}</p>
+<p>Ready to upload as ${escape(target)}</p>
 <% } %>
 <p>sha256 ${checksum}</p>
 <table>

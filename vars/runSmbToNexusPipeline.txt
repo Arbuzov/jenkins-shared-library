@@ -1,8 +1,8 @@
 # runSmbToNexusPipeline
 
-Declarative pipeline that publishes archives from an SMB share to a Maven repository in Nexus.
-It scans a share directory, analyzes every archive that is not in Nexus yet, and uploads the
-ones that pass.
+Declarative pipeline that publishes archives from an SMB share to Nexus: zip files to a Maven
+repository, or directories, zipped, to a raw repository. It scans a share directory, analyzes
+every archive that is not in Nexus yet, and uploads the ones that pass.
 
 Everything that differs between repositories and branches lives in a per-branch config file
 (`jenkins.yml` by default), so each repository keeps a two-line `Jenkinsfile`. For example,
@@ -36,7 +36,7 @@ All parameters are optional and passed through a Map:
 |-----------|---------|-------------|
 | `CONFIG` | `jenkins.yml` | Path of the config file, resolved with `readTrusted` |
 | `SMB_CREDENTIALS_ID` | `arbuzov-username-password` | Username/password credential for the share, domain `asatnet` |
-| `NEXUS_CREDENTIALS_ID` | `jira-username-password` | Credential for the Nexus search and the upload |
+| `NEXUS_CREDENTIALS_ID` | `jira-username-password` | Credential for the Nexus search or HEAD check and the upload |
 
 ## Config file
 
@@ -63,23 +63,62 @@ Keep the patterns in single quotes, so that YAML keeps the backslashes. The defa
 follow the MCD FPGA naming, `<artifactId>_<yyyyMMdd>[_HHmmss]_<commit>.zip`. An archive whose
 name yields no artifactId or no version is skipped.
 
+### Directories to a raw repository
+
+With `archiveType: directory`, every directory whose whole name matches `archivePattern` is
+zipped as `<name>/<files>` and uploaded to
+`https://nexus.asatnet.net/repository/<nexusRepository>/<nexusPath>/<name>.zip`:
+
+```yaml
+archiveType: directory                        # zip (the default) or directory
+smbDirectory: ADVSAT/Mesh/Demod/FPGA_Test_Load
+archivePattern: 'fpga_mesh_\w+'               # required, without ^ or $: matched against the whole name
+nexusRepository: store-DEV                    # a raw repository
+nexusPath: mesh/mesh-demod-fpga               # required: no leading or trailing slash
+requiredFiles:
+  - '*.core.rbf'
+```
+
+Only directory entries count, so files and names that merely contain a match are ignored. The
+step matches the pattern against the whole name itself, so a `^` or `$` in it fails the config
+check. The name ends up in shell commands and in the Nexus URL: keep the pattern to letters,
+digits and `_`. `groupId`, `versionSuffix`, `artifactIdPattern` and `versionPattern` are not used, and
+there are no release notes.
+
 ## Stages
 
 1. **Scan SMB share** lists the directory and keeps the archives whose `artifactId` and
-   `version + versionSuffix` are not in `nexusRepository` yet.
+   `version + versionSuffix` are not in `nexusRepository` yet. A directory is kept when its
+   `<name>.zip` is not in Nexus: a HEAD on that exact URL answers 404.
 2. **Analyze archives** runs only if the scan found something. It downloads each archive and
    publishes a summary on the build page: the verdict, the sha256 and the file list. An archive
    is held back, and the build turns UNSTABLE, when:
    - the zip is corrupt or incomplete, for example still being copied to the share;
    - a file from `requiredFiles` is missing;
    - `release_notes.txt` in the same directory has no numbered entry for the archive name.
+
+   A directory is first listed recursively. It is skipped, and the build stays green, while it
+   is empty or anything in it changed less than 30 minutes ago: a copy to the share keeps each
+   file's mtime, so the directory's own mtime is what shows that a file just landed. Otherwise
+   it is downloaded, its downloaded bytes must add up to the sizes in that listing, and it is
+   zipped with every file, dot files included; the
+   summary shows the sha256 of that zip. A directory is held back only for a missing
+   `requiredFiles` entry.
 3. **Upload to Nexus** runs only if an archive passed, and never for merge requests. Each
    archive is uploaded in its own parallel stage, so one failed upload does not stop the others.
-   Each upload adds a badge to the build history that links to the version in Nexus, and marks
-   the build "Keep forever" so that the build rotation does not discard it.
+   Each upload adds a badge to the build history that links to the version in Nexus (to the
+   `nexusPath` directory, for a raw repository), and marks the build "Keep forever" so that the
+   build rotation does not discard it.
 
 The job runs every 5 minutes (no cron for merge requests) and keeps 10 builds. An archive that
 is held back is analyzed again on every run, until it is fixed on the share.
+
+A zip in a raw repository is never replaced: once `<name>.zip` is in Nexus, the directory is
+skipped, even if it changes on the share. The HEAD runs in the scan and again right before the
+upload, so a zip that another build published in the meantime fails that upload instead of
+being replaced. Only one job should upload to a `nexusPath`: every non-MR branch uploads, so a
+branch that keeps another branch's `jenkins.yml` publishes to the same place. A file copied more than 30 minutes after the rest of
+a directory can miss the zip; to ship a changed directory, copy it under a new name.
 
 ## Returns
 
@@ -87,8 +126,16 @@ No return value (defines and runs a Jenkins declarative pipeline).
 
 ## Failure behavior
 
-- The config is validated before the pipeline starts. An empty or unparsable file, a missing
-  key or a `requiredFiles` that is not a list fails the build with `error(...)`, which names
-  everything that is wrong at once.
+- The config is validated before the pipeline starts, and every problem fails the build with
+  `error(...)`: an empty or unparsable file, an `archiveType` other than `zip` or `directory`,
+  a missing key, a `requiredFiles` that is not a list, and for directories an `archivePattern`
+  with `^` or `$` or a `nexusPath` with a slash at either end. The keys a config needs depend on
+  its `archiveType`; the missing ones are named all at once.
 - An archive that fails the analysis makes the build UNSTABLE and is not uploaded.
 - A failed download or upload makes the build FAILURE. The other archives are still processed.
+  For a directory this includes a listing that fails or cannot be read, and a download that
+  does not add up to the listed bytes (`smbclient` `mget` exits 0 even when a file fails).
+- An answer other than 200 or 404 to the HEAD of a raw zip fails the scan, like a failed Maven
+  search, so nothing is analyzed or uploaded in that run.
+- A raw zip that is already in Nexus when its upload starts fails that upload; it is not
+  replaced.
