@@ -4,6 +4,7 @@ import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.text.SimpleTemplateEngine
+import java.text.SimpleDateFormat
 import org.junit.Before
 import org.junit.Test
 
@@ -22,11 +23,10 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
     boolean pipelineDefined
     List events
     Set publishedUrls
-    String inspectOutput
+    String loadListing
     List caughtErrors
     List uploads
     List badges
-    Map shellScripts
     List catchErrorArgs
     List dirStack
 
@@ -78,6 +78,59 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
 \t\t1073741823 blocks of size 4096. 52428800 blocks available
 '''
 
+    /** `recurse ON; ls` of fpga_mesh_a5_20260902_650ae40b with TZ=UTC, from the agent on 2026-09-28 06:59:57 UTC. */
+    static final String REAL_LISTING = '''\
+  .                                  Dn        0  Wed Sep  2 14:44:48 2026
+  ..                                 Dn        0  Wed Sep  2 14:44:48 2026
+  fpga_mesh_a5_MESH_MitySTND.core.rbf     An 10330112  Wed Sep  2 14:42:29 2026
+  fpga_mesh_a5_MESH_MitySTND.hps.jic     An 33554678  Wed Sep  2 14:42:29 2026
+  fpga_mesh_a5_MESH_MitySTND_jic.map     An      382  Wed Sep  2 14:42:29 2026
+  stp1_mesh.stp                      An  8883170  Wed Sep  2 13:41:46 2026
+  timestamp_pkg.sv                   An      302  Wed Sep  2 13:43:18 2026
+  top.sof                            An  9444175  Wed Sep  2 14:27:57 2026
+  top.sta.summary                    An    25755  Wed Sep  2 14:27:03 2026
+
+\t\t3827199871 blocks of size 16384. 3129170441 blocks available
+'''
+
+    static long utc(String date) {
+        def format = new SimpleDateFormat('EEE MMM d HH:mm:ss yyyy', Locale.US)
+        format.timeZone = TimeZone.getTimeZone('UTC')
+        return format.parse(date).time
+    }
+
+    /** "Wed Sep  2 14:27:57 2026", the way smbclient prints an mtime, in UTC. */
+    static String smbDate(long millis) {
+        def formatted = { String pattern ->
+            def format = new SimpleDateFormat(pattern, Locale.US)
+            format.timeZone = TimeZone.getTimeZone('UTC')
+            format.format(new Date(millis))
+        }
+        return "${formatted('EEE MMM')} ${formatted('d').padLeft(2)} ${formatted('HH:mm:ss yyyy')}"
+    }
+
+    /** A `recurse ON; ls` listing, entries as [name, attribute, size, seconds ago]; '\\sub' starts a subdirectory. */
+    static String listing(List entries) {
+        long now = System.currentTimeMillis()
+        return entries.collect { entry ->
+            if (entry == '\\sub') {
+                return '\n\\sub'
+            }
+            def (name, attribute, size, age) = entry
+            return "  ${name.padRight(36)} ${attribute} ${size.toString().padLeft(8)}  ${smbDate(now - age * 1000L)}"
+        }.join('\n') + '\n\n\t\t3827199871 blocks of size 16384. 3129170441 blocks available\n'
+    }
+
+    /** A load of 62238574 bytes in which nothing changed for age seconds. */
+    static String quietLoad(long age) {
+        return listing([
+            ['.', 'Dn', 0, age],
+            ['..', 'Dn', 0, age],
+            ['fpga_mesh_a7.core.rbf', 'An', 62238000, age],
+            ['stp1.stp', 'An', 574, age]
+        ])
+    }
+
     static final String MESH_DIR = 'https://nexus.asatnet.net/repository/store-DEV/mesh/mesh-demod-fpga/'
 
     static Map meshConfig() {
@@ -114,11 +167,10 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         pipelineDefined = false
         events = []
         publishedUrls = [] as Set
-        inspectOutput = '62238574 5400'
+        loadListing = quietLoad(5400)
         caughtErrors = []
         uploads = []
         badges = []
-        shellScripts = [:]
         catchErrorArgs = []
         dirStack = []
         binding.setVariable('env', [:])
@@ -135,9 +187,8 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         helper.registerAllowedMethod('readYaml', [Map], { Map args -> validConfig() })
         helper.registerAllowedMethod('sh', [Map], { Map args ->
             events << args.label
-            shellScripts[args.label] = args.script
             if (args.label.startsWith('Inspect ')) {
-                return inspectOutput
+                return loadListing
             }
             return args.returnStdout ? shareListing : null
         })
@@ -170,6 +221,9 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         helper.registerAllowedMethod('findFiles', [Map], { Map args ->
             if (args.glob == 'content/**') {
                 return zipContent
+            }
+            if (args.glob ==~ /content\/[^*]+\/\*\*/) {
+                return zipContent.findAll { (it.path as String).startsWith(args.glob - '**') }
             }
             def fileGlob = args.glob - 'content/**/'
             def regex = fileGlob.replace('.', '\\.').replace('*', '.*')
@@ -632,12 +686,90 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         assert script.@newArchives == []
     }
 
+    // ---------- directory listing ----------
+
+    @Test
+    void inspectListingReadsARealListing() {
+        def share = script.inspectListing(REAL_LISTING, utc('Mon Sep 28 06:59:57 2026'))
+
+        assert share.bytes == 62238574
+        // the newest entry is the directory's own ".", 14:44:48
+        assert share.age == utc('Mon Sep 28 06:59:57 2026').intdiv(1000) - utc('Wed Sep 2 14:44:48 2026').intdiv(1000)
+    }
+
+    @Test
+    void inspectListingTakesTheAgeFromTheDotEntry() {
+        // the copy keeps each file's mtime, so the new file shows only in the directory's "."
+        def share = script.inspectListing(listing([
+            ['.', 'Dn', 0, 300],
+            ['..', 'Dn', 0, 99999],
+            ['top.sof', 'An', 62238000, 864000]
+        ]), System.currentTimeMillis())
+
+        assert share.bytes == 62238000
+        assert share.age >= 300 && share.age < 310
+    }
+
+    @Test
+    void inspectListingIgnoresTheParentDirectory() {
+        // ".." changes whenever another load lands next to this one
+        def share = script.inspectListing(listing([
+            ['.', 'Dn', 0, 7200],
+            ['..', 'Dn', 0, 60],
+            ['top.sof', 'An', 62238000, 7200]
+        ]), System.currentTimeMillis())
+
+        assert share.age >= 7200 && share.age < 7210
+    }
+
+    @Test
+    void inspectListingLooksIntoSubdirectories() {
+        def share = script.inspectListing(listing([
+            ['.', 'Dn', 0, 7200],
+            ['..', 'Dn', 0, 7200],
+            ['sub', 'Dn', 0, 7200],
+            '\\sub',
+            ['.', 'Dn', 0, 7200],
+            ['..', 'Dn', 0, 7200],
+            ['late.stp', 'An', 1000, 120]
+        ]), System.currentTimeMillis())
+
+        assert share.bytes == 1000
+        assert share.age >= 120 && share.age < 130
+    }
+
+    @Test
+    void inspectListingReportsAnEmptyDirectoryAsZeroBytes() {
+        def share = script.inspectListing(listing([['.', 'Dn', 0, 7200], ['..', 'Dn', 0, 7200]]), System.currentTimeMillis())
+
+        assert share.bytes == 0
+    }
+
+    @Test
+    void inspectListingReturnsNullWhenNoEntryCanBeRead() {
+        assert script.inspectListing('NT_STATUS_OK\n\n\t\t3827199871 blocks of size 16384.\n', System.currentTimeMillis()) == null
+    }
+
+    @Test
+    void analyzeFailsALoadWhoseListingCannotBeRead() {
+        script.@CFG = script.validateConfig(meshConfig())
+        loadListing = 'something else\n'
+
+        try {
+            script.analyze(load('fpga_mesh_a7_20260923_1'), '')
+            assert false: 'expected an error'
+        } catch (RuntimeException exception) {
+            assert exception.message == 'runSmbToNexusPipeline: no sizes and mtimes in the listing of fpga_mesh_a7_20260923_1.'
+        }
+        assert !events.contains('Download fpga_mesh_a7_20260923_1')
+    }
+
     // ---------- directory analysis ----------
 
     @Test
     void analyzeWaitsUntilNothingChangedForThirtyMinutes() {
         script.@CFG = script.validateConfig(meshConfig())
-        inspectOutput = '62238574 1799\n'
+        loadListing = quietLoad(1790)
 
         assert script.analyze(load('fpga_mesh_a7_20260923_1'), '') == null
         assert !events.contains('Download fpga_mesh_a7_20260923_1')
@@ -648,7 +780,7 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
     @Test
     void analyzeWaitsForAnEmptyDirectory() {
         script.@CFG = script.validateConfig(meshConfig())
-        inspectOutput = '0 99999\n'
+        loadListing = listing([['.', 'Dn', 0, 99999], ['..', 'Dn', 0, 99999]])
 
         assert script.analyze(load('fpga_mesh_a7_20260923_1'), '') == null
         assert !events.contains('Download fpga_mesh_a7_20260923_1')
@@ -657,7 +789,7 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
     @Test
     void analyzeZipsACompleteLoadAsLoadSlashFiles() {
         script.@CFG = script.validateConfig(meshConfig())
-        inspectOutput = '62238574 1800\n'
+        loadListing = quietLoad(1800)
         zipContent = [
             [path: 'content/fpga_mesh_a7_20260923_1/fpga_mesh_a7.core.rbf', length: 62238000],
             [path: 'content/fpga_mesh_a7_20260923_1/stp1.stp', length: 574]
@@ -670,7 +802,7 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
             'deleteDir content',
             'env LOAD=fpga_mesh_a7_20260923_1',
             'Inspect fpga_mesh_a7_20260923_1',
-            'env LOAD=fpga_mesh_a7_20260923_1 BYTES=62238574',
+            'env LOAD=fpga_mesh_a7_20260923_1',
             'Download fpga_mesh_a7_20260923_1',
             'zip fpga_mesh_a7_20260923_1.zip content fpga_mesh_a7_20260923_1/**',
             'sha256 fpga_mesh_a7_20260923_1.zip'
@@ -682,18 +814,13 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
     @Test
     void analyzeFailsALoadThatWasNotFullyDownloaded() {
         script.@CFG = script.validateConfig(meshConfig())
-        helper.registerAllowedMethod('sh', [Map], { Map args ->
-            events << args.label
-            if (args.label.startsWith('Download ')) {
-                throw new RuntimeException('script returned exit code 1')
-            }
-            return inspectOutput
-        })
+        // mget exits 0 even when a file fails
+        zipContent = [[path: 'content/fpga_mesh_a7_20260923_1/fpga_mesh_a7.core.rbf', length: 62238000]]
         try {
             script.analyze(load('fpga_mesh_a7_20260923_1'), '')
             assert false: 'expected an error'
         } catch (RuntimeException exception) {
-            assert exception.message == 'script returned exit code 1'
+            assert exception.message == 'runSmbToNexusPipeline: downloaded 62238000 of 62238574 bytes of fpga_mesh_a7_20260923_1.'
         }
         assert !events.any { it.startsWith('zip ') }
         assert summaries == []
@@ -715,19 +842,17 @@ class RunSmbToNexusPipelineTest extends BasePipelineTest {
         helper.registerAllowedMethod('sh', [Map], { Map args ->
             events << args.label
             if (args.label == 'Inspect fpga_mesh_busy') {
-                return '62238574 60\n'
+                return quietLoad(60)
             }
-            if (args.label == 'Download fpga_mesh_short') {
-                throw new RuntimeException('script returned exit code 1')
-            }
-            return args.label.startsWith('Inspect ') ? '62238574 5400\n' : null
+            return args.label.startsWith('Inspect ') ? quietLoad(5400) : null
         })
 
         script.analyzeArchives()
 
         assert script.@readyArchives == [load('fpga_mesh_a7_20260923_1')]
         assert unstableMessages == []
-        assert caughtErrors == ['script returned exit code 1']
+        // nothing of fpga_mesh_short arrived
+        assert caughtErrors == ['runSmbToNexusPipeline: downloaded 0 of 62238574 bytes of fpga_mesh_short.']
         // an incomplete download fails the build, and Abort or a timeout still stops it
         assert catchErrorArgs.every { it == [buildResult: 'FAILURE', stageResult: 'FAILURE', catchInterruptions: false] }
         assert !events.contains('Download release_notes.txt')

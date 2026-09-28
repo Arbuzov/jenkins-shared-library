@@ -1,4 +1,5 @@
 import groovy.transform.Field
+import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 /**
@@ -198,52 +199,67 @@ List<String> fetchZip(Map archive) {
 }
 
 /**
- * Download a directory into content/ and zip it as <name>/<files>. Returns null,
- * having downloaded nothing, while the directory is empty or anything in it
- * changed less than QUIET_MINUTES ago.
+ * Bytes and age in seconds of a directory, from its `recurse ON; ls` listing printed in UTC, or
+ * null when no entry could be read. The copy to the share keeps each file's mtime, so a file that
+ * just landed shows only in the mtime of its directory, the "." entry; "..", the parent, does not count.
+ */
+@NonCPS
+Map inspectListing(String listing, long now) {
+    // "  top.sof                            An  9444175  Wed Sep  2 14:27:57 2026"
+    def matcher = listing =~ /(?m)^\s+(.+?)\s+[A-Za-z]*\s+(\d+)\s+(\w{3} \w{3} +\d{1,2} \d{2}:\d{2}:\d{2} \d{4})\s*$/
+    def format = new SimpleDateFormat('EEE MMM d HH:mm:ss yyyy', Locale.US)
+    format.timeZone = TimeZone.getTimeZone('UTC')
+    long bytes = 0
+    long newest = 0
+    boolean found = false
+    while (matcher.find()) {
+        if (matcher.group(1) == '..') {
+            continue
+        }
+        found = true
+        bytes += matcher.group(2) as long
+        newest = Math.max(newest, format.parse(matcher.group(3).replaceAll(/ +/, ' ')).time)
+    }
+    return found ? [bytes: bytes, age: (now - newest).intdiv(1000)] : null
+}
+
+@NonCPS
+long totalLength(def files) {
+    return files.collect { it.length as long }.sum(0L)
+}
+
+/**
+ * Download a directory into content/ and zip it as <name>/<files>. Returns null, having
+ * downloaded nothing, while the directory is empty or anything in it changed less than
+ * QUIET_MINUTES ago.
  */
 List<String> fetchDirectory(Map archive) {
-    def share
+    def listing
     withEnv(["LOAD=${archive.load}"]) {
-        // The copy to the share keeps each file's mtime, so a file that just landed shows
-        // only in the mtime of its directory, the "." entry; "..", the parent, does not count.
-        // The age is taken on the agent, in the timezone smbclient prints the mtimes in.
-        share = sh(
+        listing = sh(
             label: "Inspect ${archive.load}",
-            returnStdout: true,
-            script: '''
-                listing=$(smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "recurse ON; ls") || { echo "$LOAD: cannot list it on the share" >&2; exit 1; }
-                # size and mtime of every entry: "  top.sof      A 62238574  Wed Sep  2 10:00:00 2026"
-                entries=$(printf '%s\\n' "$listing" | grep -vE '^ +[.][.] ' \\
-                    | sed -nE 's/.* ([0-9]+)  ([A-Z][a-z]{2} [A-Z][a-z]{2} +[0-9]{1,2} [0-9:]{8} [0-9]{4})$/\\1 \\2/p')
-                [ -n "$entries" ] || { echo "$LOAD: no sizes and mtimes in its listing" >&2; exit 1; }
-                bytes=$(printf '%s\\n' "$entries" | awk '{ s += $1 } END { print s }')
-                newest=$(printf '%s\\n' "$entries" | while read -r size t; do date -d "$t" +%s; done | sort -n | tail -1)
-                echo "$bytes $(( $(date +%s) - newest ))"
-            '''
-        ).trim().tokenize(' ')
+            script: 'TZ=UTC smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "recurse ON; ls"',
+            returnStdout: true
+        )
     }
-    long bytes = share[0] as long
-    long age = share[1] as long
-    if (bytes == 0 || age < QUIET_MINUTES * 60) {
+    def share = inspectListing(listing, System.currentTimeMillis())
+    if (share == null) {
+        error("runSmbToNexusPipeline: no sizes and mtimes in the listing of ${archive.load}.")
+    }
+    if (share.bytes == 0 || share.age < QUIET_MINUTES * 60) {
         echo("${archive.load}: empty or changed less than ${QUIET_MINUTES} min ago, skipped")
         return null
     }
-    withEnv([
-        "LOAD=${archive.load}",
-        "BYTES=${bytes}"
-    ]) {
-        // mget exits 0 even when a file fails, so the downloaded bytes have to add up to the listed ones
+    withEnv(["LOAD=${archive.load}"]) {
         sh(
             label: "Download ${archive.load}",
-            script: '''
-                mkdir -p "content/$LOAD"
-                smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "lcd \\"content/$LOAD\\"; recurse ON; prompt OFF; mget *"
-                downloaded=$(find "content/$LOAD" -type f -printf '%s\\n' | awk '{ s += $1 } END { print s + 0 }')
-                echo "$LOAD: downloaded $downloaded of $BYTES bytes"
-                [ "$downloaded" -eq "$BYTES" ]
-            '''
+            script: 'mkdir -p "content/$LOAD" && smbclient $SMB_OPTS --directory "$SMB_DIR/$LOAD" "$SMB_SHARE" -c "lcd \\"content/$LOAD\\"; recurse ON; prompt OFF; mget *"'
         )
+    }
+    // mget exits 0 even when a file fails, so the downloaded bytes have to add up to the listed ones
+    long downloaded = totalLength(findFiles(glob: "content/${archive.load}/**"))
+    if (downloaded != share.bytes) {
+        error("runSmbToNexusPipeline: downloaded ${downloaded} of ${share.bytes} bytes of ${archive.load}.")
     }
     // The agent image has no zip binary. defaultExcludes would drop files such as .gitignore
     // that the byte check counted, from a zip that is never replaced

@@ -134,7 +134,9 @@ No return value (defines and runs a Jenkins declarative pipeline).
 - An archive that fails the analysis makes the build UNSTABLE and is not uploaded.
 - A failed download or upload makes the build FAILURE. The other archives are still processed.
   For a directory this includes a listing that fails or cannot be read, and a download that
-  does not add up to the listed bytes (`smbclient` `mget` exits 0 even when a file fails).
+  does not add up to the listed bytes (`smbclient` `mget` exits 0 even when a file fails). The
+  downloaded bytes are counted with `findFiles`, which leaves out the files Ant excludes by
+  default, such as `.gitignore`, so a directory holding one fails this check.
 - An answer other than 200 or 404 to the HEAD of a raw zip fails the scan, like a failed Maven
   search, so nothing is analyzed or uploaded in that run.
 - A raw zip that is already in Nexus when its upload starts fails that upload; it is not
