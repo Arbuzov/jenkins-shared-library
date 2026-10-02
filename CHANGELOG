@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- New pipeline step `runApplicationMetaPluginConfigurator` in `vars/runApplicationMetaPluginConfigurator.groovy`.
+  - Lets a user pick the versions of the application plugins and Docker images of a meta plugin from drop-down lists, and commits them to the `Manifest` of the meta plugin repository, which starts `runApplicationMetaPluginBuild`.
+  - Moved from the `Jenkinsfile` and `scripts/manifest.groovy` of nms-single-meta-deployment-configurator with the same stages, conditions, parameters, Nexus poll and commit message. Each configurator repository keeps a two-line `Jenkinsfile` and a `jenkins.yml` (`pluginRepo`, `images`), read with `readTrusted`.
+  - Validates the config before the pipeline starts, so a bad config leaves the parameters of the job as they were. An unknown key, such as the former `upstream` list, fails the build instead of being ignored.
+  - Reads the `Manifest` and the commit it was read at in one call (`gitlabGetFile`) instead of two, and builds on the new steps below.
+- Step documentation in `vars/runApplicationMetaPluginConfigurator.txt` and unit tests in `src/test/groovy/vars/RunApplicationMetaPluginConfiguratorTest.groovy` and `RunApplicationMetaPluginConfiguratorGateTest.groovy`, which runs the declarative pipeline with a stand-in for `triggeredBy` (Pipeline Unit has none).
 - New shared-library step `gitlabApiGet` in `vars/gitlabApiGet.groovy`.
   - Reads one resource of a GitLab project through an authenticated `GET /projects/:id/<path>`, with the `query` parameters encoded by the step, and returns the parsed JSON body.
   - Derives the project and the host from `gitUrl` the way `gitlabGetRepositoryTree` does, or takes `projectId` and `gitlabBaseUrl`.
@@ -17,9 +23,10 @@
 - New shared-library step `sortVersions` in `vars/sortVersions.groovy`.
   - Keeps the versions that match a pattern, `X.Y.Z` with an optional `-bN` by default, and orders them newest first, numerically: `-b100` before `-b99`, and `2.0.3-b70-offline` by its build number 70.
 - New shared-library step `applyManifestVersions` in `vars/applyManifestVersions.groovy`.
-  - Sets key values in a `key: value` or `key=value` Manifest text and keeps its formatting. It replaces the copies in test-orchestrator and the configurators, which keep working until they switch to it.
+  - Sets key values in a `key: value` or `key=value` Manifest text and keeps its formatting. It replaces the copy in test-orchestrator, which keeps working until it switches to it, and the copies of the configurators, which now use it through `runApplicationMetaPluginConfigurator`.
   - Differs from those copies in two fixes: an empty value (`ncc=`, or `key:` in YAML, which gets a space before the value) no longer takes the next line as its value, and the whitespace after a value is kept, so setting a key to the value it already has is not a change.
 - Step documentation in `vars/gitlabApiGet.txt`, `vars/gitlabGetFile.txt`, `vars/nexusSearchAssets.txt`, `vars/dockerGetImageTags.txt`, `vars/sortVersions.txt` and `vars/applyManifestVersions.txt`, and unit tests in `src/test/groovy/vars/GitlabApiGetTest.groovy`, `GitlabGetFileTest.groovy`, `NexusSearchAssetsTest.groovy`, `DockerGetImageTagsTest.groovy`, `SortVersionsTest.groovy` and `ApplyManifestVersionsTest.groovy`.
+- `README.md` lists the Parameter Separator and URLTrigger plugins among the required plugins.
 - New pipeline step `runSmbToNexusPipeline` in `vars/runSmbToNexusPipeline.groovy`.
   - Publishes archives from an SMB share to Nexus: zips to a Maven repository or, with `archiveType: directory`, directories zipped into a raw repository. It has three stages, and each runs only when there is work for it: scan the share, analyze the archives that are not in Nexus yet, upload the ones that pass.
   - The analysis publishes a summary on the build page: the verdict, the sha256 and the file list. It holds back a corrupt or incomplete zip, a zip missing a file from `requiredFiles` and a zip without a numbered entry in `release_notes.txt`. The build turns UNSTABLE for any of them.

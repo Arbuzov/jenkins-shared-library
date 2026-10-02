@@ -152,6 +152,7 @@ teams. Use these as templates loaded straight from a Jenkinsfile.
 - [runAngularContainerBuild](vars/runAngularContainerBuild.groovy) / [runAngularDebBuild](vars/runAngularDebBuild.groovy) — Angular UI container and Debian package builds
 - [runApplicationPluginBuild](vars/runApplicationPluginBuild.groovy) — application plugin build and publish ([docs](vars/runApplicationPluginBuild.txt))
 - [runApplicationMetaPluginBuild](vars/runApplicationMetaPluginBuild.groovy) — meta-plugin (bundle of plugins) build and publish ([docs](vars/runApplicationMetaPluginBuild.txt))
+- [runApplicationMetaPluginConfigurator](vars/runApplicationMetaPluginConfigurator.groovy) — pick the plugin and image versions of a meta plugin from drop-down lists and commit them to its `Manifest`, driven by a `jenkins.yml` ([docs](vars/runApplicationMetaPluginConfigurator.txt))
 - [runPIPtoDebBuild](vars/runPIPtoDebBuild.groovy) — convert a PyPI package to a Debian package and publish ([docs](vars/runPIPtoDebBuild.txt))
 - [runFirmwarePipeline](vars/runFirmwarePipeline.groovy) — SBC firmware build, publish, deploy, tag and release notes, driven by a per-branch `jenkins.yml` ([docs](vars/runFirmwarePipeline.txt))
 - [runSmbToNexusPipeline](vars/runSmbToNexusPipeline.groovy) — publish archives from an SMB share to Nexus, zips to a Maven repository or directories zipped into a raw repository: scan, analyze, parallel upload, driven by a per-branch `jenkins.yml` ([docs](vars/runSmbToNexusPipeline.txt))
@@ -203,6 +204,8 @@ use the corresponding functions from `vars/`:
 * [JUnit Plugin](https://plugins.jenkins.io/junit/) — `junit` step is used to publish test results (looks for JUnit XML under `target/surefire-reports`)
 * [Nexus Artifact Uploader plugin](https://plugins.jenkins.io/nexus-jenkins-plugin/) — `nexusArtifactUploader` is used in some publishing helpers
 * [Pipeline: Basic Steps](https://plugins.jenkins.io/workflow-basic-steps/) — `archiveArtifacts`, `sh`, and other basic steps used in pipelines
+* [Parameter Separator](https://plugins.jenkins.io/parameter-separator/) — `separator` section headers in the parameters of `runFirmwarePipeline` and `runApplicationMetaPluginConfigurator`
+* [URLTrigger](https://plugins.jenkins.io/urltrigger/) — `URLTrigger`, with which `runApplicationMetaPluginConfigurator` polls Nexus
 
 Notes:
 - Some library helpers call `manager.createSummary(...)` to add build summaries. That API is provided by legacy build-step contexts (and some post-build plugins). If you use those helpers inside non-classic contexts, ensure the plugin providing `createSummary` (or an equivalent summary mechanism) is available in your environment.

@@ -1,0 +1,100 @@
+# runApplicationMetaPluginConfigurator
+
+Declarative pipeline that lets a user pick the versions of the application plugins and Docker images of a
+meta plugin from drop-down lists, and commits the picked versions to the `Manifest` of the meta plugin
+repository. The commit starts the meta plugin build, [`runApplicationMetaPluginBuild`](runApplicationMetaPluginBuild.txt).
+Nobody has to clone the repository or edit the `Manifest` by hand.
+
+Everything that differs between configurators lives in a config file (`jenkins.yml` by default), so each
+configurator repository keeps a two-line `Jenkinsfile`.
+
+The config is read with `readTrusted`, so the step only works in **multibranch** jobs. A merge request from an
+untrusted fork that changes the config fails instead of reading it.
+
+## Usage
+
+```groovy
+@Library('asatnet@master')_
+
+runApplicationMetaPluginConfigurator()
+```
+
+The first build of a new job only creates the parameters; from then on **Build with Parameters** shows the lists.
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `CONFIG` | `jenkins.yml` | Path of the config file, resolved with `readTrusted` |
+
+## Config file
+
+```yaml
+pluginRepo: https://gitlab.asatnet.net/vsat/nms/virtual-platform/nms-single-meta-deployment
+# optional: Docker images behind the Manifest `environment` versions, under the plugin that runs them
+images:
+  nms-ng:
+    NMS_BACKEND_VERSION: spacebridge/nms-ng-backend
+    NMS_FRONTEND_VERSION: spacebridge/nms-ng-frontend
+```
+
+- `pluginRepo` - the meta plugin repository. Its `Manifest` on `master` is read and written through the
+  GitLab API, so the build needs no checkout of it.
+- `images` - maps a plugin to the `Manifest` `environment` variables it runs, each with its image in
+  `registry.nexus.asatnet.net`. An `environment` variable under no plugin gets no parameter; the build log
+  names it.
+
+Any other key fails the build, so a misspelled or obsolete key (such as the former `upstream` list) is not
+silently ignored.
+
+## Build parameters
+
+The parameters are generated from the `Manifest` on every build:
+
+- per plugin of the `Manifest` `plugins`, a section header and `<PLUGIN>_VERSION` (`nms-ng` -> `NMS_NG_VERSION`)
+  with the plugin versions in Nexus `maven-releases` (`com.spacebridge.application-plugin`), spelled as the
+  `Manifest` spells them: with the classifier appended (`2.0.3-b69-offline`);
+- after it, per `images` entry of that plugin that is in the `Manifest` `environment`, a parameter named as the
+  variable with the image tags.
+
+Only release builds are listed, newest first: `X.Y.Z-bN`, for plugins also `X.Y.Z-bN-offline`. The first choice,
+`<version> (current)`, keeps whatever the `Manifest` holds when the build runs.
+
+## Stages
+
+1. **Update configuration** (every build) reads the `Manifest` of `pluginRepo` on `master` together with the
+   commit it was read at, lists the versions and regenerates the parameters. On `master` it also sets a trigger
+   that polls Nexus every 5 minutes: a new version of a `Manifest` plugin, or a new tag of a configured image,
+   starts a build that refreshes the lists. The poll compares only the versions on the first page of the plugin
+   search and the tags of the tag list (a search page also carries `lastDownloaded`, which every download
+   changes), and reads both anonymously. The build description is `Update parameters`.
+2. **Validate inputs** (user-started builds) compares the picked versions with the `Manifest` and logs the
+   changes. A picked version that is no longer in Nexus fails the build; the lists are refreshed by then.
+3. **Update deployment** (user-started builds of `master` with a change) sets the picked versions in the
+   `Manifest` text with [`applyManifestVersions`](applyManifestVersions.txt), checks that the edited text parses to
+   exactly the expected `Manifest`, and commits it with [`gitlabUpdateFile`](gitlabUpdateFile.txt). The commit
+   message names the changes and the requester and carries the `Jenkins-Upstream-Project` and
+   `Jenkins-Upstream-Build` trailers, from which the meta plugin build links this run as its upstream. The build
+   description lists the changes.
+4. **Link deployment build** (user-started builds without a change) finds the Jenkins build of the `Manifest`
+   commit in its GitLab commit statuses and links it as a downstream of this run with
+   [`linkUpstreamBuild`](linkUpstreamBuild.txt) (`reverse: true`), so the build graph leads from this run to the
+   meta plugin build of the current `Manifest`. Without a numbered build in the statuses there is no link.
+
+The job keeps 10 builds, never runs two builds at once and cannot be restarted from a stage.
+
+## Returns
+
+No return value (defines and runs a Jenkins declarative pipeline).
+
+## Failure behavior
+
+- The config is validated before the pipeline starts, so a bad config fails the build before any parameter
+  changes: an empty or unparsable file, a missing or empty `pluginRepo`, an `images` entry that is not a map of
+  variables to images, or an unknown key. Every problem is named at once.
+- A GitLab, Nexus or registry request that fails fails the build (see [`gitlabGetFile`](gitlabGetFile.txt),
+  [`nexusSearchAssets`](nexusSearchAssets.txt) and [`dockerGetImageTags`](dockerGetImageTags.txt)).
+- **Validate inputs** fails when a picked version is no longer in Nexus.
+- **Update deployment** commits nothing and fails when the edited `Manifest` would not parse to exactly the
+  expected one.
+- **Link deployment build** never fails on a missing link: it logs why there is none.
