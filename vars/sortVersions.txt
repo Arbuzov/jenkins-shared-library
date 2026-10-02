@@ -1,0 +1,61 @@
+# sortVersions
+
+Keeps the build versions of a list and orders them newest first, for the version
+and tag choices of a parameterized build.
+
+A version is kept when its whole string matches `pattern`. The kept versions are
+ordered by `X`, `Y`, `Z` and the build number `N` of a leading `X.Y.Z` or
+`X.Y.Z-bN`, numerically and descending, so `1.10.0` comes before `1.9.0` and
+`-b100` before `-b99`. `N` is the number right after `X.Y.Z`: `2.0.3-b70-offline`
+has `N = 70`.
+
+## Usage
+
+```groovy
+// X.Y.Z with an optional -bN, the default pattern
+sortVersions(versions: ['1.0.0-b99', '1.0.0', '1.0.0-b100', '1.0.0-b3-offline'])
+// ['1.0.0-b100', '1.0.0-b99', '1.0.0']
+
+// Build versions with an optional -offline suffix
+sortVersions(
+  versions: ['2.0.3-b69-offline', '1.0.0-b99', '2.0.3-b69', 'latest', '1.2.0-encryption-b9'],
+  pattern: /\d+\.\d+\.\d+-b\d+(-offline)?/,
+)
+// ['2.0.3-b69', '2.0.3-b69-offline', '1.0.0-b99']
+
+// Every tag, versions first and anything else after them
+sortVersions(versions: ['latest', '1.0.0-b1', '1.1.0'], pattern: /.*/)
+// ['1.1.0', '1.0.0-b1', 'latest']
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `versions` | required | Collection of versions. Entries are compared by `toString()`; `null` entries are skipped and duplicates removed |
+| `pattern` | `/\d+\.\d+\.\d+(-b\d+)?/` | Regex the whole version must match to be kept |
+
+## Returns
+
+`List<String>` — a new list, newest first. The caller's collection is not
+modified. An empty list when nothing matches.
+
+- A version without a build number ranks below `-b0` of the same `X.Y.Z`
+  (`1.0.0-b0` before `1.0.0`).
+- Versions with the same `X`, `Y`, `Z` and `N` are in plain string order,
+  ascending (`2.0.3-b69` before `2.0.3-b69-offline`).
+- A value without an `X.Y.Z` prefix, which only a permissive pattern such as
+  `/.*/` keeps, comes after all versions, in plain string order.
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when `versions` is missing or is
+not a Collection. An invalid `pattern` fails with Java's `PatternSyntaxException`.
+
+## Differences from the copy in test-orchestrator
+
+`sortVersions(List)` in test-orchestrator `scripts/versions.groovy` returns the
+versions oldest first, and its callers `.reverse()` the result before taking
+`first()`. This step returns newest first: drop the `.reverse()` when moving a
+caller to it. This step also removes duplicates and takes the pattern as an
+argument.

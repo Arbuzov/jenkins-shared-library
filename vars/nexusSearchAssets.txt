@@ -1,0 +1,78 @@
+# nexusSearchAssets
+
+Finds assets in Nexus 3 through `GET /service/rest/v1/search/assets` and returns
+the items of every page.
+
+Nexus answers a search one page at a time and hands back a `continuationToken`
+while more pages follow. The step repeats the search with that token until a page
+comes back without one, so a search is returned whole instead of being cut at the
+first page.
+
+## Usage
+
+```groovy
+// Every tar.gz release of one plugin
+def assets = nexusSearchAssets(
+  query: [
+    repository: 'maven-releases',
+    'maven.groupId': 'com.spacebridge.application-plugin',
+    'maven.artifactId': 'nms-ng',
+    'maven.extension': 'tar.gz',
+  ],
+)
+for (asset in assets) {
+  echo("${asset.maven2.version} ${asset.downloadUrl}")
+}
+
+// The released versions of that plugin
+def versions = nexusSearchAssets(query: [
+  repository: 'maven-releases',
+  'maven.artifactId': 'nms-ng',
+]).collect { it.maven2.version }.unique()
+
+// Another Nexus, other credentials, and a tighter page limit
+def snapshots = nexusSearchAssets(
+  nexusUrl: 'https://nexus.example.com',
+  credentialsId: 'nexus-reader',
+  query: [repository: 'maven-snapshots', 'maven.baseVersion': '1.2.0-SNAPSHOT'],
+  maxPages: 10,
+)
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `query` | required | Non-empty Map of Nexus search parameters (`repository`, `maven.groupId`, `maven.artifactId`, `maven.extension`, ...). Sent in the Map's order; keys and values are URL-encoded |
+| `nexusUrl` | `'https://nexus.asatnet.net'` | Nexus base URL |
+| `credentialsId` | `'jira-username-password'` | Jenkins username/password credentials ID, passed as the `httpRequest` `authentication` |
+| `maxPages` | `100` | Most pages the step reads, `>= 1` |
+| `debug` | `false` | Log the request URLs and the response bodies |
+
+## Returns
+
+`List<Map>` — the `items` of every page, in Nexus's order and shape:
+
+```groovy
+[path: 'com/spacebridge/application-plugin/nms-ng/2.0.3-b69/…',
+ downloadUrl: 'https://nexus.asatnet.net/repository/maven-releases/com/spacebridge/…',
+ repository: 'maven-releases', format: 'maven2',
+ maven2: [groupId: '…', artifactId: 'nms-ng', version: '2.0.3-b69', classifier: '…', extension: 'tar.gz'],
+ lastModified: '…', …]
+```
+
+A search that matches nothing returns an empty list.
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when:
+
+- `query` is missing, is not a Map, or is empty, or one of its values is `null`;
+- `maxPages` is below 1;
+- Nexus answers with a status of 400 or above. The message names the request URL
+  and the credentials ID;
+- a page still carries a `continuationToken` after `maxPages` pages. The step
+  refuses to return a silently truncated list; narrow the query or raise
+  `maxPages`. A search of exactly `maxPages` pages is returned, not rejected.

@@ -48,6 +48,8 @@ CI for GitLab projects.
 - [tagToGitlab](vars/tagToGitlab.groovy) — create/delete tags via the GitLab API
 - [gitlabUpdateFile](vars/gitlabUpdateFile.groovy) — update a single repo file via the GitLab API ([docs](vars/gitlabUpdateFile.txt))
 - [gitlabGetRepositoryTree](vars/gitlabGetRepositoryTree.groovy) — list the files and directories of a repository via the GitLab API ([docs](vars/gitlabGetRepositoryTree.txt))
+- [gitlabGetFile](vars/gitlabGetFile.groovy) — read a repo file via the GitLab API, decoded, with the commit it was read at ([docs](vars/gitlabGetFile.txt))
+- [gitlabApiGet](vars/gitlabApiGet.groovy) — read any resource of a project via the GitLab API, for the endpoints no other step covers ([docs](vars/gitlabApiGet.txt))
 
 ### Jira
 - [jiraAddComment](vars/jiraAddComment.groovy) — post a comment ([docs](vars/jiraAddComment.txt))
@@ -98,6 +100,8 @@ record of what the model did.
 - [getArtifactsURLsByBuild](vars/getArtifactsURLsByBuild.groovy) / [getArtifactsURLsByTag](vars/getArtifactsURLsByTag.groovy) — discover artifact URLs on past builds
 - [getFullSnapshotVersion](vars/getFullSnapshotVersion.groovy) — resolve the latest `-SNAPSHOT` asset on Nexus ([docs](vars/getFullSnapshotVersion.txt))
 - [getRepReproArtifacts](vars/getRepReproArtifacts.groovy) — list `.deb` artifacts in the internal Reprepro Debian repository
+- [nexusSearchAssets](vars/nexusSearchAssets.groovy) — every asset of a Nexus search, all pages ([docs](vars/nexusSearchAssets.txt))
+- [dockerGetImageTags](vars/dockerGetImageTags.groovy) — the tags of an image in a Docker registry, all pages ([docs](vars/dockerGetImageTags.txt))
 
 ### Notifications and summaries
 - [notifyTeams](vars/notifyTeams.groovy) — post to an MS Teams channel webhook ([docs](vars/notifyTeams.txt))
@@ -165,6 +169,8 @@ completeness.
 
 ### Versioning helpers
 - [getNPMPackageName](vars/getNPMPackageName.groovy) / [getNPMPackageVersion](vars/getNPMPackageVersion.groovy) — read NPM package metadata
+- [sortVersions](vars/sortVersions.groovy) — keep the build versions of a list and order them newest first, numerically ([docs](vars/sortVersions.txt))
+- [applyManifestVersions](vars/applyManifestVersions.groovy) — set key values in a `Manifest` text, keeping its formatting ([docs](vars/applyManifestVersions.txt))
 
 ### Templating and small utilities
 - [arrayToHrefList](vars/arrayToHrefList.groovy) — render a list of URLs as an HTML `<ul>` ([docs](vars/arrayToHrefList.txt))

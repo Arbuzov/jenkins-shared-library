@@ -3,6 +3,23 @@
 ## Unreleased
 
 ### Added
+- New shared-library step `gitlabApiGet` in `vars/gitlabApiGet.groovy`.
+  - Reads one resource of a GitLab project through an authenticated `GET /projects/:id/<path>`, with the `query` parameters encoded by the step, and returns the parsed JSON body.
+  - Derives the project and the host from `gitUrl` the way `gitlabGetRepositoryTree` does, or takes `projectId` and `gitlabBaseUrl`.
+  - Sends one request and walks no pages. A status of 400 or above fails through `error(...)` with the URL and the credentials ID.
+- New shared-library step `gitlabGetFile` in `vars/gitlabGetFile.groovy`.
+  - Reads a repository file through `GET /projects/:id/repository/files/:file_path?ref=` and returns GitLab's answer plus `text`, the decoded content with its line endings. `commit_id` is the commit the file was read at, so later reads can pin it.
+  - `ref` is required: a read of another project never falls back to the branch of the running job, which is `MR-<iid>` in a merge request build.
+- New shared-library step `nexusSearchAssets` in `vars/nexusSearchAssets.groovy`.
+  - Returns the items of every page of a Nexus `search/assets` query, following `continuationToken`, and fails instead of returning a truncated list after `maxPages` pages.
+- New shared-library step `dockerGetImageTags` in `vars/dockerGetImageTags.groovy`.
+  - Lists the tags of an image through the Docker registry v2 API and follows its `Link: rel="next"` header. A missing image fails the build instead of returning an empty list.
+- New shared-library step `sortVersions` in `vars/sortVersions.groovy`.
+  - Keeps the versions that match a pattern, `X.Y.Z` with an optional `-bN` by default, and orders them newest first, numerically: `-b100` before `-b99`, and `2.0.3-b70-offline` by its build number 70.
+- New shared-library step `applyManifestVersions` in `vars/applyManifestVersions.groovy`.
+  - Sets key values in a `key: value` or `key=value` Manifest text and keeps its formatting. It replaces the copies in test-orchestrator and the configurators, which keep working until they switch to it.
+  - Differs from those copies in two fixes: an empty value (`ncc=`, or `key:` in YAML, which gets a space before the value) no longer takes the next line as its value, and the whitespace after a value is kept, so setting a key to the value it already has is not a change.
+- Step documentation in `vars/gitlabApiGet.txt`, `vars/gitlabGetFile.txt`, `vars/nexusSearchAssets.txt`, `vars/dockerGetImageTags.txt`, `vars/sortVersions.txt` and `vars/applyManifestVersions.txt`, and unit tests in `src/test/groovy/vars/GitlabApiGetTest.groovy`, `GitlabGetFileTest.groovy`, `NexusSearchAssetsTest.groovy`, `DockerGetImageTagsTest.groovy`, `SortVersionsTest.groovy` and `ApplyManifestVersionsTest.groovy`.
 - New pipeline step `runSmbToNexusPipeline` in `vars/runSmbToNexusPipeline.groovy`.
   - Publishes archives from an SMB share to Nexus: zips to a Maven repository or, with `archiveType: directory`, directories zipped into a raw repository. It has three stages, and each runs only when there is work for it: scan the share, analyze the archives that are not in Nexus yet, upload the ones that pass.
   - The analysis publishes a summary on the build page: the verdict, the sha256 and the file list. It holds back a corrupt or incomplete zip, a zip missing a file from `requiredFiles` and a zip without a numbered entry in `release_notes.txt`. The build turns UNSTABLE for any of them.

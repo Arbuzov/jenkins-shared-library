@@ -1,0 +1,63 @@
+# gitlabApiGet
+
+Reads one resource of a GitLab project through an authenticated
+`GET /api/v4/projects/:id/<path>` and returns the parsed JSON body.
+
+The project is derived from `env.GIT_URL` by default, the same way
+`gitlabGetRepositoryTree` derives it. The step sends exactly one request and does
+not walk pages: a list endpoint answers with its first page, so pass `per_page`
+and `page` in `query` to get more or a later one.
+
+## Usage
+
+```groovy
+// One branch of the current project
+def branch = gitlabApiGet(path: 'repository/branches/master')
+echo("master is at ${branch.commit.id}")
+
+// A file of another project; the file path segment is encoded by the caller
+def file = gitlabApiGet(
+  path: 'repository/files/' + URLEncoder.encode('deploy/values.yml', 'UTF-8'),
+  query: [ref: 'release/v.1.1.0'],
+  projectId: 412,
+  gitlabBaseUrl: 'https://gitlab.example.com',
+)
+echo("Read at commit ${file.commit_id}")
+
+// The first 100 tags, newest first
+def tags = gitlabApiGet(
+  path: 'repository/tags',
+  query: [order_by: 'updated', sort: 'desc', per_page: 100],
+)
+echo("Latest tag: ${tags ? tags[0].name : 'none'}")
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `path` | required | Resource path under `/api/v4/projects/:id/`, without a leading slash and without a query string. Its segments are already encoded by the caller |
+| `query` | none | Map of query parameters. Keys and values are URL-encoded and sent in the Map's order; no `?` is added when it is absent or empty |
+| `gitUrl` | `env.GIT_URL` | SSH or HTTPS repository URL, used to derive the project and the host |
+| `projectId` | derived from `gitUrl` | Numeric project ID, or the project path in either spelling — `group/project` is encoded by the step, `group%2Fproject` is passed through |
+| `gitlabBaseUrl` | derived from `gitUrl` | GitLab base URL without `/api/v4`. When derived, the scheme and a non-default port of an `http(s)` `gitUrl` are kept; the port of an `ssh://` URL is the SSH daemon's and is dropped |
+| `credentialsId` | `'gitlab-text-secret'` | Jenkins credentials ID holding the GitLab token, sent as `PRIVATE-TOKEN` |
+| `debug` | `false` | Log the request URL and the response body |
+
+## Returns
+
+The response body parsed with `readJSON(returnPojo: true)`: a `Map` for a single
+resource, a `List` for a list endpoint (only its first page).
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when:
+
+- `path` is missing;
+- neither `gitUrl` nor `projectId` is available;
+- `projectId` is given without `gitUrl` and without `gitlabBaseUrl`;
+- a `query` value is `null`;
+- the credentials hold no token;
+- the API answers with a status of 400 or above — a missing project or resource
+  answers `404`, an unauthorised token `401`. The message names the request URL
+  and the credentials ID.

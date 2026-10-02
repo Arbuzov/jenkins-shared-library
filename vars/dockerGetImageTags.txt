@@ -1,0 +1,60 @@
+# dockerGetImageTags
+
+Lists the tags of an image in a Docker registry through the v2 API
+`GET https://<registryHost>/v2/<image>/tags/list`.
+
+The registry pages a long tag list and announces the next page in a
+`Link: <...>; rel="next"` header. The step follows that header until it is gone,
+so the tags of every page are returned, not only the first page.
+
+## Usage
+
+```groovy
+// Every tag of an image in the default registry
+def tags = dockerGetImageTags(image: 'spacebridge/nms-ng-backend')
+echo("Tags: ${tags.join(', ')}")
+
+// Another registry and credentials, newest build first
+def builds = sortVersions(versions: dockerGetImageTags(
+  image: 'spacebridge/nms-ng-frontend',
+  registryHost: 'registry-dev.nexus.asatnet.net',
+  credentialsId: 'local-registry-access',
+))
+echo("Latest: ${builds ? builds[0] : 'none'}")
+```
+
+## Parameters
+
+All parameters are passed through a Map:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `image` | required | Image name inside the registry, e.g. `spacebridge/nms-ng-backend` |
+| `registryHost` | `'registry.nexus.asatnet.net'` | Registry host name; requests go to `https://<registryHost>` |
+| `credentialsId` | `'jira-username-password'` | Jenkins username/password credentials ID with read access, sent as the request `authentication` |
+| `maxPages` | `100` | Number of pages read at most, `>= 1` |
+| `debug` | `false` | Log the request URLs and the response bodies |
+
+## Returns
+
+`List<String>` — the tags in the registry's order, every page joined in the order
+the pages were read. A `Link` target that is a full URL is followed as it is; a
+relative one (`/v2/...`) is resolved against `https://<registryHost>`.
+
+An image without tags (the registry answers `200` with `tags` null or empty)
+comes back as an empty list. A missing image is a different case: the registry
+answers `404 NAME_UNKNOWN` and the step fails the build, so an empty list never
+stands for "not found".
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when:
+
+- `image` is missing or empty;
+- `maxPages` is below 1;
+- the registry answers with a status of 400 or above — a missing image answers
+  `404`, rejected credentials `401`. The message names the request URL, the
+  image, the registry host and the credentials ID;
+- a next page is still announced after `maxPages` pages. The step refuses to
+  return a silently truncated list; raise `maxPages`. A list of exactly
+  `maxPages` pages with no further `Link` is returned.

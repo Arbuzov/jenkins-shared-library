@@ -1,0 +1,65 @@
+# applyManifestVersions
+
+Sets key values in a Manifest text and keeps its formatting.
+
+A key is found on `key: value` (YAML) and `key=value` (properties) lines at any
+indentation. Only the value is replaced: the indentation, the separator, the
+whitespace after the value and the line's CR/LF terminator stay as they were.
+An empty YAML value (`key:`) gets a space before the new value, so the line stays
+a mapping entry.
+Every line that carries the key is set; a key with no line is left out. The step
+is a pure text transform, so reading and writing the file stay with the caller.
+
+## Usage
+
+```groovy
+def result = applyManifestVersions(
+  text: readFile('Manifest'),
+  versions: ['nms-ng': '2.0.3-b70', NMS_BACKEND_VERSION: '1.0.0-b694'],
+)
+if (result.changed) {
+  writeFile(file: 'Manifest', text: result.text)
+  echo("Manifest updated: ${result.changed}")
+}
+
+// Properties lines keep their separator and an empty value is filled in
+applyManifestVersions(text: 'ncc=\nmcd4-lite = 1.5.13-b69\n', versions: [ncc: '5.2.20'])
+// [text: 'ncc=5.2.20\nmcd4-lite = 1.5.13-b69\n', changed: [ncc: '5.2.20']]
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `text` | required | The Manifest content as a String; `''` is allowed |
+| `versions` | `[:]` | Key -> new value. A `null`, empty or multi-line value is skipped, since it would empty or split the line. Other values are written as their `toString()` |
+
+## Returns
+
+`Map` — `[text: <new text>, changed: [key: value]]`. `changed` lists only the
+keys whose text really changed, with the value as written: a key already set to
+the given value, a key with no line and a skipped value are not in it. With
+nothing changed, `text` equals the input.
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when:
+
+- `text` is missing, or is not a String;
+- `versions` is not a Map;
+- `versions` has a `null` or blank key.
+
+## Differences from the copies in test-orchestrator and the former configurator scripts
+
+The step replaces the `applyManifestVersions(content, fieldValues)` function
+copied in `scripts/manifest.groovy` of test-orchestrator (and formerly of the
+configurators). It behaves the same except for two fixes:
+
+1. The whitespace before the key and around the separator is matched as
+   `[ \t]*` instead of `\s*`. `\s` also matches a line break, so in the copies
+   setting a key with an empty value (`ncc=`) left it empty and wrote the value
+   over the next line instead. An empty YAML value (`key:`) also gets a space
+   before the new value.
+2. The whitespace after the value is kept. In the copies it was replaced along
+   with the value, so setting a key to the value it already had (`ncc=5.2.20 `)
+   reported a change.

@@ -1,0 +1,68 @@
+# gitlabGetFile
+
+Reads a file of a GitLab repository through
+`GET /projects/:id/repository/files/:file_path?ref=`, by calling `gitlabApiGet`,
+and returns GitLab's answer together with the decoded text and the commit the file
+was read at.
+
+Both the file path and the ref are required: the step never falls back to a default
+branch, so the caller always states which version of the file it reads.
+
+## Usage
+
+```groovy
+// The Manifest of the current project on master
+def manifest = gitlabGetFile(filePath: 'Manifest', ref: 'master')
+echo(manifest.text)
+
+// Pin the commit: a later read of the same file sees exactly this version
+def first = gitlabGetFile(filePath: 'deploy/values.yml', ref: 'master')
+def again = gitlabGetFile(filePath: 'deploy/values.yml', ref: first.commit_id)
+
+// A file of another project, addressed by ID
+def chart = gitlabGetFile(
+  filePath: 'charts/nms/Chart.yaml',
+  ref: 'v1.4.0',
+  projectId: 412,
+  gitlabBaseUrl: 'https://gitlab.example.com',
+)
+echo("Chart.yaml at ${chart.commit_id}, last changed in ${chart.last_commit_id}")
+```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `filePath` | required | Repo-relative path of the file, e.g. `deploy/Manifest`. Encoded by the step (`/` as `%2F`, a space as `%20`) |
+| `ref` | required | Branch, tag or commit SHA to read the file at |
+| `gitUrl` | `env.GIT_URL` | Passed to `gitlabApiGet`: SSH or HTTPS repository URL, used to derive the project and the host |
+| `projectId` | derived from `gitUrl` | Passed to `gitlabApiGet`: numeric project ID, or the project path in either spelling |
+| `gitlabBaseUrl` | derived from `gitUrl` | Passed to `gitlabApiGet`: GitLab base URL without `/api/v4` |
+| `credentialsId` | `'gitlab-text-secret'` | Passed to `gitlabApiGet`: Jenkins credentials ID holding the GitLab token |
+| `debug` | `false` | Passed to `gitlabApiGet`: log the request URL and the response body |
+
+No other key reaches `gitlabApiGet`.
+
+## Returns
+
+`Map` — GitLab's answer as `gitlabApiGet` returned it, plus `text`:
+
+```groovy
+[file_name: 'Manifest', file_path: 'Manifest', size: 78, encoding: 'base64',
+ content: 'bmFtZTogbm1zLXNpbmdsZS1tZXRh…', content_sha256: '…', ref: 'master',
+ blob_id: '…', commit_id: '…', last_commit_id: '…',
+ text: 'name: nms-single-meta\r\nversion: 1.1.0\r\n…']
+```
+
+- `text` — `content` decoded from base64 as UTF-8; line endings (CR/LF) are kept.
+- `commit_id` — the commit `ref` pointed to when the file was read. Pass it as `ref`
+  to read other files at the same commit.
+- `last_commit_id` — the last commit that changed the file.
+
+## Failure behavior
+
+The step calls `error(...)`, failing the build, when `filePath` or `ref` is missing;
+no request is made then. Every other failure surfaces from `gitlabApiGet`: no
+project (`gitUrl`, `projectId`, `env.GIT_URL` all unset), `projectId` without
+`gitlabBaseUrl`, no token in the credentials, or a status of 400 or above — a
+missing file or ref answers `404`.
