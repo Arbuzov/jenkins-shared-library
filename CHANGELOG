@@ -38,6 +38,7 @@
 - Unit tests in `src/test/groovy/vars/JiraGetIssueCommentsTest.groovy` and `src/test/groovy/vars/JiraGetIssueInfoTest.groovy`.
 
 ### Changed
+- `linkUpstreamBuild` takes `reverse: true`, which links the other way round: the current build becomes the upstream of the given build, and the given build gets the `UpstreamCause` and is re-indexed in the downstream-build cache. The log line now names both ends (`linked <upstream> #<n> -> <downstream> #<m>`).
 - `getNetboxDevices`, `getNetboxRacks`, `getNetboxTenants` and `com.spacebridge.NetBox` default to `https://netbox.sandbox.asatnet.net/netbox` instead of `http://192.168.67.56/netbox/`.
   - The three steps send the request with `ignoreSslErrors: true`: several agents do not trust the Sandbox CA yet. Checked on 2026-09-22 over the script console: the controller, atlas, dionysus, eos and sisyphus verify the chain; build-server-iso, devops2, hera, fpga-sm2, local-deb-repo and packagebuilder-permanent fail with PKIX; satcloud cannot resolve `*.sandbox.asatnet.net` at all.
   - `com.spacebridge.NetBox` runs on the controller, which trusts the chain, and keeps certificate verification.

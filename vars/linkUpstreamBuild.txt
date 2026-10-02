@@ -21,6 +21,11 @@ The existing `CauseAction` is *merged*, not replaced: any cause already present
 (the GitLab push cause, a manual cause, ...) is preserved and the new
 `UpstreamCause` is appended. Re-linking the same upstream build is idempotent.
 
+With `reverse: true` the link goes the other way: the **current** build becomes the
+upstream of the given build, which is the one that gets the cause (and shows the
+current build to its left). The meta plugin configurator uses it for a run that
+commits nothing, to point at the build of the Manifest it confirmed.
+
 ## Usage
 
 ```groovy
@@ -32,6 +37,9 @@ linkUpstreamBuild(run: someRun)
 
 // Quietly (no console output)
 linkUpstreamBuild(project: 'folder/job', build: 7, debug: false)
+
+// The other way round: the current build becomes the upstream of folder/job #7
+linkUpstreamBuild(project: 'folder/job', build: 7, reverse: true)
 ```
 
 ## Parameters
@@ -44,6 +52,8 @@ The upstream build is identified one of two ways (checked in this order):
   (`folder/sub/job`, or a multibranch branch/MR job like `.../master`,
   `.../MR-12`).
 - `build` (optional) — upstream build number (int or numeric String).
+- `reverse` (optional, default `false`) — make the current build the upstream of
+  the given one instead; the given build gets the cause.
 - `debug` (optional, default `true`) — echo the outcome to the build log.
 
 ## Returns

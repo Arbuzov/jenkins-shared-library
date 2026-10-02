@@ -36,10 +36,17 @@ import jenkins.model.Jenkins
  * (the GitLab push cause, a manual cause, ...) is preserved and the new
  * UpstreamCause is appended. Re-linking the same upstream build is idempotent.
  *
+ * With reverse: true the link goes the other way: the CURRENT build becomes the
+ * upstream of the given build, which is the one that gets the cause. The meta
+ * plugin configurator uses it for a run that commits nothing, to point at the
+ * build of the Manifest it confirmed.
+ *
  * Args:
  *   - run     (Object):     upstream Run/RunWrapper to link.
  *   - project (String):     full job name of the upstream job.
  *   - build   (int/String): upstream build number.
+ *   - reverse (boolean):    make the current build the upstream of the given one
+ *                           (default false).
  *   - debug   (boolean):    echo the outcome to the build log (default true).
  *
  * Returns true when the link is present after the call (added now, or already
@@ -60,23 +67,27 @@ def call(Map args = [:]) {
 }
 
 /**
- * Resolve the upstream Run from args and merge an UpstreamCause into the current
- * build's CauseAction. @NonCPS because it touches non-serializable Jenkins model
+ * Resolve the given Run from args and merge an UpstreamCause for it into the current
+ * build's CauseAction, or with reverse one for the current build into the given
+ * build's. @NonCPS because it touches non-serializable Jenkins model
  * objects (Run, Cause, CauseAction) and must not yield across a pipeline step.
  * Returns [linked: boolean, message: String]; never throws.
  */
 @NonCPS
 private Map injectUpstream(Map args) {
   try {
-    Run upstreamRun = resolveRun(args)
-    if (upstreamRun == null) {
+    Run given = resolveRun(args)
+    if (given == null) {
       return [linked: false, message: "upstream build not resolved (${describeArgs(args)})"]
     }
 
+    boolean reverse = args.reverse?.toString()?.toBoolean()
+    Run upstreamRun = reverse ? currentBuild.rawBuild : given
+    Run build = reverse ? given : currentBuild.rawBuild
     String upstreamProject = upstreamRun.getParent().getFullName()
     int upstreamNumber = upstreamRun.getNumber()
+    String link = "${upstreamProject} #${upstreamNumber} -> ${build.getParent().getFullName()} #${build.getNumber()}"
 
-    def build = currentBuild.rawBuild
     def existing = build.getAction(CauseAction)
     def causes = new ArrayList(existing ? existing.getCauses() : [])
 
@@ -88,12 +99,12 @@ private Map injectUpstream(Map args) {
 
     String message
     if (already) {
-      message = "already linked to ${upstreamProject} #${upstreamNumber}"
+      message = "already linked: ${link}"
     } else {
       causes.add(new Cause.UpstreamCause(upstreamRun))
       build.replaceAction(new CauseAction(causes))
       build.save()
-      message = "linked ${upstreamProject} #${upstreamNumber}"
+      message = "linked ${link}"
     }
     // Refresh the graph cache on both paths: the cause may be persisted while the
     // cache is still stale (an earlier refresh failed, or the plugin was absent then).
