@@ -1,0 +1,13 @@
+# gitlabCommitFiles
+
+Update several existing files of a GitLab repository in one commit via `POST /projects/:id/repository/commits`.
+
+Required arguments: `gitUrl` (HTTP(S) repository URL, no credentials/query/fragment), `branch`, `commitMessage`,
+and a non-empty `files` list. Each file has `filePath`, `content`, and `lastCommitId` from `gitlabGetFile.last_commit_id`.
+Only update actions are supported. Duplicate paths and missing guards are rejected before HTTP.
+The default `credentialsId` is `gitlab-text-secret`.
+
+The API receives an action for each file with `last_commit_id`; all changes form one commit. There is no
+force, branch creation or retry. An HTTP error/conflict is propagated. Response must be 201, and JSON
+is read with `returnPojo: true`. The GitLab commit map, including `id`, is returned.
+The token header is masked and response logging is disabled.

@@ -33,6 +33,10 @@ def call(Map arg = [:]) {
       }
     }
   } catch (Exception e) {
+    // Configurators must not turn an unavailable index into valid empty choices.
+    if (arg.failOnError) {
+      throw e
+    }
     echo "Warning: Could not fetch versions for ${names.join(', ')}: ${e.message}"
   }
 

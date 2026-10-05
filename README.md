@@ -47,6 +47,7 @@ CI for GitLab projects.
 - [mergeRequestsChangeLog](vars/mergeRequestsChangeLog.groovy) — assemble a changelog from merged MRs
 - [tagToGitlab](vars/tagToGitlab.groovy) — create/delete tags via the GitLab API
 - [gitlabUpdateFile](vars/gitlabUpdateFile.groovy) — update a single repo file via the GitLab API ([docs](vars/gitlabUpdateFile.txt))
+- [gitlabCommitFiles](vars/gitlabCommitFiles.groovy) — update several existing files atomically with per-file conflict guards ([docs](vars/gitlabCommitFiles.txt))
 - [gitlabGetRepositoryTree](vars/gitlabGetRepositoryTree.groovy) — list the files and directories of a repository via the GitLab API ([docs](vars/gitlabGetRepositoryTree.txt))
 - [gitlabGetFile](vars/gitlabGetFile.groovy) — read a repo file via the GitLab API, decoded, with the commit it was read at ([docs](vars/gitlabGetFile.txt))
 - [gitlabApiGet](vars/gitlabApiGet.groovy) — read any resource of a project via the GitLab API, for the endpoints no other step covers ([docs](vars/gitlabApiGet.txt))
@@ -100,6 +101,7 @@ record of what the model did.
 - [getArtifactsURLsByBuild](vars/getArtifactsURLsByBuild.groovy) / [getArtifactsURLsByTag](vars/getArtifactsURLsByTag.groovy) — discover artifact URLs on past builds
 - [getFullSnapshotVersion](vars/getFullSnapshotVersion.groovy) — resolve the latest `-SNAPSHOT` asset on Nexus ([docs](vars/getFullSnapshotVersion.txt))
 - [getRepReproArtifacts](vars/getRepReproArtifacts.groovy) — list `.deb` artifacts in the internal Reprepro Debian repository
+- `getRepReproArtifacts(failOnError: true, ...)` — fail on index errors instead of returning empty lists; existing callers keep the default warning behavior
 - [nexusSearchAssets](vars/nexusSearchAssets.groovy) — every asset of a Nexus search, all pages ([docs](vars/nexusSearchAssets.txt))
 - [dockerGetImageTags](vars/dockerGetImageTags.groovy) — the tags of an image in a Docker registry, all pages ([docs](vars/dockerGetImageTags.txt))
 
@@ -153,6 +155,7 @@ teams. Use these as templates loaded straight from a Jenkinsfile.
 - [runApplicationPluginBuild](vars/runApplicationPluginBuild.groovy) — application plugin build and publish ([docs](vars/runApplicationPluginBuild.txt))
 - [runApplicationMetaPluginBuild](vars/runApplicationMetaPluginBuild.groovy) — meta-plugin (bundle of plugins) build and publish ([docs](vars/runApplicationMetaPluginBuild.txt))
 - [runApplicationMetaPluginConfigurator](vars/runApplicationMetaPluginConfigurator.groovy) — pick the plugin and image versions of a meta plugin from drop-down lists and commit them to its `Manifest`, driven by a `jenkins.yml` ([docs](vars/runApplicationMetaPluginConfigurator.txt))
+- [runFirmwareConfigurator](vars/runFirmwareConfigurator.groovy) — pick all Manifest Debian packages and an optional firmware VERSION, then commit them together ([docs](vars/runFirmwareConfigurator.txt))
 - [runPIPtoDebBuild](vars/runPIPtoDebBuild.groovy) — convert a PyPI package to a Debian package and publish ([docs](vars/runPIPtoDebBuild.txt))
 - [runFirmwarePipeline](vars/runFirmwarePipeline.groovy) — SBC firmware build, publish, deploy, tag and release notes, driven by a per-branch `jenkins.yml` ([docs](vars/runFirmwarePipeline.txt))
 - [runSmbToNexusPipeline](vars/runSmbToNexusPipeline.groovy) — publish archives from an SMB share to Nexus, zips to a Maven repository or directories zipped into a raw repository: scan, analyze, parallel upload, driven by a per-branch `jenkins.yml` ([docs](vars/runSmbToNexusPipeline.txt))
@@ -171,6 +174,7 @@ completeness.
 ### Versioning helpers
 - [getNPMPackageName](vars/getNPMPackageName.groovy) / [getNPMPackageVersion](vars/getNPMPackageVersion.groovy) — read NPM package metadata
 - [sortVersions](vars/sortVersions.groovy) — keep the build versions of a list and order them newest first, numerically ([docs](vars/sortVersions.txt))
+- [sortDebianVersions](vars/sortDebianVersions.groovy) — sort package versions newest first using Debian epoch, upstream and revision ordering ([docs](vars/sortDebianVersions.txt))
 - [applyManifestVersions](vars/applyManifestVersions.groovy) — set key values in a `Manifest` text, keeping its formatting ([docs](vars/applyManifestVersions.txt))
 
 ### Templating and small utilities

@@ -1,0 +1,12 @@
+# sortDebianVersions
+
+`sortDebianVersions(versions: <Collection>)` returns unique, non-null version strings, newest first,
+without modifying the input. Input must contain valid Debian versions, as returned by the package index.
+
+Compares numeric epoch, upstream version and Debian revision; a missing epoch is zero and a missing
+revision is `0`. Numeric runs ignore leading zeros and are compared without integer overflow. Tilde sorts
+before everything, including the end of a string; letters sort before other non-digit characters.
+Debian-equivalent spellings have a deterministic ascending string tie-breaker.
+It keeps Debian build/revision forms such as `1.1.0-24`, `1.0.24-b13`, `1:1.0-1` and prereleases;
+it does not apply the Docker/Maven release-pattern filtering of `sortVersions`.
+Pure comparison runs outside CPS and needs no shell or dpkg on the Jenkins agent.

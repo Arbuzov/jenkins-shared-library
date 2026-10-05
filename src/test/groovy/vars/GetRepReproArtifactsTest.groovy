@@ -117,5 +117,19 @@ class GetRepReproArtifactsTest extends BasePipelineTest {
         assert echoMessages.size() == 1
         assert echoMessages[0].contains('Warning: Could not fetch versions for my-package: boom')
     }
+
+    @Test
+    void strictModePropagatesAnIndexFailure() {
+        helper.registerAllowedMethod('httpRequest', [Map], { Map args ->
+            throw new RuntimeException('index unavailable')
+        })
+        try {
+            script.call(repository: 'bullseye', packageNames: ['ncc'], failOnError: true)
+            assert false: 'an unavailable index must fail the configurator'
+        } catch (RuntimeException expected) {
+            assert expected.message == 'index unavailable'
+        }
+        assert echoMessages == []
+    }
 }
 
