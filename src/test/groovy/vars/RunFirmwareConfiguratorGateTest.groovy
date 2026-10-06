@@ -68,13 +68,46 @@ class RunFirmwareConfiguratorGateTest extends DeclarativePipelineTest {
     }
 
     @Test
-    void manualMrAndFeatureBuildsCannotCommitEvenWithChanges() {
+    void manualMrBuildsCannotCommitEvenWithChanges() {
         userStarted = true; change = true
-        for (environment in [[BRANCH_NAME: 'MR-1', CHANGE_ID: '1'], [BRANCH_NAME: 'feature'], [BRANCH_NAME: 'master', CHANGE_ID: '1']]) {
+        for (environment in [[BRANCH_NAME: 'MR-1', CHANGE_ID: '1', CHANGE_TARGET: 'master'],
+                             [BRANCH_NAME: 'MR-2', CHANGE_ID: '2', CHANGE_TARGET: 'release/v.1.2.0'],
+                             [BRANCH_NAME: 'master', CHANGE_ID: '1', CHANGE_TARGET: 'master']]) {
             stagesRun.clear()
             binding.setVariable('env', environment)
             script.call()
             assert stagesRun == ['refresh', 'validate']
         }
+    }
+
+    @Test
+    void manualReleaseAndUniHubBuildsWithChangesCommitToTheirNamesakeBranch() {
+        userStarted = true; change = true
+        for (branch in ['release/v.1.1.0', 'release/v.1.2.0', 'uni_hub']) {
+            stagesRun.clear()
+            binding.setVariable('env', [BRANCH_NAME: branch])
+            script.call()
+            assert script.@CFG.branch == branch
+            assert stagesRun == ['refresh', 'validate', 'update']
+        }
+    }
+
+    @Test
+    void timerAndScmBuildsOfReleaseBranchesOnlyRefresh() {
+        for (branch in ['release/v.1.1.0', 'release/v.1.2.0', 'uni_hub']) {
+            stagesRun.clear()
+            binding.setVariable('env', [BRANCH_NAME: branch])
+            script.call()
+            assert stagesRun == ['refresh']
+        }
+    }
+
+    @Test
+    void explicitTargetMismatchCannotCommitFromAnotherBranch() {
+        userStarted = true; change = true
+        binding.setVariable('env', [BRANCH_NAME: 'release/v.1.2.0'])
+        helper.registerAllowedMethod('readYaml', [Map], { [firmwareRepo: 'https://gitlab.example/team/firmware', branch: 'master'] })
+        script.call()
+        assert stagesRun == ['refresh', 'validate']
     }
 }

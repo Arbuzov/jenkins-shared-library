@@ -15,11 +15,13 @@ runFirmwareConfigurator()
 
 ```yaml
 firmwareRepo: https://gitlab.asatnet.net/asat3/estella-hd/estella-hd-firmware
-branch: master
 repository: bullseye
 ```
 
-`firmwareRepo` is required (HTTP(S), without embedded credentials). `branch` and `repository` default to the values above.
+`firmwareRepo` is required (HTTP(S), without embedded credentials). `repository` defaults to `bullseye`.
+Without an explicit `branch`, normal builds target `env.BRANCH_NAME`. MR builds always preview `env.CHANGE_TARGET`,
+never `MR-<n>` or the MR source branch; a missing target fails instead of guessing master.
+An explicit `branch` remains supported for compatibility, but writes require it to equal the job's branch.
 Other keys are rejected. Manifest uses plain, unique `package=version` entries; blank lines and standalone comments are supported.
 
 ## Parameters and execution
@@ -30,9 +32,12 @@ Colliding parameter names fail. `... (current)` keeps the value read at build ti
 The actual Manifest is authoritative, rather than the firmware release-notes component registry.
 
 The stages refresh parameters, validate the selected inputs, update firmware and link its current build.
-Master refreshes every five minutes. Automatic builds do not write. A user-started master build outside an MR
-with changes calls `gitlabCommitFiles` once for all changed files. MR and feature builds preview changes only.
-The write method also checks the user cause and master/MR guard before making an API call.
+Each matching branch refreshes every five minutes. Automatic builds do not write. A user-started branch build outside an MR
+with changes calls `gitlabCommitFiles` once for all changed files, targeting only its same-named firmware branch.
+MRs and builds with an explicit mismatched target preview changes only and do not install a refresh timer.
+The write method also checks the user cause and branch/MR guard before making an API call.
+Configurator branches are created manually; there is no synchronization or branch-creation step.
+A missing firmware counterpart fails the read without falling back to another branch or creating one.
 
 VERSION is read at the Manifest's commit, so both belong to the same snapshot. Manifest edits use
 `applyManifestVersions` and are parsed back to exactly the expected package map. File updates include their

@@ -80,6 +80,7 @@ class RunFirmwareConfiguratorTest extends BasePipelineTest {
     @Test
     void refreshIsIdempotentAndMrHasNoTimer() {
         binding.env.CHANGE_ID = '1'
+        binding.env.CHANGE_TARGET = 'master'
         refresh(); refresh()
         assert script.@fields.size() == 5
         assert declaredProperties.last().pipelineTriggers == []
@@ -136,7 +137,7 @@ class RunFirmwareConfiguratorTest extends BasePipelineTest {
     }
 
     @Test
-    void writeMethodRejectsMrFeatureBranchAndAutomaticRun() {
+    void writeMethodRejectsMrMismatchedBranchAndAutomaticRun() {
         refresh()
         binding.params.NCC_VERSION = '5.2.20-b268'
         script.validateInputs()
@@ -181,6 +182,93 @@ class RunFirmwareConfiguratorTest extends BasePipelineTest {
         assert reads.first().ref == 'release/v.1.1.0'
         assert reads.last().ref == 'snapshot'
         assert declaredProperties.last().pipelineTriggers == []
+    }
+
+    @Test
+    void eachNormalBranchRefreshesAndUpdatesOnlyItsNamesakeFirmwareBranch() {
+        for (branch in ['master', 'release/v.1.1.0', 'release/v.1.2.0', 'uni_hub']) {
+            reads.clear(); commits.clear()
+            binding.env.BRANCH_NAME = branch
+            refresh()
+            assert script.@CFG.branch == branch
+            assert reads.first().ref == branch
+            assert reads.last().ref == 'snapshot'
+            assert declaredProperties.last().pipelineTriggers == [[cron: 'H/5 * * * *']]
+            binding.params.NCC_VERSION = '5.2.20-b268'
+            script.validateInputs(); script.updateFirmware()
+            assert commits.size() == 1
+            assert commits.first().branch == branch
+            assert commits.first().files*.filePath == ['Manifest']
+            script.linkFirmwareBuild()
+            assert statusesArgs.query.ref == branch
+        }
+    }
+
+    @Test
+    void mrPreviewsItsTargetEvenIfConfigStillHasAnExplicitMaster() {
+        binding.env.BRANCH_NAME = 'MR-2'
+        binding.env.CHANGE_ID = '2'
+        binding.env.CHANGE_BRANCH = 'feature/change'
+        binding.env.CHANGE_TARGET = 'release/v.1.2.0'
+        script.@CFG = script.validateConfig([firmwareRepo: REPO, branch: 'master'])
+        script.refreshParameters()
+        assert script.@CFG.branch == 'release/v.1.2.0'
+        assert reads.first().ref == 'release/v.1.2.0'
+        assert declaredProperties.last().pipelineTriggers == []
+        binding.params.NCC_VERSION = '5.2.20-b268'
+        script.validateInputs()
+        expectFailure { script.updateFirmware() }
+        assert commits == []
+    }
+
+    @Test
+    void missingMrTargetOrBranchNameFailsInsteadOfGuessingMaster() {
+        binding.env.BRANCH_NAME = 'MR-2'
+        binding.env.CHANGE_ID = '2'
+        expectFailure { script.validateConfig([firmwareRepo: REPO]) }
+        binding.env.remove('CHANGE_ID'); binding.env.remove('BRANCH_NAME')
+        expectFailure { script.validateConfig([firmwareRepo: REPO]) }
+    }
+
+    @Test
+    void missingFirmwareBranchFailsWithoutCreatingItOrFallingBackToMaster() {
+        binding.env.BRANCH_NAME = 'not-in-firmware'
+        helper.registerAllowedMethod('gitlabGetFile', [Map], { Map args ->
+            reads << args
+            throw new IllegalArgumentException('404: branch does not exist')
+        })
+        expectFailure { refresh() }
+        assert reads*.ref == ['not-in-firmware']
+        assert indexCalls == []
+        assert commits == []
+    }
+
+    @Test
+    void branchSpecificManifestControlsItsOwnPackagesAndCurrentValues() {
+        // Actual firmware branch layouts: release/v.1.2.0 has no ulpc; uni_hub has no ConfD pin.
+        def manifests = [
+            'master': MANIFEST,
+            'release/v.1.1.0': 'python3-mcd4-confd=1.1.0-24\ndataplane-phs-ng=1.0.26-b21\nmcd4-lite=1.5.14-b70\nulpc=5.3.24-b6\nncc=5.2.24-b269\n',
+            'release/v.1.2.0': 'python3-mcd4-confd=1.1.0-24\ndataplane-phs-ng=1.1.2-b22\nmcd4-lite=1.6.1-b1\nncc=5.3.30-r1-2-mbeamb84\n',
+            'uni_hub': 'dataplane-phs-ng=1.0.24-b14\nmcd4-lite=1.6.0-b2\nulpc=5.3.24-b6\nncc=5.2.22-b268\n'
+        ]
+        helper.registerAllowedMethod('gitlabGetFile', [Map], { Map args ->
+            if (args.filePath == 'Manifest') {
+                assert manifests.containsKey(args.ref)
+                return [text: manifests[args.ref], commit_id: 'snapshot-' + args.ref, last_commit_id: 'manifest-' + args.ref]
+            }
+            assert args.ref == 'snapshot-' + binding.env.BRANCH_NAME
+            [text: '1.1.2', commit_id: args.ref, last_commit_id: 'version-' + args.ref]
+        })
+        for (branch in manifests.keySet()) {
+            binding.env.BRANCH_NAME = branch
+            refresh()
+            def expected = script.parseManifest(manifests[branch])
+            def choices = declaredProperties.first().parameters.findAll { it._kind == 'choice' }
+            assert choices*.name == expected.keySet().collect { script.paramName(it) }
+            assert choices*.choices*.first() == expected.values().collect { it + ' (current)' }
+            assert indexCalls.last().packageNames == expected.keySet().toList()
+        }
     }
 
     void expectFailure(Closure body) {

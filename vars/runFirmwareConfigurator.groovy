@@ -29,7 +29,12 @@ Map validateConfig(def config) {
     if (config.repository != null && (!(config.repository instanceof String) || !(config.repository ==~ /[A-Za-z0-9._-]+/))) {
         error('runFirmwareConfigurator: repository must be a Debian distribution name.')
     }
-    return [firmwareRepo: config.firmwareRepo, branch: config.branch ?: 'master', repository: config.repository ?: 'bullseye']
+    // An MR job is named MR-<n>; preview its target, never that synthetic name or its source branch.
+    String branch = env.CHANGE_ID ? env.CHANGE_TARGET : (config.branch ?: env.BRANCH_NAME)
+    if (!branch?.trim()) {
+        error('runFirmwareConfigurator: cannot resolve the firmware branch; BRANCH_NAME or the MR CHANGE_TARGET is required.')
+    }
+    return [firmwareRepo: config.firmwareRepo, branch: branch, repository: config.repository ?: 'bullseye']
 }
 
 @NonCPS
@@ -79,7 +84,7 @@ void refreshParameters() {
     currentBuild.description = 'Update parameters'
     // Scheduled runs refresh the lists only; they never commit to the firmware repository.
     properties([parameters(definitions), pipelineTriggers(
-        env.BRANCH_NAME == 'master' && !env.CHANGE_ID ? [cron('H/5 * * * *')] : []
+        canWrite() ? [cron('H/5 * * * *')] : []
     )])
 }
 
@@ -112,12 +117,12 @@ void validateInputs() {
 
 boolean hasChanges() { !chosen.isEmpty() || !chosenVersion.isEmpty() }
 
-boolean canWrite() { env.BRANCH_NAME == 'master' && !env.CHANGE_ID }
+boolean canWrite() { !env.CHANGE_ID && env.BRANCH_NAME && env.BRANCH_NAME == CFG.branch }
 
 void updateFirmware() {
     // Also protect direct calls, not just the declarative stage gate.
     if (!canWrite() || !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')) {
-        error('Firmware updates require a user-started master build outside a merge request.')
+        error('Firmware updates require a user-started branch build outside a merge request, targeting the same firmware branch.')
     }
     if (!hasChanges()) { error('Nothing to commit.') }
     def files = []
