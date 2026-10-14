@@ -8,13 +8,13 @@ String call(Map arg) {
   def version = "${arg.version}-SNAPSHOT"
   def credentialsId = arg.credentialsId ?: 'jira-username-password'
 
-  def apiUrl = "${nexusUrl}/service/rest/v1/search/assets?repository=${repository}&maven.groupId=${groupId}&maven.artifactId=${artifactId}&maven.baseVersion=${version}&maven.extension=${extension}"
+  def apiUrl = "${nexusUrl}/service/rest/v1/search/assets?repository=${repository}&maven.groupId=${groupId}&maven.artifactId=${artifactId}&maven.baseVersion=${URLEncoder.encode(version, 'UTF-8')}&maven.extension=${extension}"
 
   def response = httpRequest(
     url: apiUrl,
     httpMode: 'GET',
     contentType: 'APPLICATION_JSON',
-    authentication: 'jira-username-password'
+    authentication: credentialsId
   )
   def json = readJSON(text: response.content)
   def items = json.items
