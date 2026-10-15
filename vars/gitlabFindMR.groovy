@@ -140,8 +140,9 @@ def call (Map args = [:]) {
   if (projectId == null) {
     return null
   }
-  // Sanitize projectId to be a number (may be an Integer when read from the API response)
-  if (!projectId.toString().matches(/^\d+$/)) {
+  projectId = projectId.toString()
+  // Sanitize projectId to be a number
+  if (!projectId.matches(/^\d+$/)) {
     return null
   }
 
