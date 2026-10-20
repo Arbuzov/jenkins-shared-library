@@ -11,9 +11,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     List echoMessages
     List buildChangesCalls
     List readTrustedCalls
-    List repArtifactCalls
     String readYamlText
-    List declaredProperties
     boolean pipelineDefined
 
     static final String YAML_TEXT = 'project: estella-hd\n'
@@ -30,9 +28,9 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
             installationRoot : 'Host eStella-HD system installation',
             testSbcIp        : '192.168.65.188',
             keyComponents    : [
-                'dataplane-phs-ng': [project: 'ASAT3-PHS/x/release_1.0.x', buildMask: '(?<=b)\\d+', pinned: true],
-                'ncc'             : [project: 'NCC/y/master', buildMask: '(?<=b)\\d+', pinned: true],
-                'watched-only'    : [project: 'OTHER/z/master', buildMask: '(?<=b)\\d+', pinned: false]
+                'dataplane-phs-ng': [project: 'ASAT3-PHS/x/release_1.0.x', buildMask: '(?<=b)\\d+'],
+                'ncc'             : [project: 'NCC/y/master', buildMask: '(?<=b)\\d+'],
+                'ulpc'            : [project: 'OTHER/z/master', buildMask: '(?<=b)\\d+']
             ]
         ]
     }
@@ -44,9 +42,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         echoMessages = []
         buildChangesCalls = []
         readTrustedCalls = []
-        repArtifactCalls = []
         readYamlText = null
-        declaredProperties = null
         pipelineDefined = false
         binding.setVariable('env', [:])
         helper.registerAllowedMethod('reportUsage', [Map], { Map args -> })
@@ -72,24 +68,9 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
             readYamlText = args.text
             return validConfig()
         })
-        helper.registerAllowedMethod('getRepReproArtifacts', [Map], { Map args ->
-            repArtifactCalls << args
-            return args.packageNames.collectEntries { [(it): ['1.0.0-b1', '1.0.1-b2']] }
-        })
-        ['choice', 'separator', 'string', 'booleanParam'].each { name ->
-            helper.registerAllowedMethod(name, [Map], { Map args -> args + [_kind: name] })
-        }
-        helper.registerAllowedMethod('parameters', [List], { List entries -> entries })
-        helper.registerAllowedMethod('properties', [List], { List entries -> declaredProperties = entries })
         // stop call() at the pipeline block - Pipeline Unit cannot evaluate declarative gating
         helper.registerAllowedMethod('pipeline', [Closure], { Closure body -> pipelineDefined = true })
         script = loadScript('vars/runFirmwarePipeline.groovy')
-    }
-
-    /** The parameter entries call() handed to properties(), in render order. */
-    List renderedParameters() {
-        assert declaredProperties != null: 'properties() was never called'
-        return declaredProperties[0]
     }
 
     // ---------- config validation ----------
@@ -139,7 +120,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     @Test
     void validateConfigRejectsAComponentWithoutProjectOrBuildMask() {
         def config = validConfig()
-        config.keyComponents['broken'] = [pinned: true]
+        config.keyComponents['broken'] = [project: 'P/q/master']
         try {
             script.validateConfig(config)
             assert false: 'expected an error'
@@ -149,7 +130,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         }
     }
 
-    // ---------- call(): config loading and generated parameters ----------
+    // ---------- call(): config loading ----------
 
     @Test
     void callReadsTheConfigThroughReadTrustedAndParsesThatVeryText() {
@@ -167,76 +148,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     }
 
     @Test
-    void callFetchesThePackageIndexOnceForEveryPinnedComponent() {
-        script.call()
-
-        // one fetch, not one per component: the index is ~7 MB
-        assert repArtifactCalls.size() == 1
-        assert repArtifactCalls[0].packageNames == ['dataplane-phs-ng', 'ncc']
-        assert repArtifactCalls[0].repository == 'bullseye'
-    }
-
-    @Test
-    void callHonoursTheRepositoryOverride() {
-        script.call(REPOSITORY: 'bookworm')
-        assert repArtifactCalls[0].repository == 'bookworm'
-    }
-
-    @Test
-    void callRendersTheParametersInOrderWithBothSections() {
-        script.call()
-
-        def rendered = renderedParameters()
-        assert rendered*.name == [
-            'separator-0',
-            'DATAPLANE_PHS_NG_VERSION',
-            'NCC_VERSION',
-            'separator-1',
-            'FIRMWARE_VERSION',
-            'CREATE_GIT_TAG'
-        ]
-        assert rendered*._kind == [
-            'separator', 'choice', 'choice', 'separator', 'string', 'booleanParam'
-        ]
-        assert rendered[0].sectionHeader == 'Software Versions'
-        assert rendered[3].sectionHeader == 'Release Options'
-    }
-
-    @Test
-    void aComponentChoiceLeadsWithAnEmptyOptionMeaningKeepTheManifestVersion() {
-        script.call()
-
-        def choice = renderedParameters().find { it.name == 'NCC_VERSION' }
-        assert choice.choices == ['', '1.0.0-b1', '1.0.1-b2']
-        assert choice.description.contains('Manifest')
-    }
-
-    @Test
-    void releaseOptionsKeepTheirDefaults() {
-        script.call()
-
-        def rendered = renderedParameters()
-        assert rendered.find { it.name == 'FIRMWARE_VERSION' }.defaultValue == ''
-        assert rendered.find { it.name == 'CREATE_GIT_TAG' }.defaultValue == false
-    }
-
-    @Test
-    void nothingPinnedRendersNoSoftwareVersionsSection() {
-        helper.registerAllowedMethod('readYaml', [Map], { Map args ->
-            def config = validConfig()
-            config.keyComponents.each { name, component -> component.pinned = false }
-            return config
-        })
-
-        script.call()
-
-        assert repArtifactCalls.isEmpty()
-        assert renderedParameters()*.name == ['separator-1', 'FIRMWARE_VERSION', 'CREATE_GIT_TAG']
-        assert !renderedParameters().any { it.sectionHeader == 'Software Versions' }
-    }
-
-    @Test
-    void callRejectsAnInvalidConfigBeforeRenderingAnyParameter() {
+    void callRejectsAnInvalidConfigBeforeDefiningThePipeline() {
         helper.registerAllowedMethod('readYaml', [Map], { Map args ->
             def config = validConfig()
             config.remove('mavenGroup')
@@ -249,44 +161,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         } catch (RuntimeException e) {
             assert e.message.contains('mavenGroup')
         }
-        assert declaredProperties == null
         assert !pipelineDefined
-    }
-
-    // ---------- parameter names ----------
-
-    @Test
-    void paramNameUppercasesAndReplacesDashes() {
-        assert script.paramName('dataplane-phs-ng') == 'DATAPLANE_PHS_NG_VERSION'
-        assert script.paramName('ncc') == 'NCC_VERSION'
-        assert script.paramName('mcd4-lite') == 'MCD4_LITE_VERSION'
-        assert script.paramName('ulpc') == 'ULPC_VERSION'
-    }
-
-    // ---------- pinned vs tracked ----------
-
-    @Test
-    void pinnedComponentsSelectsOnlyPinnedOnes() {
-        script.@CFG = validConfig()
-        assert script.pinnedComponents().keySet() as List == ['dataplane-phs-ng', 'ncc']
-    }
-
-    @Test
-    void aComponentWithoutTheFlagIsTrackedOnly() {
-        def config = validConfig()
-        config.keyComponents['no-flag'] = [project: 'P/q/master', buildMask: '(?<=b)\\d+']
-        script.@CFG = config
-        // absent means tracked-only: no parameter, never written to Manifest
-        assert !script.pinnedComponents().containsKey('no-flag')
-        assert script.@CFG.keyComponents.containsKey('no-flag')
-    }
-
-    @Test
-    void nothingPinnedYieldsNoParameters() {
-        def config = validConfig()
-        config.keyComponents.each { name, component -> component.pinned = false }
-        script.@CFG = config
-        assert script.pinnedComponents().isEmpty()
     }
 
     // ---------- build retention ----------
@@ -330,15 +205,14 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         files['artifacts-sbc/syft_report.txt'] = [
             'dataplane-phs-ng   1.0.23-b12   deb',
             'ncc                5.2.20-b264  deb',
-            'watched-only       9.9.9-b7     deb'
+            'ulpc               9.9.9-b7     deb'
         ].join('\n')
 
         def info = script.getKeyComponentsInfo().join('')
 
-        // tracked-only components are reported too - the changelog is what we report on
         assert buildChangesCalls*.BUILD_NUMBER == ['12', '264', '7']
         assert info.contains('dataplane-phs-ng&nbsp;1.0.23-b12')
-        assert info.contains('watched-only&nbsp;9.9.9-b7')
+        assert info.contains('ulpc&nbsp;9.9.9-b7')
     }
 
     @Test
@@ -346,7 +220,7 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         script.@CFG = validConfig()
         // a line with no second field used to throw ArrayIndexOutOfBounds here,
         // which killed the release notes after the artifacts were published
-        files['artifacts-sbc/syft_report.txt'] = 'ncc\ndataplane-phs-ng 1.0.23-b12 deb\nwatched-only 1 deb'
+        files['artifacts-sbc/syft_report.txt'] = 'ncc\ndataplane-phs-ng 1.0.23-b12 deb\nulpc 1 deb'
 
         def info = script.getKeyComponentsInfo().join('')
 

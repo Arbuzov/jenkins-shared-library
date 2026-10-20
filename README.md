@@ -208,7 +208,7 @@ use the corresponding functions from `vars/`:
 * [JUnit Plugin](https://plugins.jenkins.io/junit/) — `junit` step is used to publish test results (looks for JUnit XML under `target/surefire-reports`)
 * [Nexus Artifact Uploader plugin](https://plugins.jenkins.io/nexus-jenkins-plugin/) — `nexusArtifactUploader` is used in some publishing helpers
 * [Pipeline: Basic Steps](https://plugins.jenkins.io/workflow-basic-steps/) — `archiveArtifacts`, `sh`, and other basic steps used in pipelines
-* [Parameter Separator](https://plugins.jenkins.io/parameter-separator/) — `separator` section headers in the parameters of `runFirmwarePipeline` and `runApplicationMetaPluginConfigurator`
+* [Parameter Separator](https://plugins.jenkins.io/parameter-separator/) — `separator` section headers in the parameters of `runFirmwareConfigurator` and `runApplicationMetaPluginConfigurator`
 * [URLTrigger](https://plugins.jenkins.io/urltrigger/) — `URLTrigger`, with which `runApplicationMetaPluginConfigurator` polls Nexus
 
 Notes:

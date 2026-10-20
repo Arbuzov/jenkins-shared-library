@@ -3,11 +3,15 @@
 Declarative pipeline for an *SBC firmware* repository: builds the ISO and the firmware image,
 publishes them to Nexus, deploys and tests them, tags the release and writes the release notes.
 
+It builds what is committed. Component and firmware versions are picked in
+[runFirmwareConfigurator](runFirmwareConfigurator.txt), whose commit to `Manifest`/`VERSION`
+starts this pipeline through the GitLab webhook.
+
 Everything that differs between firmware repositories lives in a per-branch config file
 (`jenkins.yml` by default), so each repository keeps a two-line `Jenkinsfile`.
 
 The config is read with `readTrusted`, which resolves from SCM *before a workspace exists* —
-that is what lets its values drive the build parameters. It therefore only works in
+that is what lets its values be used while the pipeline is defined. It therefore only works in
 **multibranch** jobs.
 
 ## Usage
@@ -22,7 +26,6 @@ With overrides:
 ```groovy
 runFirmwarePipeline(
   CONFIG: 'jenkins.yml',
-  REPOSITORY: 'bullseye',
   AGENT_LABEL: 'farmer-docker-ubuntu'
 )
 ```
@@ -34,7 +37,6 @@ All parameters are optional and passed through a Map:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `CONFIG` | `jenkins.yml` | Path of the config file, resolved with `readTrusted` |
-| `REPOSITORY` | `bullseye` | Debian repository the pinned components' version choices are read from, in a single index fetch |
 | `BUILD_IMAGE` | `registry.nexus.asatnet.net/spacebridge/firmware-build:bullseye-b1` | Docker image the build runs in |
 | `BUILD_ARGS` | `--privileged -v /srv/docker/dual-image:/home/dual-image/` | Docker arguments for that image |
 | `AGENT_LABEL` | `farmer-docker-ubuntu` | Node label the pipeline runs on |
@@ -73,27 +75,17 @@ keyComponents:
   dataplane-phs-ng:
     project: ASAT3-PHS/asat3%2Fphs%2Fdataplane-phs-ng/release_1.0.x   # Jenkins job path
     buildMask: '(?<=b)\d+'                   # single quotes, so YAML keeps the backslash
-    pinned: true
 ```
 
-`keyComponents` is the single registry of the components the release notes report on:
-
-- `pinned: true` — we choose the version. The component gets a `<NAME>_VERSION` build parameter
-  (key uppercased, `-` to `_`) and is written to `Manifest`, so the key must be both the debian
-  package name and the `Manifest` key.
-- `pinned: false` (or absent) — we only track it. It appears in the changelog with whatever
-  version `syft` found in the built image, and gets no build parameter.
-
-Order in `keyComponents` is the order of the parameters in the build UI. When nothing is
-pinned, the *Software Versions* section is omitted entirely.
+`keyComponents` lists the components the release notes report on. Each appears in the
+changelog with the version `syft` found in the built image, and with the changes of the
+`project` build whose number `buildMask` extracts from that version. A leftover `pinned` flag
+is ignored: `runFirmwareConfigurator` offers every package in `Manifest`.
 
 ## Build parameters
 
-`<NAME>_VERSION` per pinned component (empty = keep the `Manifest` version), plus:
-
 | Parameter | Description |
 |-----------|-------------|
-| `FIRMWARE_VERSION` | New value for the `VERSION` file (empty = keep current) |
 | `CREATE_GIT_TAG` | Tag the deployed commit as `v<version>`, after a successful production deploy |
 
 ## Returns
@@ -102,10 +94,6 @@ No return value (defines and runs a Jenkins declarative pipeline).
 
 ## Failure behavior
 
-- The config is validated before any parameter is rendered: an empty or unparsable file, a
-  missing key, an empty `keyComponents`, or an entry without `project`/`buildMask` fails the
-  build with `error(...)` naming everything that is wrong at once.
-- Running the job manually with `FIRMWARE_VERSION` or a `<NAME>_VERSION` set commits the change
-  through `gitlabUpdateFile` and stops the build — the GitLab webhook starts the real one. If
-  the requested versions are already in `Manifest` and `VERSION`, nothing is pushed and the
-  build fails rather than reporting a handoff that will never arrive.
+The config is validated before the pipeline starts: an empty or unparsable file, a missing
+key, an empty `keyComponents`, or an entry without `project`/`buildMask` fails the build with
+`error(...)` naming everything that is wrong at once.

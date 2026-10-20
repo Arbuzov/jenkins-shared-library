@@ -2,7 +2,9 @@ import groovy.transform.Field
 
 /**
  * End-to-end SBC firmware pipeline: build the ISO and firmware, publish them to
- * Nexus, and write the release notes.
+ * Nexus, and write the release notes. It builds what is committed: component and
+ * firmware versions are picked by runFirmwareConfigurator, whose commit to
+ * Manifest/VERSION starts this build.
  *
  * Everything that differs between firmware repositories lives in a per-branch
  * config file (jenkins.yml by default), so the Jenkinsfile of each repository is
@@ -12,9 +14,8 @@ import groovy.transform.Field
  *     runFirmwarePipeline()
  *
  * The config is read with readTrusted, which resolves from SCM before a
- * workspace exists - that is what lets the values be used while the build
- * parameters are still being generated. It therefore only works in multibranch
- * jobs.
+ * workspace exists - that is what lets the values be used while the pipeline is
+ * still being defined. It therefore only works in multibranch jobs.
  *
  * See vars/runFirmwarePipeline.txt for the config format and parameters.
  */
@@ -22,7 +23,6 @@ import groovy.transform.Field
 // A vars script is a singleton per build, so these hold state for the whole run.
 @Field Map CFG = [:]
 @Field String GROUP_PATH = ''
-@Field List COMPONENT_PARAMS = []
 @Field String VERSION = ''
 
 /** Config keys every repository has to provide. */
@@ -46,7 +46,7 @@ Map validateConfig(Map config) {
         error("runFirmwarePipeline: the config is missing ${missing.join(', ')}.")
     }
     if (!(config.keyComponents instanceof Map) || !config.keyComponents) {
-        error('runFirmwarePipeline: keyComponents must be a non-empty map of component name to { project, buildMask, pinned }.')
+        error('runFirmwarePipeline: keyComponents must be a non-empty map of component name to { project, buildMask }.')
     }
     def malformed = config.keyComponents.findAll { name, component ->
         !(component instanceof Map) || !component.project || !component.buildMask
@@ -56,15 +56,6 @@ Map validateConfig(Map config) {
     }
     return config
 }
-
-/** A component key maps to exactly one build parameter name. */
-String paramName(String key) { key.toUpperCase().replace('-', '_') + '_VERSION' }
-
-/**
- * Components whose version we choose: they get a build parameter and are written
- * to Manifest. The rest are tracked only and still appear in the changelog.
- */
-Map pinnedComponents() { CFG.keyComponents.findAll { key, component -> component.pinned } }
 
 /**
  * Build records are cheap and are what a release audit reads; ISOs are not, and every
@@ -133,7 +124,7 @@ String secureString(string) {
     )
 }
 
-/** Per-component changelog for the release notes. Covers tracked components too. */
+/** Per-component changelog for the release notes. */
 List getKeyComponentsInfo() {
     def componentLines = readFile('artifacts-sbc/syft_report.txt').readLines()
     def result = []
@@ -184,7 +175,6 @@ def call(Map arg = [:]) {
     reportUsage(path: getClass().protectionDomain.codeSource.location.path)
 
     String configFile = arg.CONFIG ?: 'jenkins.yml'
-    String repository = arg.REPOSITORY ?: 'bullseye'
     String buildImage = arg.BUILD_IMAGE ?: 'registry.nexus.asatnet.net/spacebridge/firmware-build:bullseye-b1'
     String buildArgs = arg.BUILD_ARGS ?: '--privileged -v /srv/docker/dual-image:/home/dual-image/'
     String agentLabel = arg.AGENT_LABEL ?: 'farmer-docker-ubuntu'
@@ -193,48 +183,6 @@ def call(Map arg = [:]) {
 
     CFG = validateConfig(readYaml(text: readTrusted(configFile)))
     GROUP_PATH = CFG.mavenGroup.replace('.', '/')
-
-    COMPONENT_PARAMS = []
-    def pinned = pinnedComponents().keySet() as List
-    // one fetch of the ~7 MB package index for all of them, and nothing kept afterwards
-    def available = pinned ? getRepReproArtifacts(repository: repository, packageNames: pinned) : [:]
-    for (key in pinned) {
-        COMPONENT_PARAMS << choice(
-            name: paramName(key),
-            choices: [''] + available[key],
-            description: "Version of ${key} (use Manifest version if empty)"
-        )
-    }
-
-    properties([
-        parameters(
-            (COMPONENT_PARAMS ? [
-                separator(
-                    separatorStyle: 'border-width: 0',
-                    name: 'separator-0',
-                    sectionHeader: 'Software Versions',
-                    sectionHeaderStyle: sectionHeaderStyle()
-                )
-            ] + COMPONENT_PARAMS : []) + [
-                separator(
-                    separatorStyle: 'border-width: 0',
-                    name: 'separator-1',
-                    sectionHeader: 'Release Options',
-                    sectionHeaderStyle: sectionHeaderStyle()
-                ),
-                string(
-                    name: 'FIRMWARE_VERSION',
-                    defaultValue: '',
-                    description: 'Firmware version for VERSION file (empty = keep current)'
-                ),
-                booleanParam(
-                    name: 'CREATE_GIT_TAG',
-                    defaultValue: false,
-                    description: 'Create Git tag from clean version (e.g., 1.0.1-b123 -> v1.0.1)'
-                )
-            ]
-        )
-    ])
 
     pipeline {
         agent {
@@ -257,6 +205,14 @@ def call(Map arg = [:]) {
             ansiColor('xterm')
         }
 
+        parameters {
+            booleanParam(
+                name: 'CREATE_GIT_TAG',
+                defaultValue: false,
+                description: 'Create Git tag from clean version (e.g., 1.0.1-b123 -> v1.0.1)'
+            )
+        }
+
         stages {
             stage('Link upstream build') {
                 when {
@@ -265,105 +221,6 @@ def call(Map arg = [:]) {
                 }
                 steps {
                     linkUpstreamFromCommit(gitFallback: true)
-                }
-            }
-
-            stage('Publish build info') {
-                steps {
-                    script {
-                        def manifest = fileExists('Manifest') ? readProperties(file: 'Manifest') : [:]
-                        def shown = pinnedComponents().collectEntries { key, component ->
-                            [(paramName(key)): params[paramName(key)] ?: "${manifest[key] ?: '?'} (use Manifest)"]
-                        }
-                        shown['FIRMWARE_VERSION'] = params.FIRMWARE_VERSION ?: "${readCurrentVersion() ?: '?'} (keep current)"
-                        shown['CREATE_GIT_TAG'] = params.CREATE_GIT_TAG
-
-                        publishSummary(
-                            """
-                            <h3>Build Parameters</h3>
-                            <table border="1" style="border-collapse: collapse;">
-                                <tr><th>Parameter</th><th>Value</th></tr>
-                                ${shown.collect { name, value -> "<tr><td>${name}</td><td>${value}</td></tr>" }.join('')}
-                            </table>
-                            """,
-                            'Version Update Parameters',
-                            'info.gif'
-                        )
-
-                        echo '=== Build Parameters ==='
-                        for (entry in shown) {
-                            echo "${entry.key}: ${entry.value}"
-                        }
-                    }
-                }
-            }
-
-            stage('Check Parameters and Update Files') {
-                when {
-                    beforeAgent true
-                    allOf {
-                        triggeredBy 'UserIdCause'
-                        expression {
-                            return params.FIRMWARE_VERSION ||
-                                   pinnedComponents().any { key, component -> params[paramName(key)] }
-                        }
-                        not { changeRequest() }
-                    }
-                }
-                steps {
-                    script {
-                        if (params.CREATE_GIT_TAG) {
-                            error('CREATE_GIT_TAG cannot be combined with a version parameter: this run only updates files and hands off, so it would never tag. Bump the version first, then run the build again with only CREATE_GIT_TAG.')
-                        }
-
-                        // Files go back through the GitLab API: no checkout, no token, no git commands.
-                        def manifest = readProperties(file: 'Manifest')
-                        def before = manifest.collect { key, value -> "${key}=${value}" }.join('\n')
-
-                        for (key in pinnedComponents().keySet()) {
-                            if (params[paramName(key)]) { manifest[key] = params[paramName(key)] }
-                        }
-
-                        def pushed = false
-
-                        def after = manifest.collect { key, value -> "${key}=${value}" }.join('\n')
-                        if (after != before) {
-                            pushed = true
-                            gitlabUpdateFile(
-                                filePath: 'Manifest',
-                                content: after + '\n',
-                                commitMessage: 'Jenkins: Update component versions',
-                                authorName: 'Jenkins',
-                                authorEmail: 'jenkins@asatnet.net'
-                            )
-                        }
-
-                        if (params.FIRMWARE_VERSION && params.FIRMWARE_VERSION.trim() != readCurrentVersion()) {
-                            pushed = true
-                            gitlabUpdateFile(
-                                filePath: 'VERSION',
-                                content: params.FIRMWARE_VERSION.trim() + '\n',
-                                commitMessage: "Jenkins: Set version ${params.FIRMWARE_VERSION.trim()}",
-                                authorName: 'Jenkins',
-                                authorEmail: 'jenkins@asatnet.net'
-                            )
-                        }
-
-                        if (!pushed) {
-                            error('Nothing to update: Manifest and VERSION already hold the requested versions. Nothing was pushed, so no build will follow.')
-                        }
-
-                        echo '=== Version Update Complete ==='
-                        echo 'GitLab webhook will automatically trigger a new build'
-                        echo 'Actual ISO/firmware build will run in the auto-triggered job'
-                        currentBuild.displayName = 'Update versions'
-                        throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(
-                            hudson.model.Result.SUCCESS,
-                            new jenkins.model.CauseOfInterruption.UserInterruption(
-                                'Versions updated & committed - build handed off to GitLab-triggered job'
-                            )
-                        )
-                    }
                 }
             }
 
@@ -669,17 +526,6 @@ def call(Map arg = [:]) {
             }
         }
     }
-}
-
-String sectionHeaderStyle() {
-    return """
-        border-bottom: 2px solid #6fa3e1;
-        font-size: 16px;
-        font-weight: bold;
-        color: #6fa3e1;
-        margin-top: 10px;
-        margin-bottom: 10px;
-    """
 }
 
 String readCurrentVersion() {
