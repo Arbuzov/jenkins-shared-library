@@ -1,7 +1,8 @@
 # runFirmwarePipeline
 
 Declarative pipeline for an *SBC firmware* repository: builds the ISO and the firmware image,
-publishes them to Nexus, deploys and tests them, tags the release and writes the release notes.
+publishes them to Nexus, deploys and tests them and writes the release notes. Release tags are
+set by hand.
 
 It builds what is committed. Component and firmware versions are picked in
 [runFirmwareConfigurator](runFirmwareConfigurator.txt), whose commit to `Manifest`/`VERSION`
@@ -81,12 +82,6 @@ keyComponents:
 changelog with the version `syft` found in the built image, and with the changes of the
 `project` build whose number `buildMask` extracts from that version. A leftover `pinned` flag
 is ignored: `runFirmwareConfigurator` offers every package in `Manifest`.
-
-## Build parameters
-
-| Parameter | Description |
-|-----------|-------------|
-| `CREATE_GIT_TAG` | Tag the deployed commit as `v<version>`, after a successful production deploy |
 
 ## Returns
 

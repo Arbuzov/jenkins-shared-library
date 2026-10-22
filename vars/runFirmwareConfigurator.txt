@@ -48,8 +48,8 @@ The commit names the versions and requester and includes the existing `Jenkins-U
 `Jenkins-Upstream-Build` trailers. If there are no changes, GitLab commit statuses link the current numbered
 Jenkins build via `linkUpstreamBuild(reverse: true)`. No numbered status means no link and no new build.
 
-The pipeline keeps ten builds, disables concurrent runs and stage restart. Git tag creation remains in
-the firmware pipeline and is not carried in the commit. No return value.
+The pipeline keeps ten builds, disables concurrent runs and stage restart. Git tags are set by hand,
+neither pipeline creates them. No return value.
 
 ## Errors
 

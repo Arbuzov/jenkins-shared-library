@@ -268,12 +268,4 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
     void secureStringEscapesEveryNewlineFlavour() {
         assert script.secureString('a\r\nb\rc\nd') == 'a\\nb\\nc\\nd'
     }
-
-    @Test
-    void readCurrentVersionTrimsAndSurvivesAMissingFile() {
-        files['VERSION'] = "1.1.2\n"
-        assert script.readCurrentVersion() == '1.1.2'
-        files.remove('VERSION')
-        assert script.readCurrentVersion() == ''
-    }
 }

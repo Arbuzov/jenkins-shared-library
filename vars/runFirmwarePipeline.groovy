@@ -205,14 +205,6 @@ def call(Map arg = [:]) {
             ansiColor('xterm')
         }
 
-        parameters {
-            booleanParam(
-                name: 'CREATE_GIT_TAG',
-                defaultValue: false,
-                description: 'Create Git tag from clean version (e.g., 1.0.1-b123 -> v1.0.1)'
-            )
-        }
-
         stages {
             stage('Link upstream build') {
                 when {
@@ -396,24 +388,6 @@ def call(Map arg = [:]) {
                 }
             }
 
-            stage('Create git tag') {
-                when {
-                    beforeAgent true
-                    allOf {
-                        expression { return params.CREATE_GIT_TAG }
-                        not { changeRequest() }
-                    }
-                }
-                steps {
-                    tagToGitlab(
-                        env.GIT_URL,                               // gitUrl
-                        "v${readCurrentVersion().split('-')[0]}",  // tagName
-                        env.GIT_COMMIT,                            // ref
-                        "Release ${VERSION}"                       // message
-                    )
-                }
-            }
-
             stage('Deploy test firmware') {
                 when {
                     beforeAgent true
@@ -525,14 +499,5 @@ def call(Map arg = [:]) {
                 cleanWs()
             }
         }
-    }
-}
-
-String readCurrentVersion() {
-    try {
-        return readFile('VERSION').trim()
-    } catch (Exception e) {
-        print(e)
-        return ''
     }
 }
