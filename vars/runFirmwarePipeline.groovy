@@ -117,13 +117,6 @@ String loadReport(mask) {
     )
 }
 
-String secureString(string) {
-    return string.replaceAll(
-        /(\r\n|\r|\n)/,
-        '\\\\n'
-    )
-}
-
 /** Per-component changelog for the release notes. */
 List getKeyComponentsInfo() {
     def componentLines = readFile('artifacts-sbc/syft_report.txt').readLines()
@@ -482,8 +475,8 @@ def call(Map arg = [:]) {
                                         installationSpace: CFG.installationSpace,
                                         isoUrl: releaseUrl('iso'),
                                         fwUrl: releaseUrl('fw'),
-                                        boms: secureString(loadReport('artifacts-sbc/syft_report.txt')),
-                                        vulnerability: secureString(loadReport('artifacts-sbc/grype_report.txt')),
+                                        boms: loadReport('artifacts-sbc/syft_report.txt'),
+                                        vulnerability: loadReport('artifacts-sbc/grype_report.txt'),
                                         bomChangeset: differences
                                     )
                                 )

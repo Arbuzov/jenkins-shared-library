@@ -261,11 +261,4 @@ class RunFirmwarePipelineTest extends BasePipelineTest {
         assert script.parsePackageListFromFile('artifacts-sbc/nope.txt') == [:]
         assert echoMessages.any { it.contains('Failed to read or parse artifact') }
     }
-
-    // ---------- misc helpers ----------
-
-    @Test
-    void secureStringEscapesEveryNewlineFlavour() {
-        assert script.secureString('a\r\nb\rc\nd') == 'a\\nb\\nc\\nd'
-    }
 }
