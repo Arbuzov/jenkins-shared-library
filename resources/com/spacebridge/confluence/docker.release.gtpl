@@ -95,7 +95,7 @@ build?.changeSets.each { changeSet ->
     &#8212;
     <a target='_blank' href='https://jenkins.asatnet.net/${c.author.url}/' class='model-link inside'>${c.author.displayName}</a> /
     
-    <% def cslink = browser.getChangeSetLink(c) %>
+    <% def cslink = browser?.getChangeSetLink(c) %>
     <% if (cslink) { %>
       <a target='_blank' href='${cslink}'>${browser.descriptor.displayName}</a>
     <% } else { %>
