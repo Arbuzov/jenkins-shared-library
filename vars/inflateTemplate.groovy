@@ -7,16 +7,23 @@ String call(Map arg) {
   def TEMPLATE = arg.TEMPLATE ?: ''
   def template = engine.createTemplate(TEMPLATE).make(arg).toString()
   if (STRINGIFY) {
-    // Preserve newlines inside CDATA sections (e.g. noformat macro content)
-    def cdataBlocks = []
-    template = template.replaceAll('(?s)<!\\[CDATA\\[(.*?)\\]\\]>') { match ->
-      cdataBlocks << match[1]
-      "__CDATA_BLOCK_${cdataBlocks.size() - 1}__"
-    }
-    template = template.replaceAll(/(\r\n|\r|\n)/, '')
-    cdataBlocks.eachWithIndex { content, i ->
-      template = template.replace("__CDATA_BLOCK_${i}__", "<![CDATA[${content}]]>")
-    }
+    template = stringify(template)
   }
   return template
+}
+
+// Strips newlines outside CDATA sections; CDATA content (e.g. noformat macro) is kept as is.
+// @NonCPS: closures passed to regex methods do not run reliably in CPS pipeline code.
+@NonCPS
+String stringify(String template) {
+  def out = new StringBuilder()
+  def matcher = java.util.regex.Pattern.compile('(?s)<!\\[CDATA\\[.*?\\]\\]>').matcher(template)
+  int last = 0
+  while (matcher.find()) {
+    out.append(template.substring(last, matcher.start()).replaceAll(/(\r\n|\r|\n)/, ''))
+    out.append(matcher.group())
+    last = matcher.end()
+  }
+  out.append(template.substring(last).replaceAll(/(\r\n|\r|\n)/, ''))
+  return out.toString()
 }
