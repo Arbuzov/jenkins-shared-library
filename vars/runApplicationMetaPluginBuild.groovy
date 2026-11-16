@@ -148,7 +148,11 @@ def call(Map arg) {
   IMAGES = new HashSet<String>()
 
   pipeline {
-    agent any
+    agent {
+      docker {
+        image 'registry.nexus.asatnet.net/base/ansible-box:10.0.1-b30'
+      }
+    }
     options {
       timestamps()
       disableConcurrentBuilds()

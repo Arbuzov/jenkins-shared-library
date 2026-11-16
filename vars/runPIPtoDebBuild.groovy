@@ -22,7 +22,11 @@ def call (Map args) {
     DISTS = args.DISTS ?: ['stretch', 'buster', 'bullseye', 'bookworm']
     VERSION = args.VERSION ?: ''
     pipeline {
-        agent any
+        agent {
+            docker {
+                image 'registry.nexus.asatnet.net/base/ansible-box:10.0.1-b30'
+            }
+        }
         stages {
             stage ('Build spacebridge packages') {
                 matrix {

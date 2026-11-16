@@ -311,7 +311,7 @@ def call(Map arg = [:]) {
                     stage('Publish Artifacts') {
                         steps {
                             script {
-                                archiveArtifacts artifacts: 'artifacts-sbc/iso/*.iso, artifacts-sbc/firmware/*.fw, artifacts-sbc/firmware/*.md5sum, artifacts-sbc/firmware/*.version, artifacts-sbc/firmware/*.log, artifacts-sbc/*.xml, artifacts-sbc/*.txt, artifacts-sbc/*.json, artifacts-sbc/*.html', fingerprint: true, onlyIfSuccessful: true
+                                archiveArtifacts artifacts: 'artifacts-sbc/firmware/*.md5sum, artifacts-sbc/firmware/*.version, artifacts-sbc/firmware/*.log, artifacts-sbc/*.xml, artifacts-sbc/*.txt, artifacts-sbc/*.json, artifacts-sbc/*.html', fingerprint: true, onlyIfSuccessful: true
                                 currentBuild.displayName = findSBCVersion()
                                 publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '', reportFiles: 'artifacts-sbc/grype_report.html', reportName: 'Grype report', reportTitles: 'Grype report', useWrapperFileDirectly: true])
                                 stash includes: 'artifacts-sbc/firmware/*.log, artifacts-sbc/*.xml, artifacts-sbc/*.txt, artifacts-sbc/*.json, artifacts-sbc/*.html', name: 'artifacts-sbc'
@@ -373,11 +373,6 @@ def call(Map arg = [:]) {
                         credentialsId: nexusCredentialsId,
                         artifacts: firmwareArtifacts()
                     )
-                    publishSummary(
-                        arrayToHrefList([releaseUrl('iso'), releaseUrl('fw')]),
-                        'Build results',
-                        'info.gif'
-                    )
                 }
             }
 
@@ -397,13 +392,6 @@ def call(Map arg = [:]) {
                         repository: 'maven-snapshots',
                         credentialsId: nexusCredentialsId,
                         artifacts: firmwareArtifacts()
-                    )
-                    publishSummary(
-                        arrayToHrefList([
-                            "https://nexus.asatnet.net/#browse/browse:maven-snapshots:${GROUP_PATH.replace('/', '%2F')}%2F${CFG.project}%2F${artifactVersion()}-SNAPSHOT"
-                        ]),
-                        'Build results',
-                        'info.gif'
                     )
                 }
             }

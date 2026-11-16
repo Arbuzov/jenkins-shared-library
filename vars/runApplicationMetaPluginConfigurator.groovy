@@ -277,7 +277,11 @@ def call(Map arg = [:]) {
     CFG = validateConfig(readYaml(text: readTrusted(configFile)))
 
     pipeline {
-        agent any
+        agent {
+            docker {
+                image 'registry.nexus.asatnet.net/base/ansible-box:10.0.1-b30'
+            }
+        }
         options {
             timestamps()
             buildDiscarder(logRotator(numToKeepStr: '10'))
